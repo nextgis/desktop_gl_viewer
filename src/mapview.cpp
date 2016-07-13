@@ -1,0 +1,150 @@
+/******************************************************************************
+*  Project: NextGIS GL Viewer
+*  Purpose: GUI viewer for spatial data.
+*  Author:  Dmitry Baryshnikov, bishop.dev@gmail.com
+*******************************************************************************
+*  Copyright (C) 2016 NextGIS, <info@nextgis.com>
+*
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 2 of the License, or
+*   (at your option) any later version.
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+******************************************************************************/
+#include "mapview.h"
+#include "api.h"
+
+#include <QDebug>
+#include <QPainter>
+#include <QApplication>
+#include <QDesktopWidget>
+
+using namespace ngv;
+
+#define TM_RESIZING 250
+#define DEFAULT_MAP_NAME "default"
+
+static double gComplete = 0;
+
+int ngsQtDrawingProgressFunc(double complete, const char* message,
+                       void* progressArguments) {
+    if(nullptr != message)
+        qDebug() << "Qt draw notiy: " << message;
+
+    MapView* pView = static_cast<MapView*>(progressArguments);
+    if(complete - gComplete > 0.045) { // each 5% redraw
+        pView->update ();
+        gComplete = complete;
+    }
+
+    return 1; // TODO: maybe pView->canel() ? FALSE : TRUE;
+}
+
+MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
+    m_glImage(nullptr), m_ok(false)
+{
+    QRect rec = QApplication::desktop()->screenGeometry();
+    size_t bufferSize = size_t(rec.height() * rec.width() * 4);
+    m_buffer = new uchar[bufferSize];
+
+    m_timer = new QTimer(this);
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
+
+    m_bkcolor = QColor(210, 245, 255);
+
+    // init buffer with grey
+    memset (m_buffer, 128, bufferSize);
+
+    const QSize viewSize = size();
+    m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
+                           QImage::Format_RGBA8888);
+
+    if(ngsInit ("./tmp", nullptr, nullptr) == ngsErrorCodes::SUCCESS){
+        if(ngsInitMap (DEFAULT_MAP_NAME, m_buffer, viewSize.width (),
+                       viewSize.height ()) == ngsErrorCodes::SUCCESS) {
+            ngsSetMapBackgroundColor (DEFAULT_MAP_NAME, 0, 255, 0, 255);
+            m_ok = true;
+        }
+    }
+}
+
+MapView::~MapView()
+{
+    ngsUninit();
+    delete m_glImage;
+    delete m_buffer;
+}
+
+bool MapView::isOk() const
+{
+    return m_ok;
+}
+
+void MapView::onTimer()
+{
+    if(m_state == State::Resizing){
+        m_state = State::Drawing;
+        gComplete = 0;
+        m_timer->stop ();
+
+        const QSize viewSize = size();
+        ngsInitMap (DEFAULT_MAP_NAME, m_buffer, viewSize.width (),
+                               viewSize.height ());
+
+        delete m_glImage;
+        m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
+                               QImage::Format_RGBA8888);
+
+        if(m_ok) {
+            ngsDrawMap (DEFAULT_MAP_NAME, ngsQtDrawingProgressFunc, (void*)this);
+        }
+    }
+}
+
+void MapView::paintEvent(QPaintEvent *)
+{
+    if(m_state == State::None){
+        return drawBackground();
+    }
+
+    if(nullptr != m_glImage){
+        if(m_state == State::Drawing){
+            QPainter painter(this);
+            painter.drawImage (QPoint(0,0), *m_glImage);
+        }
+        else if(m_state == State::Resizing){
+            const QSize viewSize = size();
+            QPoint insertPoint(int(viewSize.width () * .5) -
+                               int(m_glImage->width () * .5),
+                               int(viewSize.height () * .5) -
+                               int(m_glImage->height () * .5) );
+            QPainter painter(this);
+            painter.setBrush(m_bkcolor);
+            painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
+            painter.drawImage (insertPoint, *m_glImage);
+        }
+    }
+}
+
+void MapView::resizeEvent(QResizeEvent *)
+{
+    if(m_state != State::Resizing) {
+        //start resizing action
+        m_state = State::Resizing;
+    }
+    m_timer->start(TM_RESIZING);
+}
+
+void MapView::drawBackground()
+{
+    const QSize viewSize = size();
+    QPainter painter(this);
+    painter.setBrush(m_bkcolor);
+    painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
+}
