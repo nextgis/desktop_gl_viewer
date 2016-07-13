@@ -1,0 +1,105 @@
+/******************************************************************************
+*  Project: NextGIS GL Viewer
+*  Purpose: GUI interface to prepare Sphinx documentation.
+*  Author:  Dmitry Baryshnikov, bishop.dev@gmail.com
+*******************************************************************************
+*  Copyright (C) 2015-2016 NextGIS, <info@nextgis.com>
+*
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 2 of the License, or
+*   (at your option) any later version.
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+******************************************************************************/
+//
+#include "version.h"
+
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include <windows.h>
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include <winver.h>
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON    DISCARDABLE     "glviewer.ico"
+//#endif    
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+#ifdef _DEBUG
+    #define DLL_FLAGS 0x1L
+#else
+    #define DLL_FLAGS 0x0L
+#endif
+
+// 0x0409 is US English, 0x04b0 is Unicode and 0x0000 is 7 bit ASCII. see
+// http://msdn.microsoft.com/en-us/library/aa381049(VS.85).aspx for the full
+// list of languages and charsets
+#define LANG 0x0409
+#ifdef _UNICODE
+    #define CHARSET 0x4b0
+    #define LANG_WITH_CHARSET "040904b0"
+#else
+    #define CHARSET 0
+    #define LANG_WITH_CHARSET "04090000"
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION        NGGLV_MAJOR_VERSION,NGGLV_MINOR_VERSION,NGGLV_RELEASE_NUMBER,NGGLV_SUBRELEASE_NUMBER
+ PRODUCTVERSION     NGGLV_MAJOR_VERSION,NGGLV_MINOR_VERSION,NGGLV_RELEASE_NUMBER,NGGLV_SUBRELEASE_NUMBER
+ FILEFLAGSMASK      0x3fL
+ FILEFLAGS DLL_FLAGS
+ FILEOS             0x4L
+ FILETYPE           0x1L
+ FILESUBTYPE        0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK LANG_WITH_CHARSET
+        BEGIN
+            VALUE "Comments", APP_COMMENT "\0"
+            VALUE "CompanyName", VENDOR "\0"
+#ifdef _WIN64
+            VALUE "FileDescription", APP_NAME " (x86_64) for Windows\0"
+#else
+            VALUE "FileDescription", APP_NAME " (x86) for Windows\0"
+#endif
+            VALUE "FileVersion", NGGLV_VERSION_NUM_DOT_STRING "\0"
+            VALUE "InternalName", APP_NAME "\0"
+            VALUE "LegalCopyright", "Copyright NextGIS\0"
+            VALUE "LegalTrademarks", VENDOR "\0"
+            VALUE "OriginalFilename", APP_NAME ".exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", APP_NAME "\0"
+            VALUE "ProductVersion", NGGLV_VERSION_NUM_DOT_STRING "\0"
+            VALUE "SpecialBuild", "\0"            
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", LANG, CHARSET
+    END
+END
+
+#endif
