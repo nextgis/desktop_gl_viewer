@@ -48,6 +48,8 @@ set(VERSION ${NGGLV_MAJOR_VERSION}.${NGGLV_MINOR_VERSION}.${NGGLV_PATCH_NUMBER})
 
 report_version(${PROJECT_NAME} ${VERSION})
 
+enable_testing()
+
 add_subdirectory (lib)
 
 include_directories (${CMAKE_SOURCE_DIR}/lib/src)

@@ -68,6 +68,7 @@ MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
     if(ngsInit ("./tmp", nullptr, nullptr) == ngsErrorCodes::SUCCESS){
         if(ngsInitMap (DEFAULT_MAP_NAME, m_buffer, viewSize.width (),
                        viewSize.height ()) == ngsErrorCodes::SUCCESS) {
+            // set green gl background to see offscreen raster in window
             ngsSetMapBackgroundColor (DEFAULT_MAP_NAME, 0, 255, 0, 255);
             m_ok = true;
         }
