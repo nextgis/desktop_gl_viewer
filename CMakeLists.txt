@@ -51,6 +51,7 @@ report_version(${PROJECT_NAME} ${VERSION})
 enable_testing()
 
 add_subdirectory (lib)
+add_subdirectory (test)
 
 include_directories (${CMAKE_SOURCE_DIR}/lib/src)
 
