@@ -68,6 +68,7 @@ protected:
     QImage* m_glImage;
     QColor m_bkcolor;
     bool m_ok;
+    unsigned int m_mapId;
 };
 
 }

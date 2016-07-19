@@ -29,6 +29,11 @@ using namespace ngv;
 
 #define TM_RESIZING 250
 #define DEFAULT_MAP_NAME "default"
+#define DEFAULT_EPSG 3857
+#define DEFAULT_MAX_X 20037508.34 // 180.0
+#define DEFAULT_MAX_Y 20037508.34 // 90.0
+#define DEFAULT_MIN_X -DEFAULT_MAX_X
+#define DEFAULT_MIN_Y -DEFAULT_MAX_Y
 
 static double gComplete = 0;
 
@@ -47,7 +52,7 @@ int ngsQtDrawingProgressFunc(double complete, const char* message,
 }
 
 MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
-    m_glImage(nullptr), m_ok(false)
+    m_glImage(nullptr), m_ok(false), m_mapId(15000)
 {
     QRect rec = QApplication::desktop()->screenGeometry();
     size_t bufferSize = size_t(rec.height() * rec.width() * 4);
@@ -65,12 +70,18 @@ MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
     m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
                            QImage::Format_RGBA8888);
 
-    if(ngsInit ("./tmp", nullptr, nullptr) == ngsErrorCodes::SUCCESS){
-        if(ngsInitMap (DEFAULT_MAP_NAME, m_buffer, viewSize.width (),
+    if(ngsInit (nullptr, nullptr) == ngsErrorCodes::SUCCESS){
+        int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
+                                  DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
+                                  DEFAULT_MAX_Y);
+        if(mapId != -1) {
+            m_mapId = static_cast<unsigned int>(mapId);
+            if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
                        viewSize.height ()) == ngsErrorCodes::SUCCESS) {
-            // set green gl background to see offscreen raster in window
-            ngsSetMapBackgroundColor (DEFAULT_MAP_NAME, 0, 255, 0, 255);
-            m_ok = true;
+                // set green gl background to see offscreen raster in window
+                ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
+                m_ok = true;
+            }
         }
     }
 }
@@ -94,16 +105,15 @@ void MapView::onTimer()
         gComplete = 0;
         m_timer->stop ();
 
-        const QSize viewSize = size();
-        ngsInitMap (DEFAULT_MAP_NAME, m_buffer, viewSize.width (),
-                               viewSize.height ());
-
-        delete m_glImage;
-        m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
-                               QImage::Format_RGBA8888);
-
         if(m_ok) {
-            ngsDrawMap (DEFAULT_MAP_NAME, ngsQtDrawingProgressFunc, (void*)this);
+            const QSize viewSize = size();
+            ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height ());
+
+            delete m_glImage;
+            m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
+                                   QImage::Format_RGBA8888);
+
+            ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
         }
     }
 }
