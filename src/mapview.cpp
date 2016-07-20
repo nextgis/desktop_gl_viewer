@@ -70,25 +70,22 @@ MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
     m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
                            QImage::Format_RGBA8888);
 
-    if(ngsInit (nullptr, nullptr) == ngsErrorCodes::SUCCESS){
-        int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
-                                  DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
-                                  DEFAULT_MAX_Y);
-        if(mapId != -1) {
-            m_mapId = static_cast<unsigned int>(mapId);
-            if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
-                       viewSize.height ()) == ngsErrorCodes::SUCCESS) {
-                // set green gl background to see offscreen raster in window
-                ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
-                m_ok = true;
-            }
+    int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
+                              DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
+                              DEFAULT_MAX_Y);
+    if(mapId != -1) {
+        m_mapId = static_cast<unsigned int>(mapId);
+        if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
+                   viewSize.height ()) == ngsErrorCodes::SUCCESS) {
+            // set green gl background to see offscreen raster in window
+            ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
+            m_ok = true;
         }
     }
 }
 
 MapView::~MapView()
 {
-    ngsUninit();
     delete m_glImage;
     delete m_buffer;
 }

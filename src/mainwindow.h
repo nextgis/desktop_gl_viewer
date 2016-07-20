@@ -29,10 +29,29 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = 0);
+
+public slots:
+    void about();
+    void save();
+    void open();
+    void newFile();
+    void load();
+
 protected:
     void closeEvent(QCloseEvent *event);
     void writeSettings();
     void readSettings();
+    void createMenus();
+    void createActions();
+
+private:
+    QAction *m_pNewAct;
+    QAction *m_pOpenAct;
+    QAction *m_pSaveAct;
+    QAction *m_pAboutAct;
+    QAction *m_pUploadAct;
+    QAction *m_pAboutQtAct;
+    QAction *m_pExitAct;
 };
 
 }
