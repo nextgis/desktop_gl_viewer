@@ -48,7 +48,7 @@ int ngsQtDrawingProgressFunc(double complete, const char* message,
         gComplete = complete;
     }
 
-    return 1; // TODO: maybe pView->cancel() ? FALSE : TRUE;
+    return 1; // FIXME: maybe pView->cancel() ? FALSE : TRUE;
 }
 
 MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),

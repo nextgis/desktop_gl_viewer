@@ -48,6 +48,8 @@ set(VERSION ${NGGLV_MAJOR_VERSION}.${NGGLV_MINOR_VERSION}.${NGGLV_PATCH_NUMBER})
 
 report_version(${PROJECT_NAME} ${VERSION})
 
+option (BUILD_SHARED_LIBS "Build as dynamic library" ON)
+
 enable_testing()
 
 add_subdirectory (lib)
