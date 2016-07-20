@@ -31,6 +31,20 @@
 
 using namespace ngv;
 
+int ngsQtLoadingProgressFunc(double complete, const char* message,
+                       void* progressArguments) {
+    if(nullptr != message)
+        qDebug() << "Qt load notiy: " << message;
+
+    /*MapView* pView = static_cast<MapView*>(progressArguments);
+    if(complete - gComplete > 0.045) { // each 5% redraw
+        pView->update ();
+        gComplete = complete;
+    }*/
+
+    return 1; // FIXME: maybe MainWindow->cancel() ? FALSE : TRUE;
+}
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     createActions ();
@@ -97,6 +111,21 @@ void MainWindow::save()
 
 void MainWindow::load()
 {
+    if(ngsInitDataStore ("./tmp/ngs.gpkg") != ngsErrorCodes::SUCCESS) {
+        QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
+        return;
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
+    if(ngsLoad(fileName.toStdString ().c_str (), "ov3", false, ngsQtLoadingProgressFunc, this)
+            != ngsErrorCodes::SUCCESS) {
+        QString message = QString(tr("Load %1 failed")).arg (fileName);
+        QMessageBox::critical (this, tr("Error"), message);
+        return;
+    }
+
+    // add ov3 to default map
 }
 
 void MainWindow::about()
