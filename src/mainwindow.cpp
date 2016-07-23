@@ -115,14 +115,14 @@ void MainWindow::load()
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
     // TODO: m_progressStatus should have child progresses and show full status of all progresses
-    if(ngsLoad(fileName.toStdString ().c_str (), "ov3", false, 1, LoadingProgressFunc,
+    if(ngsLoad(fileName.toStdString ().c_str (), "", false, 1, LoadingProgressFunc,
                m_progressStatus) != ngsErrorCodes::SUCCESS) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);
         return;
     }
 
-    // add ov3 to default map
+    // TODO: add ov3 to default map
 }
 
 void MainWindow::about()
