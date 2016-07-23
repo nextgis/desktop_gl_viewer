@@ -36,6 +36,7 @@ class ProgressStatus : public QWidget
     Q_OBJECT
 public:
     explicit ProgressStatus(QWidget *parent = 0);
+    void setValue(int value);
 
 signals:
 

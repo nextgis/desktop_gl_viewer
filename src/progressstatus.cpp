@@ -25,6 +25,8 @@
 #include <QHideEvent>
 #include <QApplication>
 
+#define DELTA 0.00000001
+
 using namespace ngv;
 
 ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent), m_continue(true)
@@ -53,19 +55,26 @@ ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent), m_continue(tr
     setLayout (layout);
 }
 
+void ProgressStatus::setValue(int value) {
+    m_progress->setValue (value);
+}
+
 int ngv::LoadingProgressFunc(double complete, const char* message,
                        void* progressArguments) {
     if(nullptr != message)
-        qDebug() << "Qt load notiy: " << message;
+        qDebug() << "Qt load notiy: " << complete << " msg:" << message;
 
-    ProgressStatus* status = static_cast<ProgressStatus*>(progressArguments);
-    if(status->isHidden () && complete < 1)
-        QMetaObject::invokeMethod(status, "show");
+    ProgressStatus* status = reinterpret_cast<ProgressStatus*>(progressArguments);
+    if(status) {
+        if(status->isHidden () && complete < 1)
+            QMetaObject::invokeMethod(status, "show");
 
-    if(complete >= 1)
-        QMetaObject::invokeMethod(status, "hide");
+        if(!status->isHidden () && 1 - complete < DELTA)
+            QMetaObject::invokeMethod(status, "hide");
 
-    status->m_progress->setValue (static_cast<int>(complete * 100));
+        status->setValue (static_cast<int>(complete * 100));
 
-    return status->m_continue ? 1 : 0;
+        return status->m_continue ? 1 : 0;
+    }
+    return 1;
 }
