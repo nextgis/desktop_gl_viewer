@@ -17,52 +17,36 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef PROGRESSSTATUS_H
+#define PROGRESSSTATUS_H
 
-#include "eventsstatus.h"
-#include "progressstatus.h"
-#include "mapview.h"
-
-#include <QMainWindow>
+#include <QWidget>
+#include <QLabel>
+#include <QProgressBar>
 
 namespace ngv {
 
-class MainWindow : public QMainWindow
+int LoadingProgressFunc(double complete, const char *message,
+                             void *progressArguments);
+
+class ProgressStatus : public QWidget
 {
+    friend int LoadingProgressFunc(double complete, const char *message,
+                                    void *progressArguments);
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit ProgressStatus(QWidget *parent = 0);
+
+signals:
 
 public slots:
-    void about();
-    void save();
-    void open();
-    void newFile();
-    void load();
 
 protected:
-    void closeEvent(QCloseEvent *event);
-    void writeSettings();
-    void readSettings();
-    void createMenus();
-    void createActions();
-
-private:
-    QAction *m_pNewAct;
-    QAction *m_pOpenAct;
-    QAction *m_pSaveAct;
-    QAction *m_pAboutAct;
-    QAction *m_pUploadAct;
-    QAction *m_pAboutQtAct;
-    QAction *m_pExitAct;
-
-private:
-    EventsStatus *m_eventsStatus;
-    ProgressStatus *m_progressStatus;
-    MapView *m_mapView;
+    QLabel *m_text;
+    QProgressBar *m_progress;
+    bool m_continue;
 };
 
 }
 
-#endif // MAINWINDOW_H
+#endif // PROGRESSSTATUS_H

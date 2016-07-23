@@ -66,12 +66,16 @@ set(PROJECT_HEADERS
     src/version.h
     src/mainwindow.h
     src/mapview.h
+    src/eventsstatus.h
+    src/progressstatus.h
 )
 
 set(PROJECT_SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/mapview.cpp
+    src/eventsstatus.cpp
+    src/progressstatus.cpp
 )
 
 if(MSVC)

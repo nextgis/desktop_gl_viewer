@@ -17,52 +17,30 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef EVENTSSTATUS_H
+#define EVENTSSTATUS_H
 
-#include "eventsstatus.h"
-#include "progressstatus.h"
-#include "mapview.h"
-
-#include <QMainWindow>
+#include <QWidget>
+#include <QLabel>
 
 namespace ngv {
 
-class MainWindow : public QMainWindow
+class EventsStatus : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit EventsStatus(QWidget *parent = 0);
+    void addError();
+    void addMessage();
+    void addWarning();
+signals:
 
 public slots:
-    void about();
-    void save();
-    void open();
-    void newFile();
-    void load();
 
 protected:
-    void closeEvent(QCloseEvent *event);
-    void writeSettings();
-    void readSettings();
-    void createMenus();
-    void createActions();
-
-private:
-    QAction *m_pNewAct;
-    QAction *m_pOpenAct;
-    QAction *m_pSaveAct;
-    QAction *m_pAboutAct;
-    QAction *m_pUploadAct;
-    QAction *m_pAboutQtAct;
-    QAction *m_pExitAct;
-
-private:
-    EventsStatus *m_eventsStatus;
-    ProgressStatus *m_progressStatus;
-    MapView *m_mapView;
+    QLabel *m_count, *m_icon;
+    int m_errorCount, m_messageCount, m_warningCount;
 };
 
 }
-
-#endif // MAINWINDOW_H
+#endif // EVENTSSTATUS_H

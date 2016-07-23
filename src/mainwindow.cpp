@@ -18,7 +18,6 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 #include "mainwindow.h"
-#include "mapview.h"
 #include "api.h"
 #include "lib/src/version.h"
 
@@ -31,28 +30,25 @@
 
 using namespace ngv;
 
-int ngsQtLoadingProgressFunc(double complete, const char* message,
-                       void* progressArguments) {
-    if(nullptr != message)
-        qDebug() << "Qt load notiy: " << message;
-
-    /*MapView* pView = static_cast<MapView*>(progressArguments);
-    if(complete - gComplete > 0.045) { // each 5% redraw
-        pView->update ();
-        gComplete = complete;
-    }*/
-
-    return 1; // FIXME: maybe MainWindow->cancel() ? FALSE : TRUE;
-}
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     createActions ();
     createMenus();
     readSettings();
     ngsInit (nullptr, nullptr);
-    statusBar()->showMessage(tr("Ready"));
-    setCentralWidget (new MapView());
+    statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
+    m_progressStatus = new ProgressStatus;
+    statusBar ()->addPermanentWidget (m_progressStatus);
+    m_progressStatus->hide ();
+    m_eventsStatus = new EventsStatus;
+    statusBar ()->addPermanentWidget (m_eventsStatus);
+    statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
+    m_mapView = new MapView();
+    setCentralWidget (m_mapView);
+
+    /*m_eventsStatus->addMessage ();
+    m_eventsStatus->addWarning ();
+    m_eventsStatus->addError ();*/
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -118,8 +114,9 @@ void MainWindow::load()
 
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
-    if(ngsLoad(fileName.toStdString ().c_str (), "ov3", false, ngsQtLoadingProgressFunc, this)
-            != ngsErrorCodes::SUCCESS) {
+    // TODO: m_progressStatus should have child progresses and show full status of all progresses
+    if(ngsLoad(fileName.toStdString ().c_str (), "ov3", false, 1, LoadingProgressFunc,
+               m_progressStatus) != ngsErrorCodes::SUCCESS) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);
         return;
