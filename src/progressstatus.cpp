@@ -69,10 +69,12 @@ int ngv::LoadingProgressFunc(double complete, const char* message,
         if(status->isHidden () && complete < 1)
             QMetaObject::invokeMethod(status, "show");
 
-        if(!status->isHidden () && 1 - complete < DELTA)
-            QMetaObject::invokeMethod(status, "hide");
-
-        status->setValue (static_cast<int>(complete * 100));
+        if(!status->isHidden ()) {
+            if ( 1 - complete < DELTA)
+                QMetaObject::invokeMethod(status, "hide");
+            else
+                status->setValue (static_cast<int>(complete * 100));
+        }
 
         return status->m_continue ? 1 : 0;
     }

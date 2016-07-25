@@ -35,7 +35,7 @@ public:
     explicit MapView(QWidget *parent = 0);
     virtual ~MapView();
 public:
-    enum State
+    enum class State
     {
         None		= 0,
         Panning,
