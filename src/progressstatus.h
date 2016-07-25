@@ -24,7 +24,16 @@
 #include <QLabel>
 #include <QProgressBar>
 
+#include <string>
+
 namespace ngv {
+
+class IProgressFinish
+{
+public:
+    virtual ~IProgressFinish(){}
+    virtual void onFinish(int type, const std::string& data) = 0;
+};
 
 int LoadingProgressFunc(double complete, const char *message,
                              void *progressArguments);
@@ -37,7 +46,8 @@ class ProgressStatus : public QWidget
 public:
     explicit ProgressStatus(QWidget *parent = 0);
     void setValue(int value);
-
+    void setFinish(IProgressFinish* object, int type, const std::string& data);
+    void onFinish();
 signals:
 
 public slots:
@@ -46,6 +56,9 @@ protected:
     QLabel *m_text;
     QProgressBar *m_progress;
     bool m_continue;
+    IProgressFinish* m_finishObject;
+    int m_finishType;
+    std::string m_finishData;
 };
 
 }

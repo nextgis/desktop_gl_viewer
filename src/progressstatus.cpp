@@ -29,7 +29,8 @@
 
 using namespace ngv;
 
-ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent), m_continue(true)
+ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent),
+    m_continue(true), m_finishObject(nullptr)
 {
     m_text = new QLabel(tr("process running ..."));
     m_progress = new QProgressBar;
@@ -59,21 +60,37 @@ void ProgressStatus::setValue(int value) {
     m_progress->setValue (value);
 }
 
-int ngv::LoadingProgressFunc(double complete, const char* message,
+void ProgressStatus::setFinish(IProgressFinish *object, int type, const std::__cxx11::string &data)
+{
+    m_finishObject = object;
+    m_finishType = type;
+    m_finishData = data;
+}
+
+void ProgressStatus::onFinish()
+{
+    if(nullptr != m_finishObject)
+        m_finishObject->onFinish (m_finishType, m_finishData);
+}
+
+int ngv::LoadingProgressFunc(double complete, const char* /*message*/,
                        void* progressArguments) {
-    if(nullptr != message)
-        qDebug() << "Qt load notiy: " << complete << " msg:" << message;
+//    if(nullptr != message)
+//        qDebug() << "Qt load notiy: " << complete << " msg:" << message;
 
     ProgressStatus* status = reinterpret_cast<ProgressStatus*>(progressArguments);
-    if(status) {
-        if(status->isHidden () && complete < 1)
+    if(nullptr != status) {
+        if(status->isHidden () && complete < .99999999)
             QMetaObject::invokeMethod(status, "show");
 
         if(!status->isHidden ()) {
-            if ( 1 - complete < DELTA)
+            if ( 1 - complete < DELTA) {
                 QMetaObject::invokeMethod(status, "hide");
-            else
+                status->onFinish ();
+            }
+            else {
                 status->setValue (static_cast<int>(complete * 100));
+            }
         }
 
         return status->m_continue ? 1 : 0;

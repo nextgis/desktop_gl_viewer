@@ -20,6 +20,8 @@
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
+#include "progressstatus.h"
+
 #include <QWidget>
 #include <QTimer>
 #include <QImage>
@@ -28,7 +30,7 @@
 namespace ngv {
 
 
-class MapView : public QWidget
+class MapView : public QWidget, public IProgressFinish
 {
     Q_OBJECT
 public:
@@ -69,6 +71,10 @@ protected:
     QColor m_bkcolor;
     bool m_ok;
     unsigned int m_mapId;
+
+    // IProgressFinish interface
+public:
+    virtual void onFinish(int type, const std::string &data) override;
 };
 
 }

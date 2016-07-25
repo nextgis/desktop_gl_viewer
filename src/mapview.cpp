@@ -156,3 +156,10 @@ void MapView::drawBackground()
     painter.setBrush(m_bkcolor);
     painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
 }
+
+
+void ngv::MapView::onFinish(int /*type*/, const std::string &data)
+{
+    if(ngsCreateLayer (m_mapId, "ov3", data.c_str ()) == ngsErrorCodes::SUCCESS)
+        update ();
+}
