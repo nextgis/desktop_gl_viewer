@@ -112,7 +112,7 @@ void MainWindow::load()
         return;
     }
 
-    m_progressStatus->setFinish (m_mapView, 0, "ov3");
+    m_progressStatus->setFinish (m_mapView, 0, "./tmp/ngs.gpkg/ov3");
 
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
