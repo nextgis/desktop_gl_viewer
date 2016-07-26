@@ -161,5 +161,5 @@ void MapView::drawBackground()
 void ngv::MapView::onFinish(int /*type*/, const std::string &data)
 {
     if(ngsCreateLayer (m_mapId, "ov3", data.c_str ()) == ngsErrorCodes::SUCCESS)
-        update ();
+        ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
 }
