@@ -60,7 +60,7 @@ void ProgressStatus::setValue(int value) {
     m_progress->setValue (value);
 }
 
-void ProgressStatus::setFinish(IProgressFinish *object, int type, const std::__cxx11::string &data)
+void ProgressStatus::setFinish(IProgressFinish *object, int type, const std::string &data)
 {
     m_finishObject = object;
     m_finishType = type;
