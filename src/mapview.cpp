@@ -37,18 +37,15 @@ using namespace ngv;
 
 static double gComplete = 0;
 
-int ngsQtDrawingProgressFunc(double complete, const char* message,
+int ngsQtDrawingProgressFunc(double complete, const char* /*message*/,
                        void* progressArguments) {
-    if(nullptr != message)
-        qDebug() << "Qt draw notiy: " << message;
-
     MapView* pView = static_cast<MapView*>(progressArguments);
     if(complete - gComplete > 0.045) { // each 5% redraw
         pView->update ();
         gComplete = complete;
     }
 
-    return 1; // FIXME: maybe pView->cancel() ? FALSE : TRUE;
+    return pView->continueDraw() ? 1 : 0;
 }
 
 MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
@@ -69,19 +66,7 @@ MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
     const QSize viewSize = size();
     m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
                            QImage::Format_RGBA8888);
-
-    int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
-                              DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
-                              DEFAULT_MAX_Y);
-    if(mapId != -1) {
-        m_mapId = static_cast<unsigned int>(mapId);
-        if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
-                   viewSize.height ()) == ngsErrorCodes::SUCCESS) {
-            // set green gl background to see offscreen raster in window
-            ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
-            m_ok = true;
-        }
-    }
+    newMap();
 }
 
 MapView::~MapView()
@@ -99,7 +84,6 @@ void MapView::onTimer()
 {
     if(m_state == State::Resizing){
         m_state = State::Drawing;
-        gComplete = 0;
         m_timer->stop ();
 
         if(m_ok) {
@@ -110,6 +94,7 @@ void MapView::onTimer()
             m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
                                    QImage::Format_RGBA8888);
 
+            gComplete = 0;
             ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
         }
     }
@@ -157,9 +142,51 @@ void MapView::drawBackground()
     painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
 }
 
+void MapView::setMapId(unsigned int mapId)
+{
+    m_mapId = mapId;
+    m_ok = false;
+    const QSize viewSize = size();
+    if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height ()) ==
+            ngsErrorCodes::SUCCESS) {
+        m_ok = true;
+        gComplete = 0;
+        ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+    }
+}
+
+bool MapView::continueDraw() const
+{
+    return true;
+}
+
+void MapView::newMap()
+{
+    const QSize viewSize = size();
+    int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
+                              DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
+                              DEFAULT_MAX_Y);
+    if(mapId != -1) {
+        m_mapId = static_cast<unsigned int>(mapId);
+        if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
+                   viewSize.height ()) == ngsErrorCodes::SUCCESS) {
+            // set green gl background to see offscreen raster in window
+            ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
+            m_ok = true;
+        }
+    }
+}
+
+unsigned int MapView::mapId() const
+{
+    return m_mapId;
+}
+
 
 void ngv::MapView::onFinish(int /*type*/, const std::string &data)
 {
-    if(ngsCreateLayer (m_mapId, "ov3", data.c_str ()) == ngsErrorCodes::SUCCESS)
+    if(ngsCreateLayer (m_mapId, "ov3", data.c_str ()) == ngsErrorCodes::SUCCESS) {
+        gComplete = 0;
         ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+    }
 }

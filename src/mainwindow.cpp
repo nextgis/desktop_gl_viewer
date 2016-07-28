@@ -93,16 +93,37 @@ void MainWindow::readSettings()
     settings.endGroup();
 }
 
+// TODO: need add layer to map dialog
+
 void MainWindow::newFile()
 {
+    m_mapView->newMap();
 }
 
 void MainWindow::open()
 {
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
+    int mapId = ngsOpenMap (fileName.toStdString ().c_str ());
+    if(-1 == mapId) {
+        QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
+    }
+    else {
+        m_mapView->setMapId (static_cast<unsigned int>(mapId));
+    }
 }
 
 void MainWindow::save()
 {
+    QString fileName = QFileDialog::getSaveFileName(this,
+        tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
+    if(ngsSaveMap (m_mapView->mapId(),  fileName.toStdString ().c_str ())
+            != ngsErrorCodes::SUCCESS) {
+        QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
+    }
+    else {
+        statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
+    }
 }
 
 void MainWindow::load()

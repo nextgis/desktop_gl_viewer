@@ -50,6 +50,11 @@ public:
 
 public:
     bool isOk() const;
+    unsigned int mapId() const;
+    void setMapId(unsigned int mapId);
+    bool continueDraw() const;
+    void newMap();
+
 signals:
 
 public slots:
