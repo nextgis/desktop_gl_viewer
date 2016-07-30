@@ -88,7 +88,7 @@ void MapView::onTimer()
 
         if(m_ok) {
             const QSize viewSize = size();
-            ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height ());
+            ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true);
 
             delete m_glImage;
             m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
@@ -128,7 +128,7 @@ void MapView::paintEvent(QPaintEvent *)
 void MapView::resizeEvent(QResizeEvent *)
 {
     if(m_state != State::Resizing) {
-        //start resizing action
+        // start resizing action
         m_state = State::Resizing;
     }
     m_timer->start(TM_RESIZING);
@@ -147,7 +147,7 @@ void MapView::setMapId(unsigned int mapId)
     m_mapId = mapId;
     m_ok = false;
     const QSize viewSize = size();
-    if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height ()) ==
+    if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true) ==
             ngsErrorCodes::SUCCESS) {
         m_ok = true;
         gComplete = 0;
@@ -169,7 +169,7 @@ void MapView::newMap()
     if(mapId != -1) {
         m_mapId = static_cast<unsigned int>(mapId);
         if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
-                   viewSize.height ()) == ngsErrorCodes::SUCCESS) {
+                   viewSize.height (), true) == ngsErrorCodes::SUCCESS) {
             // set green gl background to see offscreen raster in window
             ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
             m_ok = true;
