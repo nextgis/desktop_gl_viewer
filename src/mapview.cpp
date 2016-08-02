@@ -24,6 +24,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QKeyEvent>
 
 using namespace ngv;
 
@@ -34,6 +35,8 @@ using namespace ngv;
 #define DEFAULT_MAX_Y 20037508.34 // 90.0
 #define DEFAULT_MIN_X -DEFAULT_MAX_X
 #define DEFAULT_MIN_Y -DEFAULT_MAX_Y
+#define DEFAULT_SCALE 1.0
+#define ZOOM_FACTOR 0.8
 
 static double gComplete = 0;
 
@@ -51,6 +54,9 @@ int ngsQtDrawingProgressFunc(double complete, const char* /*message*/,
 MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
     m_glImage(nullptr), m_ok(false), m_mapId(15000)
 {
+    m_mapScale = m_imageScale = m_mapScale = DEFAULT_SCALE;
+    m_imageOffset = m_mapOffset = QPoint();
+
     QRect rec = QApplication::desktop()->screenGeometry();
     size_t bufferSize = size_t(rec.height() * rec.width() * 4);
     m_buffer = new uchar[bufferSize];
@@ -82,22 +88,71 @@ bool MapView::isOk() const
 
 void MapView::onTimer()
 {
-    if(m_state == State::Resizing){
-        m_state = State::Drawing;
-        m_timer->stop ();
+    switch (m_state) {
+        case State::Resizing: {
+            m_state = State::Drawing;
+            m_timer->stop();
 
-        if(m_ok) {
-            const QSize viewSize = size();
-            ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true);
+            if(m_ok) {
+                const QSize viewSize = size();
+                ngsInitMap(m_mapId, m_buffer, viewSize.width(), viewSize.height(), true);
 
-            delete m_glImage;
-            m_glImage = new QImage(m_buffer, viewSize.width (), viewSize.height (),
-                                   QImage::Format_RGBA8888);
+                delete m_glImage;
+                m_glImage = new QImage(m_buffer, viewSize.width(), viewSize.height(),
+                                       QImage::Format_RGBA8888);
+                gComplete = 0;
+                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+            }
+            break;
+        }
 
-            gComplete = 0;
-            ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+        case State::Panning: {
+            m_state = State::Drawing;
+            m_timer->stop();
+
+            if(m_ok) {
+                ngsSetMapDisplayCenter(m_mapId, m_mapDisplayCenter.x(), m_mapDisplayCenter.y());
+
+                gComplete = 0;
+                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+            }
+            break;
+        }
+
+        case State::Zooming: {
+            m_state = State::Drawing;
+            m_timer->stop();
+
+            if(m_ok) {
+                ngsGetMapScale(m_mapId, m_mapScale);
+                m_mapScale /= m_curScale;
+                ngsSetMapScale(m_mapId, m_mapScale);
+
+                gComplete = 0;
+                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+            }
+            break;
+        }
+
+        case State::Rotating: {
+            break;
+        }
+
+        case State::Drawing: {
+            break;
+        }
+
+        case State::Flashing: {
+            break;
+        }
+
+        case State::None: {
+            break;
         }
     }
+
+    m_imageOffset = m_mapOffset = QPoint();
+    m_imageScale = m_curScale = DEFAULT_SCALE;
 }
 
 void MapView::paintEvent(QPaintEvent *)
@@ -107,20 +162,69 @@ void MapView::paintEvent(QPaintEvent *)
     }
 
     if(nullptr != m_glImage){
-        if(m_state == State::Drawing){
-            QPainter painter(this);
-            painter.drawImage (QPoint(0,0), *m_glImage);
-        }
-        else if(m_state == State::Resizing){
-            const QSize viewSize = size();
-            QPoint insertPoint(int(viewSize.width () * .5) -
-                               int(m_glImage->width () * .5),
-                               int(viewSize.height () * .5) -
-                               int(m_glImage->height () * .5) );
-            QPainter painter(this);
-            painter.setBrush(m_bkcolor);
-            painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
-            painter.drawImage (insertPoint, *m_glImage);
+
+        switch (m_state) {
+            case State::Drawing: {
+                QPainter painter(this);
+                painter.drawImage(QPoint(0,0), *m_glImage);
+                break;
+            }
+
+            case State::Resizing: {
+                const QSize viewSize = size();
+                QPoint insertPoint(int(viewSize.width() * .5) -
+                                   int(m_glImage->width() * .5),
+                                   int(viewSize.height() * .5) -
+                                   int(m_glImage->height() * .5) );
+                QPainter painter(this);
+                painter.setBrush(m_bkcolor);
+                painter.drawRect(0, 0, viewSize.width(), viewSize.height());
+                painter.drawImage(insertPoint, *m_glImage);
+                break;
+            }
+
+            case State::Panning: {
+                const QSize viewSize = size();
+                QPainter painter(this);
+                painter.setBrush(m_bkcolor);
+                painter.drawRect(0, 0, viewSize.width(), viewSize.height());
+                painter.drawImage(m_imageOffset, *m_glImage);
+                break;
+            }
+
+            case State::Zooming: {
+                double scaleFactor = m_imageScale / m_curScale;
+                int newWidth = int (m_glImage->width() * scaleFactor);
+                int newHeight = int (m_glImage->height() * scaleFactor);
+                int newX = m_imageOffset.x() + (m_glImage->width() - newWidth) / 2;
+                int newY = m_imageOffset.y() + (m_glImage->height() - newHeight) / 2;
+
+                const QSize viewSize = size();
+                QPainter painter(this);
+
+                painter.setBrush(m_bkcolor);
+                painter.drawRect(0, 0, viewSize.width(), viewSize.height());
+
+                painter.save();
+                painter.translate(newX, newY);
+                painter.scale(scaleFactor, scaleFactor);
+                QRectF exposed = painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
+                painter.drawImage(exposed, *m_glImage, exposed);
+                painter.restore();
+                break;
+            }
+
+            case State::Rotating: {
+                break;
+            }
+
+            case State::Flashing: {
+                break;
+            }
+
+            case State::None: {
+                break;
+            }
         }
     }
 }
@@ -182,11 +286,66 @@ unsigned int MapView::mapId() const
     return m_mapId;
 }
 
-
 void ngv::MapView::onFinish(int /*type*/, const std::string &data)
 {
-    if(ngsCreateLayer (m_mapId, "ov3", data.c_str ()) == ngsErrorCodes::SUCCESS) {
+    if(ngsCreateLayer (m_mapId, "orbv3", data.c_str ()) == ngsErrorCodes::SUCCESS) {
         gComplete = 0;
         ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
     }
+}
+
+void MapView::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton) {
+        m_imageOffset = m_mapOffset = QPoint();
+        m_imageLastDragPos = m_mapStartDragPos = event->pos();
+        ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
+    }
+}
+
+void MapView::mouseMoveEvent(QMouseEvent* event)
+{
+    if (event->buttons() & Qt::LeftButton) {
+        if(m_state != State::Panning) {
+            // start panning action
+            m_state = State::Panning;
+        }
+
+        m_imageOffset += event->pos() - m_imageLastDragPos;
+        m_imageLastDragPos = event->pos();
+
+        update();
+    }
+}
+
+void MapView::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if(m_state != State::Panning) {
+            // end panning action
+            m_state = State::Panning;
+        }
+
+        m_imageOffset += event->pos() - m_imageLastDragPos;
+        m_mapOffset += event->pos() - m_mapStartDragPos;
+        m_mapDisplayCenter -= m_mapOffset;
+
+        update();
+        m_timer->start(TM_RESIZING);
+    }
+}
+
+void MapView::wheelEvent(QWheelEvent* event)
+{
+    if(m_state != State::Zooming) {
+        // start zooming action
+        m_state = State::Zooming;
+    }
+
+    int numDegrees = event->delta() / 8;
+    double numSteps = numDegrees / 15.0f;
+    m_curScale *= pow(ZOOM_FACTOR, numSteps);
+
+    update();
+    m_timer->start(TM_RESIZING);
 }

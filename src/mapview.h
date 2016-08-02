@@ -65,6 +65,11 @@ protected:
     virtual void paintEvent(QPaintEvent *) override;
     virtual void resizeEvent(QResizeEvent *) override;
 
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
+
 protected:
     void drawBackground();
 
@@ -76,6 +81,15 @@ protected:
     QColor m_bkcolor;
     bool m_ok;
     unsigned int m_mapId;
+
+    QPoint m_imageLastDragPos;
+    QPoint m_imageOffset;
+    double m_imageScale;
+    QPoint m_mapStartDragPos;
+    QPoint m_mapOffset;
+    double m_mapScale;
+    double m_curScale;
+    QPoint m_mapDisplayCenter;
 
     // IProgressFinish interface
 public:
