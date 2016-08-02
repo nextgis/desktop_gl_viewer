@@ -29,6 +29,7 @@
 using namespace ngv;
 
 #define TM_RESIZING 250
+#define TM_ZOOMING 550
 #define DEFAULT_MAP_NAME "default"
 #define DEFAULT_EPSG 3857
 #define DEFAULT_MAX_X 20037508.34 // 180.0
@@ -107,6 +108,13 @@ void MapView::onTimer()
         }
 
         case State::Panning: {
+        // put current scaled picture of display to m_glImage buffer
+        // this need if user right after wheel make pan and during panning
+        // old unscaled image seen
+            QPixmap pixmap = grab();
+            QPainter qPainter(m_glImage);
+            qPainter.drawPixmap (0, 0, pixmap);
+
             m_state = State::Drawing;
             m_timer->stop();
 
@@ -120,10 +128,19 @@ void MapView::onTimer()
         }
 
         case State::Zooming: {
+        // put current scaled picture of display to m_glImage buffer
+        // this need if user right after wheel make pan and during panning
+        // old unscaled image seen
+            QPixmap pixmap = grab();
+            QPainter qPainter(m_glImage);
+            qPainter.drawPixmap (0, 0, pixmap);
+
             m_state = State::Drawing;
             m_timer->stop();
 
             if(m_ok) {
+
+
                 ngsGetMapScale(m_mapId, m_mapScale);
                 m_mapScale /= m_curScale;
                 ngsSetMapScale(m_mapId, m_mapScale);
@@ -210,7 +227,7 @@ void MapView::paintEvent(QPaintEvent *)
                 painter.scale(scaleFactor, scaleFactor);
                 QRectF exposed = painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
                 painter.drawImage(exposed, *m_glImage, exposed);
-                painter.restore();
+                painter.restore();                
                 break;
             }
 
@@ -253,6 +270,7 @@ void MapView::setMapId(unsigned int mapId)
     const QSize viewSize = size();
     if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true) ==
             ngsErrorCodes::SUCCESS) {
+        ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
         m_ok = true;
         gComplete = 0;
         ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
@@ -276,6 +294,7 @@ void MapView::newMap()
                    viewSize.height (), true) == ngsErrorCodes::SUCCESS) {
             // set green gl background to see offscreen raster in window
             ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
+            ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
             m_ok = true;
         }
     }
@@ -299,6 +318,12 @@ void MapView::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton) {
         m_imageOffset = m_mapOffset = QPoint();
         m_imageLastDragPos = m_mapStartDragPos = event->pos();
+
+        // if just after zoom
+        ngsGetMapScale(m_mapId, m_mapScale);
+        m_mapScale /= m_curScale;
+        ngsSetMapScale(m_mapId, m_mapScale);
+
         ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
     }
 }
@@ -347,5 +372,5 @@ void MapView::wheelEvent(QWheelEvent* event)
     m_curScale *= pow(ZOOM_FACTOR, numSteps);
 
     update();
-    m_timer->start(TM_RESIZING);
+    m_timer->start(TM_ZOOMING);
 }
