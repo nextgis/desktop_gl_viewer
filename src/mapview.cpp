@@ -28,7 +28,7 @@
 
 using namespace ngv;
 
-#define TM_RESIZING 250
+#define TM_RESIZING 350
 #define TM_ZOOMING 550
 #define DEFAULT_MAP_NAME "default"
 #define DEFAULT_EPSG 3857
@@ -210,6 +210,9 @@ void MapView::paintEvent(QPaintEvent *)
             }
 
             case State::Zooming: {
+            // TODO: maybe set new matrix for zoom/pan and get result buffer without
+            // reread from datasource will be faster than raster scale operation?
+
                 double scaleFactor = m_imageScale / m_curScale;
                 int newWidth = int (m_glImage->width() * scaleFactor);
                 int newHeight = int (m_glImage->height() * scaleFactor);
