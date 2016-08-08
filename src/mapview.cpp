@@ -141,7 +141,7 @@ void MapView::onTimer()
             if(m_ok) {
 
 
-                ngsGetMapScale(m_mapId, m_mapScale);
+                ngsGetMapScale(m_mapId, &m_mapScale);
                 m_mapScale /= m_curScale;
                 ngsSetMapScale(m_mapId, m_mapScale);
 
@@ -273,7 +273,7 @@ void MapView::setMapId(unsigned int mapId)
     const QSize viewSize = size();
     if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true) ==
             ngsErrorCodes::SUCCESS) {
-        ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
+        ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
         m_ok = true;
         gComplete = 0;
         ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
@@ -297,7 +297,7 @@ void MapView::newMap()
                    viewSize.height (), true) == ngsErrorCodes::SUCCESS) {
             // set green gl background to see offscreen raster in window
             ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
-            ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
+            ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
             m_ok = true;
         }
     }
@@ -323,11 +323,11 @@ void MapView::mousePressEvent(QMouseEvent* event)
         m_imageLastDragPos = m_mapStartDragPos = event->pos();
 
         // if just after zoom
-        ngsGetMapScale(m_mapId, m_mapScale);
+        ngsGetMapScale(m_mapId, &m_mapScale);
         m_mapScale /= m_curScale;
         ngsSetMapScale(m_mapId, m_mapScale);
 
-        ngsGetMapDisplayCenter(m_mapId, m_mapDisplayCenter.rx(), m_mapDisplayCenter.ry());
+        ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
     }
 }
 
