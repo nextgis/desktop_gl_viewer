@@ -104,6 +104,8 @@ void MainWindow::open()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
+    if(fileName.isEmpty ())
+        return;
     int mapId = ngsOpenMap (fileName.toStdString ().c_str ());
     if(-1 == mapId) {
         QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
@@ -117,6 +119,8 @@ void MainWindow::save()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
+    if(fileName.isEmpty ())
+        return;
     if(ngsSaveMap (m_mapView->mapId(),  fileName.toStdString ().c_str ())
             != ngsErrorCodes::SUCCESS) {
         QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
@@ -138,6 +142,8 @@ void MainWindow::load()
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
     // TODO: m_progressStatus should have child progresses and show full status of all progresses
+    if(fileName.isEmpty ())
+        return;
     if(ngsLoad("orbv3", fileName.toStdString ().c_str (), "", false, 1, LoadingProgressFunc,
                m_progressStatus) != ngsErrorCodes::SUCCESS) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
