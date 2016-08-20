@@ -53,7 +53,7 @@ int ngsQtDrawingProgressFunc(double complete, const char* /*message*/,
 }
 
 MapView::MapView(QWidget *parent) : QWidget(parent), m_state(State::None),
-    m_glImage(nullptr), m_ok(false), m_mapId(15000)
+    m_glImage(nullptr), m_ok(false), m_mapId(-1)
 {
     m_mapScale = m_imageScale = m_mapScale = DEFAULT_SCALE;
     m_imageOffset = m_mapOffset = QPoint();
@@ -87,6 +87,25 @@ bool MapView::isOk() const
     return m_ok;
 }
 
+void MapView::closeMap()
+{
+    if(-1 != m_mapId)
+        ngsMapClose (m_mapId);
+}
+
+bool MapView::openMap(const QString &path)
+{
+    m_mapId = ngsMapOpen (path.toStdString ().c_str ());
+    initMap();
+    return -1 != m_mapId;
+}
+
+bool MapView::saveMap(const QString &path)
+{
+    return ngsMapSave (m_mapId,  path.toStdString ().c_str ())
+            == ngsErrorCodes::SUCCESS;
+}
+
 void MapView::onTimer()
 {
     switch (m_state) {
@@ -96,13 +115,13 @@ void MapView::onTimer()
 
             if(m_ok) {
                 const QSize viewSize = size();
-                ngsInitMap(m_mapId, m_buffer, viewSize.width(), viewSize.height(), true);
+                ngsMapInit(m_mapId, m_buffer, viewSize.width(), viewSize.height(), true);
 
                 delete m_glImage;
                 m_glImage = new QImage(m_buffer, viewSize.width(), viewSize.height(),
                                        QImage::Format_RGBA8888);
                 gComplete = 0;
-                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+                ngsMapDraw(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
             }
             break;
         }
@@ -119,10 +138,10 @@ void MapView::onTimer()
             m_timer->stop();
 
             if(m_ok) {
-                ngsSetMapDisplayCenter(m_mapId, m_mapDisplayCenter.x(), m_mapDisplayCenter.y());
+                ngsMapSetDisplayCenter(m_mapId, m_mapDisplayCenter.x(), m_mapDisplayCenter.y());
 
                 gComplete = 0;
-                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+                ngsMapDraw(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
             }
             break;
         }
@@ -141,12 +160,12 @@ void MapView::onTimer()
             if(m_ok) {
 
 
-                ngsGetMapScale(m_mapId, &m_mapScale);
+                ngsMapGetScale(m_mapId, &m_mapScale);
                 m_mapScale /= m_curScale;
-                ngsSetMapScale(m_mapId, m_mapScale);
+                ngsMapSetScale(m_mapId, m_mapScale);
 
                 gComplete = 0;
-                ngsDrawMap(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
+                ngsMapDraw(m_mapId, ngsQtDrawingProgressFunc, (void*) this);
             }
             break;
         }
@@ -266,17 +285,19 @@ void MapView::drawBackground()
     painter.drawRect(0, 0, viewSize.width (), viewSize.height ());
 }
 
-void MapView::setMapId(unsigned int mapId)
+void MapView::initMap()
 {
-    m_mapId = mapId;
     m_ok = false;
+    if(-1 == m_mapId)
+        return;
     const QSize viewSize = size();
-    if(ngsInitMap (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true) ==
+    if(ngsMapInit (m_mapId, m_buffer, viewSize.width (), viewSize.height (), true) ==
             ngsErrorCodes::SUCCESS) {
-        ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
+        ngsMapGetDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(),
+                               &m_mapDisplayCenter.ry());
         m_ok = true;
         gComplete = 0;
-        ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+        ngsMapDraw (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
     }
 }
 
@@ -287,32 +308,25 @@ bool MapView::continueDraw() const
 
 void MapView::newMap()
 {
+    closeMap ();
     const QSize viewSize = size();
-    int mapId = ngsCreateMap (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
+    int mapId = ngsMapCreate (DEFAULT_MAP_NAME, "test gl map", DEFAULT_EPSG,
                               DEFAULT_MIN_X, DEFAULT_MIN_Y, DEFAULT_MAX_X,
                               DEFAULT_MAX_Y);
+    m_mapId = mapId;
+    initMap();
     if(mapId != -1) {
-        m_mapId = static_cast<unsigned int>(mapId);
-        if(ngsInitMap (m_mapId, m_buffer, viewSize.width (),
-                   viewSize.height (), true) == ngsErrorCodes::SUCCESS) {
-            // set green gl background to see offscreen raster in window
-            ngsSetMapBackgroundColor (m_mapId, 0, 255, 0, 255);
-            ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
-            m_ok = true;
-        }
+        // set green gl background to see offscreen raster in window
+        ngsMapSetBackgroundColor (m_mapId, 0, 255, 0, 255);
+        ngsMapGetDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
     }
-}
-
-unsigned int MapView::mapId() const
-{
-    return m_mapId;
 }
 
 void ngv::MapView::onFinish(int /*type*/, const std::string &data)
 {
-    if(ngsCreateLayer (m_mapId, "orbv3", data.c_str ()) == ngsErrorCodes::SUCCESS) {
+    if(ngsMapCreateLayer (m_mapId, "orbv3", data.c_str ()) == ngsErrorCodes::SUCCESS) {
         gComplete = 0;
-        ngsDrawMap (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+        ngsMapDraw (m_mapId, ngsQtDrawingProgressFunc, (void*)this);
     }
 }
 
@@ -323,11 +337,11 @@ void MapView::mousePressEvent(QMouseEvent* event)
         m_imageLastDragPos = m_mapStartDragPos = event->pos();
 
         // if just after zoom
-        ngsGetMapScale(m_mapId, &m_mapScale);
+        ngsMapGetScale(m_mapId, &m_mapScale);
         m_mapScale /= m_curScale;
-        ngsSetMapScale(m_mapId, m_mapScale);
+        ngsMapSetScale(m_mapId, m_mapScale);
 
-        ngsGetMapDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
+        ngsMapGetDisplayCenter(m_mapId, &m_mapDisplayCenter.rx(), &m_mapDisplayCenter.ry());
     }
 }
 

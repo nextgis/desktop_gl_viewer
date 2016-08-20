@@ -36,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     createMenus();
     readSettings();
     ngsInit (nullptr, nullptr);
+
+    // statusbar setup
     statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
     m_progressStatus = new ProgressStatus;
     statusBar ()->addPermanentWidget (m_progressStatus);
@@ -43,6 +45,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_eventsStatus = new EventsStatus;
     statusBar ()->addPermanentWidget (m_eventsStatus);
     statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
+
+    // storage setup
+    if(ngsDataStoreInit ("./tmp/ngs.gpkg") != ngsErrorCodes::SUCCESS) {
+        QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
+        return;
+    }
+
+    // mapview setup
     m_mapView = new MapView();
     setCentralWidget (m_mapView);
 
@@ -106,12 +116,9 @@ void MainWindow::open()
         tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
-    int mapId = ngsOpenMap (fileName.toStdString ().c_str ());
-    if(-1 == mapId) {
+    m_mapView->closeMap ();
+    if(!m_mapView->openMap (fileName)) {
         QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
-    }
-    else {
-        m_mapView->setMapId (static_cast<unsigned int>(mapId));
     }
 }
 
@@ -121,8 +128,7 @@ void MainWindow::save()
         tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
-    if(ngsSaveMap (m_mapView->mapId(),  fileName.toStdString ().c_str ())
-            != ngsErrorCodes::SUCCESS) {
+    if(!m_mapView->saveMap (fileName)) {
         QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
     }
     else {
@@ -132,11 +138,6 @@ void MainWindow::save()
 
 void MainWindow::load()
 {
-    if(ngsInitDataStore ("./tmp/ngs.gpkg") != ngsErrorCodes::SUCCESS) {
-        QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
-        return;
-    }
-
     m_progressStatus->setFinish (m_mapView, 0, "./tmp/ngs.gpkg/orbv3");
 
     QString fileName = QFileDialog::getOpenFileName(this,
@@ -144,7 +145,7 @@ void MainWindow::load()
     // TODO: m_progressStatus should have child progresses and show full status of all progresses
     if(fileName.isEmpty ())
         return;
-    if(ngsLoad("orbv3", fileName.toStdString ().c_str (), "", false, 1, LoadingProgressFunc,
+    if(ngsDataStoreLoad("orbv3", fileName.toStdString ().c_str (), "", false, 1, LoadingProgressFunc,
                m_progressStatus) != ngsErrorCodes::SUCCESS) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);

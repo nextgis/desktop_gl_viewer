@@ -50,8 +50,9 @@ public:
 
 public:
     bool isOk() const;
-    unsigned int mapId() const;
-    void setMapId(unsigned int mapId);
+    void closeMap();
+    bool openMap(const QString& path);
+    bool saveMap(const QString& path);
     bool continueDraw() const;
     void newMap();
 
@@ -70,6 +71,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void wheelEvent(QWheelEvent* event) override;
 
+    void initMap();
 protected:
     void drawBackground();
 
@@ -80,7 +82,7 @@ protected:
     QImage* m_glImage;
     QColor m_bkcolor;
     bool m_ok;
-    unsigned int m_mapId;
+    int m_mapId;
 
     QPoint m_imageLastDragPos;
     QPoint m_imageOffset;
