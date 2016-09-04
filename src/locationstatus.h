@@ -17,39 +17,33 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
+#ifndef LOCATIONSTATUS_H
+#define LOCATIONSTATUS_H
 
-#include "version.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QSurfaceFormat>
+#include <QWidget>
+#include <QLabel>
 
-using namespace ngv;
+namespace ngv {
 
-int main(int argc, char *argv[])
+class ILocationStatus {
+public:
+    virtual ~ILocationStatus() {}
+    virtual void setLocation(double x, double y) = 0;
+};
+
+class LocationStatus : public QWidget, public ILocationStatus
 {
-    //Q_INIT_RESOURCE(glview);
+public:
+    LocationStatus();
 
-    QApplication app(argc, argv);
+    // ILocationStatus interface
+public:
+    virtual void setLocation(double x, double y) override;
 
-    app.setOrganizationName("NextGIS");
-    app.setApplicationDisplayName ("NextGIS GL Viewer");
-    app.setApplicationName("glviewer");
-    app.setApplicationVersion(NGGLV_VERSION_STRING);
-    app.setOrganizationDomain("nextgis.com");
+protected:
+    QLabel *m_text;
+};
 
-    // gl stuff
-    QSurfaceFormat format;
-//    format.setDepthBufferSize(16);
-//    format.setStencilBufferSize(8);
-    format.setVersion(2, 0);
-//    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setRenderableType (QSurfaceFormat::OpenGLES);
-    QSurfaceFormat::setDefaultFormat(format);
-
-    // create window
-    MainWindow wnd;
-    wnd.show();
-    
-    return app.exec ();
 }
 
+#endif // LOCATIONSTATUS_H

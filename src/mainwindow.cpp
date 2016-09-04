@@ -42,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_progressStatus = new ProgressStatus;
     statusBar ()->addPermanentWidget (m_progressStatus);
     m_progressStatus->hide ();
+    m_locationStatus = new LocationStatus;
+    statusBar ()->addPermanentWidget (m_locationStatus);
+
     m_eventsStatus = new EventsStatus;
     statusBar ()->addPermanentWidget (m_eventsStatus);
     statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
@@ -53,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     }
 
     // mapview setup
-    m_mapView = new MapView();
+    m_mapView = new GlMapView(m_locationStatus);
     setCentralWidget (m_mapView);
 
     /*m_eventsStatus->addMessage ();
@@ -107,12 +110,12 @@ void MainWindow::readSettings()
 
 void MainWindow::newFile()
 {
-    m_mapView->newMap();
+//    m_mapView->newMap();
 }
 
 void MainWindow::open()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
+/*    QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
@@ -120,11 +123,12 @@ void MainWindow::open()
     if(!m_mapView->openMap (fileName)) {
         QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
     }
+*/
 }
 
 void MainWindow::save()
 {
-    QString fileName = QFileDialog::getSaveFileName(this,
+/*    QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
@@ -134,11 +138,12 @@ void MainWindow::save()
     else {
         statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
     }
+*/
 }
 
 void MainWindow::load()
 {
-    m_progressStatus->setFinish (m_mapView, 0, "./tmp/ngs.gpkg/orbv3");
+/*    m_progressStatus->setFinish (m_mapView, 0, "./tmp/ngs.gpkg/orbv3");
 
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
@@ -150,6 +155,7 @@ void MainWindow::load()
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);
     }
+*/
 }
 
 void MainWindow::about()

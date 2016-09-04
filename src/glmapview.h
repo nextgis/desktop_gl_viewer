@@ -17,39 +17,47 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
+#ifndef GLMAPVIEW_H
+#define GLMAPVIEW_H
 
-#include "version.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QSurfaceFormat>
+#include <QOpenGLWidget>
 
-using namespace ngv;
+#include "api.h"
+#include "locationstatus.h"
 
-int main(int argc, char *argv[])
+namespace ngv {
+
+class GlMapView : public QOpenGLWidget
 {
-    //Q_INIT_RESOURCE(glview);
+    Q_OBJECT
+public:
+    GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
+    void closeMap();
+    void newMap();
 
-    QApplication app(argc, argv);
+    // QOpenGLWidget interface
+protected:
+    virtual void initializeGL() override;
+    virtual void resizeGL(int w, int h) override;
+    virtual void paintGL() override;
 
-    app.setOrganizationName("NextGIS");
-    app.setApplicationDisplayName ("NextGIS GL Viewer");
-    app.setApplicationName("glviewer");
-    app.setApplicationVersion(NGGLV_VERSION_STRING);
-    app.setOrganizationDomain("nextgis.com");
+    // mouse events
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
+protected:
+    void initMap();
 
-    // gl stuff
-    QSurfaceFormat format;
-//    format.setDepthBufferSize(16);
-//    format.setStencilBufferSize(8);
-    format.setVersion(2, 0);
-//    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setRenderableType (QSurfaceFormat::OpenGLES);
-    QSurfaceFormat::setDefaultFormat(format);
+protected:
+    unsigned char m_mapId;
+    ngsCoordinate m_mapCenter;
+    QPoint m_mouseStartPoint;
+    QPoint m_center;
+    double m_startRotateZ, m_startRotateX;
+    ILocationStatus *m_locationStatus;
+};
 
-    // create window
-    MainWindow wnd;
-    wnd.show();
-    
-    return app.exec ();
 }
 
+#endif // GLMAPVIEW_H

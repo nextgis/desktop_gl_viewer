@@ -65,17 +65,21 @@ qt5_add_resources(RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/glviewer.qrc")
 set(PROJECT_HEADERS
     src/version.h
     src/mainwindow.h
-    src/mapview.h
+#    src/mapview.h
+    src/glmapview.h
     src/eventsstatus.h
     src/progressstatus.h
+    src/locationstatus.h
 )
 
 set(PROJECT_SOURCES
     src/main.cpp
     src/mainwindow.cpp
-    src/mapview.cpp
+#    src/mapview.cpp
+    src/glmapview.cpp
     src/eventsstatus.cpp
     src/progressstatus.cpp
+    src/locationstatus.cpp
 )
 
 if(MSVC)

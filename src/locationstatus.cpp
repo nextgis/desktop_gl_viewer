@@ -17,39 +17,32 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-
-#include "version.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QSurfaceFormat>
+#include "locationstatus.h"
+#include <QHBoxLayout>
 
 using namespace ngv;
 
-int main(int argc, char *argv[])
+LocationStatus::LocationStatus()
 {
-    //Q_INIT_RESOURCE(glview);
+    m_text = new QLabel(tr("unknown"));
+    m_text->setMinimumWidth (260);
+    QHBoxLayout *layout = new QHBoxLayout;
+    // TODO: does this needed? Or can be overridy by style.
+    QFrame* vFrame = new QFrame;
+    vFrame->setFrameShape(QFrame::VLine);
+    layout->addWidget (vFrame);
+    layout->addSpacing (2);
+    layout->addWidget (m_text);
 
-    QApplication app(argc, argv);
+    layout->setMargin(0);
+    layout->setSpacing(0);
 
-    app.setOrganizationName("NextGIS");
-    app.setApplicationDisplayName ("NextGIS GL Viewer");
-    app.setApplicationName("glviewer");
-    app.setApplicationVersion(NGGLV_VERSION_STRING);
-    app.setOrganizationDomain("nextgis.com");
+    setLayout (layout);
 
-    // gl stuff
-    QSurfaceFormat format;
-//    format.setDepthBufferSize(16);
-//    format.setStencilBufferSize(8);
-    format.setVersion(2, 0);
-//    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setRenderableType (QSurfaceFormat::OpenGLES);
-    QSurfaceFormat::setDefaultFormat(format);
-
-    // create window
-    MainWindow wnd;
-    wnd.show();
-    
-    return app.exec ();
 }
 
+
+void LocationStatus::setLocation(double x, double y)
+{
+    m_text->setText (QString("X: %1, Y: %2").arg(x, 0, 'f', 4).arg(y, 0, 'f', 4));
+}

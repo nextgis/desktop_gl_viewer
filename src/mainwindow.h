@@ -22,7 +22,9 @@
 
 #include "eventsstatus.h"
 #include "progressstatus.h"
+#include "locationstatus.h"
 #include "mapview.h"
+#include "glmapview.h"
 
 #include <QMainWindow>
 
@@ -60,7 +62,8 @@ private:
 private:
     EventsStatus *m_eventsStatus;
     ProgressStatus *m_progressStatus;
-    MapView *m_mapView;
+    LocationStatus *m_locationStatus;
+    GlMapView *m_mapView;
 };
 
 }
