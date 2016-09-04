@@ -28,6 +28,7 @@
 #define DEFAULT_MAX_Y 20037508.34 // 90.0
 #define DEFAULT_MIN_X -DEFAULT_MAX_X
 #define DEFAULT_MIN_Y -DEFAULT_MAX_Y
+#define MIN_OFF_PX 2
 
 static double gComplete = 0;
 
@@ -109,7 +110,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
             // rotate
-            double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
+            /*double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
                    event->pos().x () - m_mouseStartPoint.x ());
 
             double newAng = m_startRotateX + rotate;
@@ -117,17 +118,20 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             if(newAng > 0 && newAng < 0.4) {
                 ngsMapSetRotate (m_mapId, ngsDirection::X, newAng);
 
-            }
+            }*/
         }
         else {
             // pan
             QPoint mapOffset = event->pos() - m_mouseStartPoint;
-            ngsCoordinate offset = ngsMapGetDistance (m_mapId, mapOffset.x (),
-                                                        mapOffset.y ());
-            m_mapCenter.X -= offset.X;
-            m_mapCenter.Y += offset.Y;
-            ngsMapSetCenter (m_mapId, m_mapCenter.X, m_mapCenter.Y);
-            m_mouseStartPoint = event->pos();
+            if(abs(mapOffset.x ()) > MIN_OFF_PX ||
+               abs(mapOffset.y ()) > MIN_OFF_PX) {
+                ngsCoordinate offset = ngsMapGetDistance (m_mapId, mapOffset.x (),
+                                                            mapOffset.y ());
+                m_mapCenter.X -= offset.X;
+                m_mapCenter.Y += offset.Y;
+                ngsMapSetCenter (m_mapId, m_mapCenter.X, m_mapCenter.Y);
+                m_mouseStartPoint = event->pos();
+            }
         }
         update ();
     }
