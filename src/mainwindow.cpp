@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
 
     // storage setup
-    if(ngsDataStoreInit ("./tmp/ngs.gpkg") != ngsErrorCodes::SUCCESS) {
+    if(ngsDataStoreInit ("./tmp/ngs.gpkg") != ngsErrorCodes::EC_SUCCESS) {
         QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
         return;
     }

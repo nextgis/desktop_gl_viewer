@@ -29,6 +29,7 @@
 #define DEFAULT_MIN_X -DEFAULT_MAX_X
 #define DEFAULT_MIN_Y -DEFAULT_MAX_Y
 #define MIN_OFF_PX 2
+#define TM_ZOOMING 350
 
 static double gComplete = 0;
 
@@ -47,13 +48,23 @@ int ngsQtDrawingProgressFunc(double complete, const char* /*message*/,
 
 
 GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
-    QOpenGLWidget(parent), m_mapId(0), m_locationStatus(status)
+    QOpenGLWidget(parent), m_mapId(0), m_locationStatus(status),
+    m_drawState(DS_NORMAL)
 {
-    // TODO: map id as input parameter
+    m_timer = new QTimer(this);
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
+
+    // TODO: map id as input parameter. GlMapView for each map
     newMap();
     setMouseTracking(true);
 }
 
+void GlMapView::onTimer()
+{
+    m_timer->stop(); // one shoot for update gl view
+    m_drawState = DS_NORMAL;
+    update ();
+}
 
 void GlMapView::initializeGL()
 {
@@ -74,7 +85,8 @@ void GlMapView::resizeGL(int w, int h)
 
 void GlMapView::paintGL()
 {
-    ngsMapDraw(m_mapId, ngsQtDrawingProgressFunc, (void*)this);
+    ngsMapDraw(m_mapId, m_drawState, ngsQtDrawingProgressFunc, (void*)this);
+    m_drawState = DS_PRESERVED; // draw from cache on display update
 }
 
 void GlMapView::mousePressEvent(QMouseEvent *event)
@@ -85,12 +97,16 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
             QSize winSize = size ();
             m_mouseStartPoint.setX (winSize.width () / 2);
             m_mouseStartPoint.setY (winSize.height () / 2);
+            m_beginRotateAngle = atan2 (event->pos().y () - m_mouseStartPoint.y (),
+                                        event->pos().x () - m_mouseStartPoint.x ());
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
             m_startRotateX = ngsMapGetRotate (m_mapId, ngsDirection::X);
             QSize winSize = size ();
             m_mouseStartPoint.setX (winSize.width () / 2);
             m_mouseStartPoint.setY (winSize.height () / 2);
+            m_beginRotateAngle = atan2 (event->pos().y () - m_mouseStartPoint.y (),
+                                        event->pos().x () - m_mouseStartPoint.x ());
         }
         else {
             m_mouseStartPoint = event->pos ();
@@ -104,21 +120,23 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
             // rotate
             double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
-                   event->pos().x () - m_mouseStartPoint.x ());
+                   event->pos().x () - m_mouseStartPoint.x ()) - m_beginRotateAngle;
 
             ngsMapSetRotate (m_mapId, ngsDirection::Z, m_startRotateZ + rotate);
+            m_drawState = DS_NORMAL;
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
             // rotate
-            /*double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
-                   event->pos().x () - m_mouseStartPoint.x ());
+            double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
+                   event->pos().x () - m_mouseStartPoint.x ()) - m_beginRotateAngle;
 
             double newAng = m_startRotateX + rotate;
 
-            if(newAng > 0 && newAng < 0.4) {
-                ngsMapSetRotate (m_mapId, ngsDirection::X, newAng);
-
-            }*/
+            // limit from 0 to 34 degree
+            if(newAng < 0 || newAng > 0.6)
+                return;
+            ngsMapSetRotate (m_mapId, ngsDirection::X, newAng);
+            m_drawState = DS_NORMAL;
         }
         else {
             // pan
@@ -132,6 +150,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                 ngsMapSetCenter (m_mapId, m_mapCenter.X, m_mapCenter.Y);
                 m_mouseStartPoint = event->pos();
             }
+            m_drawState = DS_NORMAL;
         }
         update ();
     }
@@ -168,7 +187,11 @@ void GlMapView::wheelEvent(QWheelEvent* event)
         scale /= add;
 
     ngsMapSetScale(m_mapId, scale);
+    m_drawState = DS_PRESERVED;
     update ();
+
+    // send event to full redraw
+    m_timer->start(TM_ZOOMING);
 }
 
 void GlMapView::closeMap()
@@ -196,7 +219,7 @@ void GlMapView::initMap()
         return;
     const QSize viewSize = size();
     if(ngsMapSetSize (m_mapId, viewSize.width (), viewSize.height (), 1) ==
-            ngsErrorCodes::SUCCESS) {
+            ngsErrorCodes::EC_SUCCESS) {
         m_mapCenter = ngsMapGetCenter(m_mapId);
     }
     ngsMapSetBackgroundColor (m_mapId, 0, 255, 0, 255);

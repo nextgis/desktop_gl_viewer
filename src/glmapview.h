@@ -21,6 +21,7 @@
 #define GLMAPVIEW_H
 
 #include <QOpenGLWidget>
+#include <QTimer>
 
 #include "api.h"
 #include "locationstatus.h"
@@ -34,6 +35,11 @@ public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
     void closeMap();
     void newMap();
+
+signals:
+
+public slots:
+    void onTimer(void);
 
     // QOpenGLWidget interface
 protected:
@@ -54,8 +60,10 @@ protected:
     ngsCoordinate m_mapCenter;
     QPoint m_mouseStartPoint;
     QPoint m_center;
-    double m_startRotateZ, m_startRotateX;
+    double m_startRotateZ, m_startRotateX, m_beginRotateAngle;
     ILocationStatus *m_locationStatus;
+    enum ngsDrawState m_drawState;
+    QTimer* m_timer;
 };
 
 }
