@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // mapview setup
     m_mapView = new GlMapView(m_locationStatus);
     setCentralWidget (m_mapView);
+    m_progressStatus->setFinish (m_mapView);
 
     /*m_eventsStatus->addMessage ();
     m_eventsStatus->addWarning ();
@@ -110,25 +111,23 @@ void MainWindow::readSettings()
 
 void MainWindow::newFile()
 {
-//    m_mapView->newMap();
+    m_mapView->newMap();
 }
 
 void MainWindow::open()
 {
-/*    QString fileName = QFileDialog::getOpenFileName(this,
+    QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
-    m_mapView->closeMap ();
     if(!m_mapView->openMap (fileName)) {
         QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
     }
-*/
 }
 
 void MainWindow::save()
 {
-/*    QString fileName = QFileDialog::getSaveFileName(this,
+    QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
         return;
@@ -138,24 +137,25 @@ void MainWindow::save()
     else {
         statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
     }
-*/
 }
 
 void MainWindow::load()
 {
-/*    m_progressStatus->setFinish (m_mapView, 0, "./tmp/ngs.gpkg/orbv3");
-
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
     // TODO: m_progressStatus should have child progresses and show full status of all progresses
     if(fileName.isEmpty ())
         return;
-    if(ngsDataStoreLoad("orbv3", fileName.toStdString ().c_str (), "", false, 1, LoadingProgressFunc,
-               m_progressStatus) != ngsErrorCodes::SUCCESS) {
+
+    const char* pszPath = fileName.toStdString ().c_str ();
+    QFileInfo fileInfo(fileName);
+    const char* pszName = fileInfo.baseName ().toStdString ().c_str ();
+
+    if(ngsDataStoreLoad(pszName, pszPath, "", false, 1, LoadingProgressFunc,
+               m_progressStatus) == 0) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);
     }
-*/
 }
 
 void MainWindow::about()

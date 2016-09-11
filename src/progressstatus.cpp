@@ -60,22 +60,19 @@ void ProgressStatus::setValue(int value) {
     m_progress->setValue (value);
 }
 
-void ProgressStatus::setFinish(IProgressFinish *object, int type,
-                               const std::string &data)
+void ProgressStatus::setFinish(IProgressFinish *object)
 {
     m_finishObject = object;
-    m_finishType = type;
-    m_finishData = data;
 }
 
-void ProgressStatus::onFinish()
+void ProgressStatus::onFinish(unsigned int taskId)
 {
     if(nullptr != m_finishObject)
-        m_finishObject->onFinish (m_finishType, m_finishData);
+        m_finishObject->onFinish (taskId);
 }
 
-int ngv::LoadingProgressFunc(double complete, const char* /*message*/,
-                       void* progressArguments) {
+int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
+                             const char* /*message*/, void* progressArguments) {
 //    if(nullptr != message)
 //        qDebug() << "Qt load notiy: " << complete << " msg:" << message;
 
@@ -87,7 +84,7 @@ int ngv::LoadingProgressFunc(double complete, const char* /*message*/,
         if(!status->isHidden ()) {
             if ( 1 - complete < DELTA) {
                 QMetaObject::invokeMethod(status, "hide");
-                status->onFinish ();
+                status->onFinish (taskId);
             }
             else {
                 status->setValue (static_cast<int>(complete * 100));

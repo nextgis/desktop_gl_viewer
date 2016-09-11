@@ -95,7 +95,7 @@ protected:
 
     // IProgressFinish interface
 public:
-    virtual void onFinish(int type, const std::string &data) override;
+    virtual void onFinish(unsigned int taskId) override;
 };
 
 }

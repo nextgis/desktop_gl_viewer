@@ -21,6 +21,7 @@
 
 #include <QKeyEvent>
 #include <QApplication>
+#include <QMessageBox>
 
 #define DEFAULT_MAP_NAME "default"
 #define DEFAULT_EPSG 3857
@@ -35,8 +36,9 @@ static double gComplete = 0;
 
 using namespace ngv;
 
-int ngsQtDrawingProgressFunc(double complete, const char* /*message*/,
-                       void* progressArguments) {
+int ngsQtDrawingProgressFunc(unsigned int taskId, double complete,
+                             const char* /*message*/,
+                             void* progressArguments) {
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
     if(complete - gComplete > 0.045) { // each 5% redraw
         pView->update ();
@@ -57,6 +59,7 @@ GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     // TODO: map id as input parameter. GlMapView for each map
     newMap();
     setMouseTracking(true);
+    setFocusPolicy(Qt::WheelFocus);
 }
 
 void GlMapView::onTimer()
@@ -196,19 +199,36 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
 void GlMapView::closeMap()
 {
-    if(!m_mapId)
-        ngsMapClose (m_mapId);
+    if(!m_mapId) {
+        if(ngsMapClose (m_mapId) == ngsErrorCodes::EC_SUCCESS)
+            m_mapId = 0;
+        else
+            QMessageBox::critical (this, tr("Error"), tr("Close map failed"));
+    }
+}
+
+bool GlMapView::openMap(const QString &path)
+{
+    closeMap ();
+    m_mapId = ngsMapOpen (path.toStdString ().c_str ());
+    initMap();
+    return 0 != m_mapId;
+}
+
+bool GlMapView::saveMap(const QString &path)
+{
+    return ngsMapSave (m_mapId,  path.toStdString ().c_str ())
+            == ngsErrorCodes::EC_SUCCESS;
 }
 
 
 void GlMapView::newMap()
 {
     closeMap ();
-    unsigned char mapId = ngsMapCreate (DEFAULT_MAP_NAME, "test gl map",
+    m_mapId = ngsMapCreate (DEFAULT_MAP_NAME, "test gl map",
                                         DEFAULT_EPSG, DEFAULT_MIN_X,
                                         DEFAULT_MIN_Y, DEFAULT_MAX_X,
                                         DEFAULT_MAX_Y);
-    m_mapId = mapId;
     initMap();
 }
 
@@ -225,3 +245,29 @@ void GlMapView::initMap()
     ngsMapSetBackgroundColor (m_mapId, 0, 255, 0, 255);
 }
 
+void GlMapView::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_F5) {
+        m_drawState = DS_REDRAW;
+        update();
+        return;
+    }
+
+    QWidget::keyPressEvent(event);
+}
+
+
+void GlMapView::onFinish(unsigned int taskId)
+{
+    ngsLoadTaskInfo info = ngsDataStoreGetLoadTaskInfo(taskId);
+    if(info.status != ngsErrorCodes::EC_SUCCESS) {
+        QString message = QString(tr("Load %1 failed")).arg (info.name);
+        QMessageBox::critical (this, tr("Error"), message);
+        return;
+    }
+    // add loaded data to map as new layer
+    if(ngsMapCreateLayer (m_mapId, info.name, info.newName) ==
+            ngsErrorCodes::EC_SUCCESS) {
+        update ();
+    }
+}

@@ -32,22 +32,22 @@ class IProgressFinish
 {
 public:
     virtual ~IProgressFinish(){}
-    virtual void onFinish(int type, const std::string& data) = 0;
+    virtual void onFinish(unsigned int taskId) = 0;
 };
 
-int LoadingProgressFunc(double complete, const char *message,
+int LoadingProgressFunc(unsigned int taskId, double complete, const char *message,
                              void *progressArguments);
 
 class ProgressStatus : public QWidget
 {
-    friend int LoadingProgressFunc(double complete, const char *message,
-                                    void *progressArguments);
+    friend int LoadingProgressFunc(unsigned int taskId, double complete,
+                                   const char *message, void *progressArguments);
     Q_OBJECT
 public:
     explicit ProgressStatus(QWidget *parent = 0);
     void setValue(int value);
-    void setFinish(IProgressFinish* object, int type, const std::string& data);
-    void onFinish();
+    void setFinish(IProgressFinish *object);
+    void onFinish(unsigned int taskId);
 signals:
 
 public slots:
@@ -57,8 +57,6 @@ protected:
     QProgressBar *m_progress;
     bool m_continue;
     IProgressFinish* m_finishObject;
-    int m_finishType;
-    std::string m_finishData;
 };
 
 }

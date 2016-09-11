@@ -25,16 +25,19 @@
 
 #include "api.h"
 #include "locationstatus.h"
+#include "progressstatus.h"
 
 namespace ngv {
 
-class GlMapView : public QOpenGLWidget
+class GlMapView : public QOpenGLWidget, public IProgressFinish
 {
     Q_OBJECT
 public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
     void closeMap();
     void newMap();
+    bool openMap(const QString &path);
+    bool saveMap(const QString &path);
 
 signals:
 
@@ -52,6 +55,7 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent* event) override;
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void wheelEvent(QWheelEvent* event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
 protected:
     void initMap();
 
@@ -64,6 +68,10 @@ protected:
     ILocationStatus *m_locationStatus;
     enum ngsDrawState m_drawState;
     QTimer* m_timer;
+
+    // IProgressFinish interface
+public:
+    virtual void onFinish(unsigned int taskId) override;
 };
 
 }
