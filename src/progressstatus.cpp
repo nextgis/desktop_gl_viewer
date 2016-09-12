@@ -54,10 +54,10 @@ ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent),
     layout->setSpacing(0);
 
     setLayout (layout);
-}
 
-void ProgressStatus::setValue(int value) {
-    m_progress->setValue (value);
+    connect(this, SIGNAL(valueChanged(int)), m_progress, SLOT(setValue(int)));
+    connect (this, SIGNAL(finish(unsigned int)), this,
+             SLOT(onFinish(unsigned int)));
 }
 
 void ProgressStatus::setFinish(IProgressFinish *object)
@@ -78,16 +78,16 @@ int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
 
     ProgressStatus* status = reinterpret_cast<ProgressStatus*>(progressArguments);
     if(nullptr != status) {
-        if(status->isHidden () && complete < .99999999)
-            QMetaObject::invokeMethod(status, "show");
+        if(status->isHidden () && complete < 1.0)
+            status->setVisible (true);
 
         if(!status->isHidden ()) {
-            if ( 1 - complete < DELTA) {
-                QMetaObject::invokeMethod(status, "hide");
-                status->onFinish (taskId);
+            if ( 2 - complete < DELTA) {
+                status->setVisible (false);
+                emit status->finish (taskId);
             }
             else {
-                status->setValue (static_cast<int>(complete * 100));
+                emit status->valueChanged (static_cast<int>(complete * 100));
             }
         }
 

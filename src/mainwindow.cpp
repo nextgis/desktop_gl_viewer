@@ -149,9 +149,9 @@ void MainWindow::load()
     if(fileName.isEmpty ())
         return;
 
-    const char* pszPath = fileName.toStdString ().c_str ();
+    const char* pszPath = fileName.toUtf8().constData();
     QFileInfo fileInfo(fileName);
-    const char* pszName = fileInfo.baseName ().toStdString ().c_str ();
+    const char* pszName = fileInfo.baseName ().toUtf8().constData();
 
     if(ngsDataStoreLoad(pszName, pszPath, "", false, 1, LoadingProgressFunc,
                m_progressStatus) == 0) {

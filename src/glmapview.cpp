@@ -22,6 +22,8 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QDir>
 
 #define DEFAULT_MAP_NAME "default"
 #define DEFAULT_EPSG 3857
@@ -71,14 +73,14 @@ void GlMapView::onTimer()
 
 void GlMapView::initializeGL()
 {
-    if(!m_mapId)
+    if(0 == m_mapId)
         return;
     ngsMapInit(m_mapId);
 }
 
 void GlMapView::resizeGL(int w, int h)
 {
-    if(!m_mapId)
+    if(0 == m_mapId)
         return;
     m_center.setX (w / 2);
     m_center.setY (h / 2);
@@ -199,7 +201,7 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
 void GlMapView::closeMap()
 {
-    if(!m_mapId) {
+    if(0 != m_mapId) {
         if(ngsMapClose (m_mapId) == ngsErrorCodes::EC_SUCCESS)
             m_mapId = 0;
         else
@@ -235,7 +237,7 @@ void GlMapView::newMap()
 
 void GlMapView::initMap()
 {
-    if(!m_mapId)
+    if(0 == m_mapId)
         return;
     const QSize viewSize = size();
     if(ngsMapSetSize (m_mapId, viewSize.width (), viewSize.height (), 1) ==
@@ -265,8 +267,11 @@ void GlMapView::onFinish(unsigned int taskId)
         QMessageBox::critical (this, tr("Error"), message);
         return;
     }
+
+    QFileInfo fileInfo(QDir(info.dstPath), info.newName);
     // add loaded data to map as new layer
-    if(ngsMapCreateLayer (m_mapId, info.name, info.newName) ==
+    if(ngsMapCreateLayer (m_mapId, info.name,
+                          fileInfo.absoluteFilePath ().toUtf8 ().constData ()) ==
             ngsErrorCodes::EC_SUCCESS) {
         update ();
     }

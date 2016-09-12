@@ -45,12 +45,14 @@ class ProgressStatus : public QWidget
     Q_OBJECT
 public:
     explicit ProgressStatus(QWidget *parent = 0);
-    void setValue(int value);
     void setFinish(IProgressFinish *object);
-    void onFinish(unsigned int taskId);
+
 signals:
+    void valueChanged(int value);
+    void finish(unsigned int taskId);
 
 public slots:
+    void onFinish(unsigned int taskId);
 
 protected:
     QLabel *m_text;
