@@ -58,6 +58,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *event) override;
 protected:
     void initMap();
+    void draw(enum ngsDrawState state);
 
 protected:
     unsigned char m_mapId;
