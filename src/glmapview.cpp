@@ -33,7 +33,7 @@
 #define DEFAULT_MIN_X -DEFAULT_MAX_X
 #define DEFAULT_MIN_Y -DEFAULT_MAX_Y
 #define MIN_OFF_PX 2
-#define TM_ZOOMING 350
+#define TM_ZOOMING 200
 #define YORIENT 0
 
 static double gComplete = 0;
@@ -47,7 +47,7 @@ int ngsQtDrawingProgressFunc(unsigned int /*taskId*/, double complete,
     qDebug() << "Qt draw notiy: " << complete << " g:" << gComplete;
 
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
-    if(complete - gComplete > 0.045) { // each 5% redraw
+    if(complete - gComplete > 0.045 || complete > 0.999999) { // each 5% redraw
         pView->update ();
         gComplete = complete;
     }
@@ -114,11 +114,7 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
             m_startRotateX = ngsMapGetRotate (m_mapId, ngsDirection::X);
-            QSize winSize = size ();
-            m_mouseStartPoint.setX (winSize.width () / 2);
-            m_mouseStartPoint.setY (winSize.height () / 2);
-            m_beginRotateAngle = atan2 (event->pos().y () - m_mouseStartPoint.y (),
-                                        event->pos().x () - m_mouseStartPoint.x ());
+            m_mouseStartPoint = event->pos ();
         }
         else {
             m_mouseStartPoint = event->pos ();
@@ -134,11 +130,10 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
                    event->pos().x () - m_mouseStartPoint.x ()) - m_beginRotateAngle;
 
-            ngsMapSetRotate (m_mapId, ngsDirection::Z, -(m_startRotateZ + rotate));
+            ngsMapSetRotate (m_mapId, ngsDirection::Z, -rotate + m_startRotateZ);
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
             // rotate
-            //  - M_PI
             double rotate = (event->pos().y () - m_mouseStartPoint.y ()) *
                     M_PI / size().height ();
 
