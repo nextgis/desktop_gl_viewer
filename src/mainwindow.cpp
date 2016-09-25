@@ -153,7 +153,11 @@ void MainWindow::load()
     QFileInfo fileInfo(fileName);
     const char* pszName = fileInfo.baseName ().toUtf8().constData();
 
-    if(ngsDataStoreLoad(pszName, pszPath, "", false, 1, LoadingProgressFunc,
+    //TODO: LOAD_OP=COPY FEATURES_SKIP=EMPTY_GEOMETRY
+
+    char *options[3] = {"LOAD_OP=COPY", "FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
+
+    if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
                m_progressStatus) == 0) {
         QString message = QString(tr("Load %1 failed")).arg (fileName);
         QMessageBox::critical (this, tr("Error"), message);
