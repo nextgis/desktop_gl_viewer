@@ -80,7 +80,7 @@ int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
 
     ProgressStatus* status = reinterpret_cast<ProgressStatus*>(progressArguments);
     if(nullptr != status) {
-        if(status->isHidden () && complete < 1.0 && complete > 0)
+        if(status->isHidden () && complete < 1.0 && complete > 0) // prevent imediatly show/hide
             status->setVisible (true);
 
         if(!status->isHidden ()) {
