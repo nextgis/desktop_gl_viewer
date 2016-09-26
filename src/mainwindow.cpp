@@ -143,8 +143,13 @@ void MainWindow::save()
 
 void MainWindow::load()
 {
+    QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
+    QString rasFilters(ngsGetFilters(DT_RASTER_ALL, FM_READ, ""));
+    QString filters(vecFilters + ";;" + rasFilters);
+    QString selectedFilter;
+
     QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Load file to storage"), "", tr("ESRI Shape file (*.shp)"));
+        tr("Load file to storage"), "", filters, &selectedFilter);
     // TODO: m_progressStatus should have child progresses and show full status of all progresses
     if(fileName.isEmpty ())
         return;
@@ -153,14 +158,25 @@ void MainWindow::load()
     QFileInfo fileInfo(fileName);
     const char* pszName = fileInfo.baseName ().toUtf8().constData();
 
-    //TODO: LOAD_OP=COPY FEATURES_SKIP=EMPTY_GEOMETRY
+    if(selectedFilter.startsWith ("Vector")) {
+        const char *options[3] = {"LOAD_OP=COPY", "FEATURES_SKIP=EMPTY_GEOMETRY",
+                                  nullptr};
 
-    char *options[3] = {"LOAD_OP=COPY", "FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
+        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
+                   m_progressStatus) == 0) {
+            QString message = QString(tr("Load %1 failed")).arg (fileName);
+            QMessageBox::critical (this, tr("Error"), message);
+        }
+    }
+    else if(selectedFilter.startsWith ("Raster")) {
+        const char *options[3] = {"LOAD_OP=COPY", "RASTER_PROJECT=ON",
+                                  nullptr};
 
-    if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
-               m_progressStatus) == 0) {
-        QString message = QString(tr("Load %1 failed")).arg (fileName);
-        QMessageBox::critical (this, tr("Error"), message);
+        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
+                   m_progressStatus) == 0) {
+            QString message = QString(tr("Load %1 failed")).arg (fileName);
+            QMessageBox::critical (this, tr("Error"), message);
+        }
     }
 }
 

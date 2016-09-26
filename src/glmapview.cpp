@@ -274,16 +274,17 @@ void GlMapView::onFinish(unsigned int taskId)
 {
     ngsLoadTaskInfo info = ngsDataStoreGetLoadTaskInfo(taskId);
     if(info.status != ngsErrorCodes::EC_SUCCESS) {
-        QString message = QString(tr("Load %1 failed")).arg (info.name);
+        QString nameStr(info.name);
+        QString message = QString(tr("Load %1 failed")).arg (nameStr);
         QMessageBox::critical (this, tr("Error"), message);
         return;
     }
 
-    QString namesStr(info.newName);
+    QString namesStr(info.newNames);
     QStringList namesList = namesStr.split(";");
+    QString pathStr(info.dstPath);
     for(QString &name : namesList) {
-
-        QFileInfo fileInfo(QDir(info.dstPath), name);
+        QFileInfo fileInfo(QDir(pathStr), name);
         // add loaded data to map as new layer
         ngsMapCreateLayer (m_mapId, info.name,
                           fileInfo.absoluteFilePath ().toUtf8 ().constData ());

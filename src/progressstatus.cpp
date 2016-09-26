@@ -69,6 +69,8 @@ void ProgressStatus::onFinish(unsigned int taskId)
 {
     if(nullptr != m_finishObject)
         m_finishObject->onFinish (taskId);
+
+    setVisible (false);
 }
 
 int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
@@ -78,12 +80,11 @@ int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
 
     ProgressStatus* status = reinterpret_cast<ProgressStatus*>(progressArguments);
     if(nullptr != status) {
-        if(status->isHidden () && complete < 1.0)
+        if(status->isHidden () && complete < 1.0 && complete > 0)
             status->setVisible (true);
 
         if(!status->isHidden ()) {
             if ( 2 - complete < DELTA) {
-                status->setVisible (false);
                 emit status->finish (taskId);
             }
             else {
