@@ -279,11 +279,14 @@ void GlMapView::onFinish(unsigned int taskId)
         return;
     }
 
-    QFileInfo fileInfo(QDir(info.dstPath), info.newName);
-    // add loaded data to map as new layer
-    if(ngsMapCreateLayer (m_mapId, info.name,
-                          fileInfo.absoluteFilePath ().toUtf8 ().constData ()) ==
-            ngsErrorCodes::EC_SUCCESS) {
-        draw(DS_NORMAL);
+    QString namesStr(info.newName);
+    QStringList namesList = namesStr.split(";");
+    for(QString &name : namesList) {
+
+        QFileInfo fileInfo(QDir(info.dstPath), name);
+        // add loaded data to map as new layer
+        ngsMapCreateLayer (m_mapId, info.name,
+                          fileInfo.absoluteFilePath ().toUtf8 ().constData ());
     }
+    draw(DS_NORMAL);
 }
