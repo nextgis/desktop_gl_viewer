@@ -143,6 +143,8 @@ void MainWindow::save()
 
 void MainWindow::load()
 {
+    // TODO: need methods (C API?) to get various filtes and  "All vector datasets", "All raster datasets" filters. Also for selected dataset need corresponding GDALDriver, and create/open options.
+    // TODO: Own data model for datasets
     QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
     QString rasFilters(ngsGetFilters(DT_RASTER_ALL, FM_READ, ""));
     QString filters(vecFilters + ";;" + rasFilters);
