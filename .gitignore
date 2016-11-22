@@ -36,3 +36,11 @@ Makefile*
 # QtCtreator CMake
 CMakeLists.txt.user
 
+# Eclipse
+.externalToolBuilders/
+.settings/
+.cproject
+.project
+
+build/
+/desktop_gl_viewer/
