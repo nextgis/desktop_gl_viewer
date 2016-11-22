@@ -19,6 +19,9 @@
 ******************************************************************************/
 #include "glmapview.h"
 
+#include <cmath>
+#include <complex.h>
+
 #include <QKeyEvent>
 #include <QApplication>
 #include <QMessageBox>
