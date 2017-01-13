@@ -17,16 +17,16 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-#include "mainwindow.h"
 #include "api.h"
+#include "mainwindow.h"
 #include "lib/src/version.h"
+#include "version.h"
 
-#include <QStatusBar>
-#include <QSettings>
-#include <QCloseEvent>
 #include <QApplication>
+#include <QCloseEvent>
+#include <QSettings>
+#include <QStatusBar>
 #include <QtWidgets>
-
 
 using namespace ngv;
 
@@ -35,7 +35,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     createActions ();
     createMenus();
     readSettings();
-    ngsInit (nullptr, nullptr);
+
+    ngsInit(nullptr, nullptr);
 
     // statusbar setup
     statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
@@ -185,11 +186,11 @@ void MainWindow::load()
 void MainWindow::about()
 {
     QString message =  QString(tr("The <b>GL View application</b> "
-                                  "test OpenGL ES rendering.<p>"
-                                  "Comiled with&nbsp;libngstore %1<p>"
-                                  "Run with&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-                                  "&nbsp;&nbsp;&nbsp;&nbsp;libngstore %2")).arg (
-                NGS_VERSION, ngsGetVersionString("self"));
+                                  "test OpenGL ES rendering (version %1).<p>"
+                                  "Compiled with&nbsp;&nbsp;libngstore %2<p>"
+                                  "Run with&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                                  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;libngstore %3")).arg (
+                NGGLV_VERSION_STRING, NGS_VERSION, ngsGetVersionString("self"));
     QMessageBox::about(this, tr("About Menu"),
             message);
 }

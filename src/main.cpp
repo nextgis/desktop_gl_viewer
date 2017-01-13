@@ -18,10 +18,10 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "version.h"
 #include "mainwindow.h"
 #include <QApplication>
 #include <QSurfaceFormat>
+#include "version.h"
 
 using namespace ngv;
 
@@ -39,11 +39,15 @@ int main(int argc, char *argv[])
 
     // gl stuff
     QSurfaceFormat format;
-//    format.setDepthBufferSize(16);
-//    format.setStencilBufferSize(8);
-    format.setVersion(2, 0);
-//    format.setProfile(QSurfaceFormat::CoreProfile);
+#ifdef Q_OS_MACOS
+    format.setRenderableType (QSurfaceFormat::OpenGL);
+#else
+    //    format.setDepthBufferSize(16);
+    //    format.setStencilBufferSize(8);
+        format.setVersion(2, 0);
+    //    format.setProfile(QSurfaceFormat::CoreProfile);
     format.setRenderableType (QSurfaceFormat::OpenGLES);
+#endif
     QSurfaceFormat::setDefaultFormat(format);
 
     // create window

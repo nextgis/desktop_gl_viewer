@@ -41,5 +41,3 @@ CMakeLists.txt.user
 .settings/
 .cproject
 .project
-
-build/

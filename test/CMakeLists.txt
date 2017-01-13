@@ -1,4 +1,4 @@
-#*************************************************************************** 
+#***************************************************************************
 # Project:  NextGIS GL Viewer
 # Purpose:  cmake script
 # Author:   Dmitry Baryshnikov, bishop.dev@gmail.com
@@ -19,42 +19,42 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #***************************************************************************
 
-if(UNIX)
+if(UNIX AND NOT APPLE)
 
-find_package (EGL REQUIRED)
-if(EGL_FOUND)
-    include_directories(${EGL_INCLUDE_DIRS})
+    find_package (EGL REQUIRED)
+    if(EGL_FOUND)
+        include_directories(${EGL_INCLUDE_DIRS})
+    endif()
+
+    find_package (GLES2 REQUIRED)
+    if(OPENGLES2_FOUND)
+        include_directories(${OPENGLES2_INCLUDE_DIRS})
+    endif()
+
+    find_package (X11 REQUIRED)
+    if(X11_FOUND)
+        include_directories(${X11_INCLUDE_DIR})
+    endif()
+
+    find_library(M_LIB m)
+
+    set(HHEADERS
+        esUtil.h
+    )
+
+    set(CSOURCES
+        esShader.c
+        esShapes.c
+        esTransform.c
+        esUtil.c
+    )
+
+    add_executable(egltriangle Hello_Triangle.c ${CSOURCES} ${HHEADERS})
+    target_link_libraries(egltriangle ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES}
+        ${X11_LIBRARIES} ${M_LIB})
+
+    add_executable(eglvertexshader Simple_VertexShader.c ${CSOURCES} ${HHEADERS})
+    target_link_libraries(eglvertexshader ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES}
+        ${X11_LIBRARIES} ${M_LIB})
+
 endif()
-
-find_package (GLES2 REQUIRED)
-if(OPENGLES2_FOUND)
-    include_directories(${OPENGLES2_INCLUDE_DIRS})
-endif()
-
-find_package (X11 REQUIRED)
-if(X11_FOUND)
-    include_directories(${X11_INCLUDE_DIR})
-endif()
-
-find_library(M_LIB m)
-
-set(HHEADERS
-    esUtil.h
-)
-
-set(CSOURCES
-    esShader.c
-    esShapes.c
-    esTransform.c
-    esUtil.c
-)
-
-add_executable(egltriangle Hello_Triangle.c ${CSOURCES} ${HHEADERS})
-target_link_libraries(egltriangle ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES}
-    ${X11_LIBRARIES} ${M_LIB})
-
-add_executable(eglvertexshader Simple_VertexShader.c ${CSOURCES} ${HHEADERS})
-target_link_libraries(eglvertexshader ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES}
-    ${X11_LIBRARIES} ${M_LIB})
-
-endif(UNIX)
