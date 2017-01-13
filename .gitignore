@@ -39,5 +39,6 @@ CMakeLists.txt.user
 # Eclipse
 .externalToolBuilders/
 .settings/
+build/
 .cproject
 .project
