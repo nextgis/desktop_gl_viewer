@@ -17,60 +17,77 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
-#include "api.h"
 #include "mainwindow.h"
-#include "lib/src/version.h"
-#include "version.h"
 
+// Qt
 #include <QApplication>
 #include <QCloseEvent>
 #include <QSettings>
 #include <QStatusBar>
 #include <QtWidgets>
 
+// ngstore
+#include "ngstore/api.h"
+#include "ngstore/version.h"
+
+#include "version.h"
+
 using namespace ngv;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    createActions ();
-    createMenus();
-    readSettings();
+    char** options = nullptr;
+    options = ngsAddNameValue(options, "DEBUG_MODE", "ON");
+    options = ngsAddNameValue(options, "SETTINGS_DIR",
+                              ngsFormFileName(ngsGetCurrentDirectory(), "tmp",
+                                              nullptr));
 
-    ngsInit(nullptr, nullptr);
+    int result = ngsInit(options);
 
-    // statusbar setup
-    statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
-    m_progressStatus = new ProgressStatus;
-    statusBar ()->addPermanentWidget (m_progressStatus);
-    m_progressStatus->hide ();
-    m_locationStatus = new LocationStatus;
-    statusBar ()->addPermanentWidget (m_locationStatus);
+    ngsDestroyList(options);
 
-    m_eventsStatus = new EventsStatus;
-    statusBar ()->addPermanentWidget (m_eventsStatus);
-    statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
+    if(result == ngsErrorCodes::EC_SUCCESS && createDatastore()) {
 
-    // storage setup
-    QString storePath = QDir::currentPath() + "/tmp/ngs.gpkg";
-    if(ngsDataStoreInit (storePath.toStdString ().c_str ()) !=
-            ngsErrorCodes::EC_SUCCESS) {
-        QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
-        return;
+        createActions ();
+        createMenus();
+        readSettings();
+
+
+        // statusbar setup
+        statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
+        m_progressStatus = new ProgressStatus;
+        statusBar ()->addPermanentWidget (m_progressStatus);
+        m_progressStatus->hide ();
+        m_locationStatus = new LocationStatus;
+        statusBar ()->addPermanentWidget (m_locationStatus);
+
+        m_eventsStatus = new EventsStatus;
+        statusBar ()->addPermanentWidget (m_eventsStatus);
+        statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
+
+        // storage setup
+        /*QString storePath = QDir::currentPath() + "/tmp/ngs.gpkg";
+        if(ngsDataStoreInit (storePath.toStdString ().c_str ()) !=
+                ngsErrorCodes::EC_SUCCESS) {
+            QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
+            return;
+        }*/
+
+        // mapview setup
+        m_mapView = new GlMapView(m_locationStatus);
+        setCentralWidget (m_mapView);
+        m_progressStatus->setFinish (m_mapView);
+
+        /*m_eventsStatus->addMessage ();
+        m_eventsStatus->addWarning ();
+        m_eventsStatus->addError ();*/
+
     }
-
-    // mapview setup
-    m_mapView = new GlMapView(m_locationStatus);
-    setCentralWidget (m_mapView);
-    m_progressStatus->setFinish (m_mapView);
-
-    /*m_eventsStatus->addMessage ();
-    m_eventsStatus->addWarning ();
-    m_eventsStatus->addError ();*/
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    ngsUninit();
+    ngsUnInit();
     writeSettings();
     event->accept();
 }
@@ -106,11 +123,10 @@ void MainWindow::readSettings()
         move(settings.value("frame/pos", QPoint(200, 200)).toPoint());
     }
     restoreState(settings.value("frame/state").toByteArray());
-    statusBar()->setVisible(settings.value("frame/statusbar/shown", true).toBool());
+    statusBar()->setVisible(settings.value("frame/statusbar_shown", true).toBool());
+
     settings.endGroup();
 }
-
-// TODO: need add layer to map dialog
 
 void MainWindow::newFile()
 {
@@ -124,7 +140,7 @@ void MainWindow::open()
     if(fileName.isEmpty ())
         return;
     if(!m_mapView->openMap (fileName)) {
-        QMessageBox::critical (this, tr("Error"), tr("Map load failed"));
+        QMessageBox::critical(this, tr("Error"), tr("Map load failed"));
     }
 }
 
@@ -146,7 +162,7 @@ void MainWindow::load()
 {
     // TODO: need methods (C API?) to get various filtes and  "All vector datasets", "All raster datasets" filters. Also for selected dataset need corresponding GDALDriver, and create/open options.
     // TODO: Own data model for datasets
-    QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
+/*    QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
     QString rasFilters(ngsGetFilters(DT_RASTER_ALL, FM_READ, ""));
     QString filters(vecFilters + ";;" + rasFilters);
     QString selectedFilter;
@@ -165,32 +181,49 @@ void MainWindow::load()
         const char *options[3] = {"LOAD_OP=COPY", "FEATURES_SKIP=EMPTY_GEOMETRY",
                                   nullptr};
 
-        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
+/*        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
                    m_progressStatus) == 0) {
             QString message = QString(tr("Load %1 failed")).arg (fileName);
             QMessageBox::critical (this, tr("Error"), message);
-        }
+        }*//*
     }
     else if(selectedFilter.startsWith ("Raster")) {
         const char *options[3] = {"LOAD_OP=COPY", "RASTER_PROJECT=ON",
                                   nullptr};
 
-        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
+/*        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
                    m_progressStatus) == 0) {
             QString message = QString(tr("Load %1 failed")).arg (fileName);
             QMessageBox::critical (this, tr("Error"), message);
-        }
-    }
+        }*//*
+    }*/
+}
+
+void MainWindow::addMapLayer()
+{
+
+}
+
+void MainWindow::removeMapLayer()
+{
+
 }
 
 void MainWindow::about()
 {
+    QString appVersion(NGGLV_VERSION_STRING);
+    QString libVersion(NGS_VERSION);
+#ifdef Q_OS_MACOS
+    QString format("OpenGL");
+#else
+    QString format("OpenGL ES");
+#endif
     QString message =  QString(tr("The <b>GL View application</b> "
-                                  "test OpenGL ES rendering (version %1).<p>"
-                                  "Compiled with&nbsp;&nbsp;libngstore %2<p>"
+                                  "test %1 rendering (version %2).<p>"
+                                  "Compiled with&nbsp;&nbsp;libngstore %3<p>"
                                   "Run with&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-                                  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;libngstore %3")).arg (
-                NGGLV_VERSION_STRING, NGS_VERSION, ngsGetVersionString("self"));
+                                  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;libngstore %4")).arg (
+                format, appVersion, libVersion, ngsGetVersionString("self"));
     QMessageBox::about(this, tr("About Menu"),
             message);
 }
@@ -212,9 +245,9 @@ void MainWindow::createActions()
     m_pSaveAct->setStatusTip(tr("Save the map document to disk"));
     connect(m_pSaveAct, SIGNAL(triggered()), this, SLOT(save()));
 
-    m_pUploadAct = new QAction(tr("&Load"), this);
-    m_pUploadAct->setStatusTip(tr("Load spatial data to internal storage"));
-    connect(m_pUploadAct, SIGNAL(triggered()), this, SLOT(load()));
+    m_pLoadAct = new QAction(tr("&Load"), this);
+    m_pLoadAct->setStatusTip(tr("Load spatial data to internal storage"));
+    connect(m_pLoadAct, SIGNAL(triggered()), this, SLOT(load()));
 
     m_pExitAct = new QAction(tr("E&xit"), this);
     m_pExitAct->setShortcuts(QKeySequence::Quit);
@@ -230,6 +263,44 @@ void MainWindow::createActions()
     m_pAboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
     m_pAboutQtAct->setMenuRole(QAction::AboutQtRole);
     connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+    m_pAddLayerAct = new QAction(tr("Add layer"), this);
+    connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(addMapLayer()));
+    m_pDeleteLayerAct = new QAction(tr("Remove layer"), this);
+    connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(removeMapLayer()));
+}
+
+bool MainWindow::createDatastore()
+{
+    // Check if datastore exists
+    std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr);
+    std::string catalogPath = ngsCatalogPathFromSystem(path.c_str());
+    ngsCatalogObjectInfo* pathInfo = ngsCatalogObjectQuery(catalogPath.c_str());
+    int count = 0;
+    bool exists = false;
+    std::string storeName("main.ngst");
+    while(pathInfo[count].name) {
+        if(storeName.compare(pathInfo[count].name) == 0) {
+            exists = true;
+            break;
+        }
+        count++;
+    }
+    ngsFree(pathInfo);
+
+    m_storePath = catalogPath + "/" + storeName;
+
+    if(exists)
+        return true;
+
+    char** options = nullptr;
+    options = ngsAddNameValue(options,
+                              "TYPE", std::to_string(
+                                  ngsCatalogObjectType::CAT_CONTAINER_NGS).c_str());
+    options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
+
+    return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
+                                  options) == ngsErrorCodes::EC_SUCCESS;
 }
 
 void MainWindow::createMenus()
@@ -239,9 +310,14 @@ void MainWindow::createMenus()
     pFileMenu->addAction(m_pOpenAct);
     pFileMenu->addAction(m_pSaveAct);
     pFileMenu->addSeparator();
-    pFileMenu->addAction(m_pUploadAct);
-    pFileMenu->addSeparator();
     pFileMenu->addAction(m_pExitAct);
+
+    QMenu *pDataMenu = menuBar()->addMenu(tr("&Data"));
+    pDataMenu->addAction(m_pLoadAct);
+
+    QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
+    pMapMenu->addAction(m_pAddLayerAct);
+    pMapMenu->addAction(m_pDeleteLayerAct);
 
     QMenu *pHelpMenu = menuBar()->addMenu(tr("&Help"));
     pHelpMenu->addAction(m_pAboutAct);

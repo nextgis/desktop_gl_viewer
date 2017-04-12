@@ -23,9 +23,10 @@
 #include <QOpenGLWidget>
 #include <QTimer>
 
-#include "api.h"
+
 #include "locationstatus.h"
 #include "progressstatus.h"
+#include "ngstore/api.h"
 
 namespace ngv {
 

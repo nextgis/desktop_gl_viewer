@@ -80,35 +80,35 @@ void GlMapView::onTimer()
 
 void GlMapView::initializeGL()
 {
-    if(0 == m_mapId)
-        return;
-    ngsMapInit(m_mapId);
+//    if(0 == m_mapId)
+//        return;
+//    ngsMapInit(m_mapId);
 }
 
 void GlMapView::resizeGL(int w, int h)
 {
-    if(0 == m_mapId)
-        return;
-    m_drawState = DS_PRESERVED;
-    m_center.setX (w / 2);
-    m_center.setY (h / 2);
-    ngsMapSetSize(m_mapId, w, h, YORIENT);
-    // send event to full redraw
-    m_timer->start(TM_ZOOMING);
+//    if(0 == m_mapId)
+//        return;
+//    m_drawState = DS_PRESERVED;
+//    m_center.setX (w / 2);
+//    m_center.setY (h / 2);
+//    ngsMapSetSize(m_mapId, w, h, YORIENT);
+//    // send event to full redraw
+//    m_timer->start(TM_ZOOMING);
 }
 
 
 void GlMapView::paintGL()
 {
-    ngsMapDraw(m_mapId, m_drawState, ngsQtDrawingProgressFunc, (void*)this);
-    m_drawState = DS_PRESERVED; // draw from cache on display update
+//    ngsMapDraw(m_mapId, m_drawState, ngsQtDrawingProgressFunc, (void*)this);
+//    m_drawState = DS_PRESERVED; // draw from cache on display update
 }
 
 void GlMapView::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) {
+/*    if (event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
-            m_startRotateZ = ngsMapGetRotate (m_mapId, ngsDirection::Z);
+            m_startRotateZ = ngsMapGetRotate (m_mapId, ngsDirection::DIR_Z);
             QSize winSize = size ();
             m_mouseStartPoint.setX (winSize.width () / 2);
             m_mouseStartPoint.setY (winSize.height () / 2);
@@ -116,18 +116,19 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
                                         event->pos().x () - m_mouseStartPoint.x ());
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
-            m_startRotateX = ngsMapGetRotate (m_mapId, ngsDirection::X);
+            m_startRotateX = ngsMapGetRotate (m_mapId, ngsDirection::DIR_X);
             m_mouseStartPoint = event->pos ();
         }
         else {
             m_mouseStartPoint = event->pos ();
         }
     }
+    */
 }
 
 void GlMapView::mouseMoveEvent(QMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton) {
+/*    if (event->buttons() & Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
             // rotate
             double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
@@ -145,7 +146,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             // limit from -17 to 80 degree
             if(newAng < -0.3 || newAng > 1.41)
                 return;
-            ngsMapSetRotate (m_mapId, ngsDirection::X, newAng);
+            ngsMapSetRotate (m_mapId, ngsDirection::DIR_X, newAng);
         }
         else {
             // pan
@@ -169,11 +170,12 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                                                    event->pos ().y ());
         m_locationStatus->setLocation (coord.X, coord.Y);
     }
+    */
 }
 
 void GlMapView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton) {
+/*    if (event->buttons() & Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
@@ -182,11 +184,12 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
             m_mapCenter = ngsMapGetCenter(m_mapId);
         }
     }
+    */
 }
 
 void GlMapView::wheelEvent(QWheelEvent* event)
 {
-    double scale = 1;
+/*    double scale = 1;
     double delta = event->delta();
     double add = fabs(delta) / 80;
     scale = ngsMapGetScale(m_mapId);
@@ -200,49 +203,55 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
     // send event to full redraw
     m_timer->start(TM_ZOOMING);
+    */
 }
 
 void GlMapView::closeMap()
 {
-    if(0 != m_mapId) {
+/*    if(0 != m_mapId) {
         makeCurrent();
         if(ngsMapClose (m_mapId) == ngsErrorCodes::EC_SUCCESS)
             m_mapId = 0;
         else
             QMessageBox::critical (this, tr("Error"), tr("Close map failed"));
     }
+    */
 }
 
 bool GlMapView::openMap(const QString &path)
 {
-    closeMap ();
+/*    closeMap ();
     m_mapId = ngsMapOpen (path.toStdString ().c_str ());    
     m_drawState = DS_REDRAW;
     initMap();
     return 0 != m_mapId;
+   */
+    return true;
 }
 
 bool GlMapView::saveMap(const QString &path)
 {
-    return ngsMapSave (m_mapId,  path.toStdString ().c_str ())
-            == ngsErrorCodes::EC_SUCCESS;
+//    return ngsMapSave (m_mapId,  path.toStdString ().c_str ())
+//            == ngsErrorCodes::EC_SUCCESS;
+    return true;
 }
 
 
 void GlMapView::newMap()
 {
-    closeMap ();
+/*    closeMap ();
     m_mapId = ngsMapCreate (DEFAULT_MAP_NAME, "test gl map",
                                         DEFAULT_EPSG, DEFAULT_MIN_X,
                                         DEFAULT_MIN_Y, DEFAULT_MAX_X,
                                         DEFAULT_MAX_Y);
     initMap();
+    */
 }
 
 
 void GlMapView::initMap()
 {
-    if(0 == m_mapId)
+/*    if(0 == m_mapId)
         return;
 
     const QSize viewSize = size();
@@ -253,6 +262,7 @@ void GlMapView::initMap()
     ngsMapSetBackgroundColor (m_mapId, 0, 255, 0, 255);
     makeCurrent();
     ngsMapInit(m_mapId);
+    */
 }
 
 void GlMapView::draw(ngsDrawState state)
@@ -275,7 +285,7 @@ void GlMapView::keyPressEvent(QKeyEvent *event)
 
 void GlMapView::onFinish(unsigned int taskId)
 {
-    ngsLoadTaskInfo info = ngsDataStoreGetLoadTaskInfo(taskId);
+/*    ngsLoadTaskInfo info = ngsDataStoreGetLoadTaskInfo(taskId);
     if(info.status != ngsErrorCodes::EC_SUCCESS) {
         QString nameStr(info.name);
         QString message = QString(tr("Load %1 failed")).arg (nameStr);
@@ -293,4 +303,5 @@ void GlMapView::onFinish(unsigned int taskId)
                           fileInfo.absoluteFilePath ().toUtf8 ().constData ());
     }
     draw(DS_NORMAL);
+    */
 }

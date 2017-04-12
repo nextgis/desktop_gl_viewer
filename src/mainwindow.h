@@ -42,6 +42,8 @@ public slots:
     void open();
     void newFile();
     void load();
+    void addMapLayer();
+    void removeMapLayer();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -49,21 +51,26 @@ protected:
     void readSettings();
     void createMenus();
     void createActions();
+    bool createDatastore();
 
 private:
     QAction *m_pNewAct;
     QAction *m_pOpenAct;
     QAction *m_pSaveAct;
     QAction *m_pAboutAct;
-    QAction *m_pUploadAct;
+    QAction *m_pLoadAct;
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
+    QAction *m_pAddLayerAct, *m_pDeleteLayerAct;
 
 private:
     EventsStatus *m_eventsStatus;
     ProgressStatus *m_progressStatus;
     LocationStatus *m_locationStatus;
     GlMapView *m_mapView;
+
+private:
+    std::string m_storePath;
 };
 
 }

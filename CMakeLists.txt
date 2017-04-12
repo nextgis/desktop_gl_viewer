@@ -66,7 +66,8 @@ enable_testing()
 add_subdirectory (lib)
 add_subdirectory (test)
 
-include_directories (${CMAKE_SOURCE_DIR}/lib/src)
+include_directories (${CMAKE_SOURCE_DIR}/lib/src
+    ${CMAKE_SOURCE_DIR}/lib/include)
 
 # Widgets finds its own dependencies.
 find_package(Qt5 REQUIRED COMPONENTS Widgets Svg)
@@ -114,6 +115,11 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
        MACOSX_BUNDLE_COPYRIGHT "Copyright 2017, NextGIS. All Rights Reserved."
        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
      )
+
+     add_custom_command(TARGET ${APP_NAME}
+         POST_BUILD COMMAND
+         ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "~/Applications/NextGIS/Library/Frameworks/"
+         $<TARGET_FILE:${APP_NAME}>)
 else()
     add_executable(${APP_NAME} ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
 endif()
