@@ -30,6 +30,7 @@
 #include "ngstore/api.h"
 #include "ngstore/version.h"
 
+#include "catalogdialog.h"
 #include "version.h"
 
 using namespace ngv;
@@ -65,14 +66,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         statusBar ()->addPermanentWidget (m_eventsStatus);
         statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
 
-        // storage setup
-        /*QString storePath = QDir::currentPath() + "/tmp/ngs.gpkg";
-        if(ngsDataStoreInit (storePath.toStdString ().c_str ()) !=
-                ngsErrorCodes::EC_SUCCESS) {
-            QMessageBox::critical (this, tr("Error"), tr("Storage initialize failed"));
-            return;
-        }*/
-
         // mapview setup
         m_mapView = new GlMapView(m_locationStatus);
         setCentralWidget (m_mapView);
@@ -82,6 +75,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         m_eventsStatus->addWarning ();
         m_eventsStatus->addError ();*/
 
+    }
+    else {
+        QMessageBox::critical(this, tr("Error"), tr("Storage initialize failed"));
     }
 }
 
@@ -105,7 +101,7 @@ void MainWindow::writeSettings()
         settings.setValue("frame/pos", pos());
     }
     settings.setValue("frame/state", saveState());
-    settings.setValue("frame/statusbar/shown", statusBar()->isVisible());
+    settings.setValue("frame/statusbar_shown", statusBar()->isVisible());
     settings.endGroup();
 }
 
@@ -135,6 +131,7 @@ void MainWindow::newFile()
 
 void MainWindow::open()
 {
+    // TODO: Change on catalog open dialog
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
@@ -146,6 +143,7 @@ void MainWindow::open()
 
 void MainWindow::save()
 {
+    // TODO: Change on catalog save dialog
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
     if(fileName.isEmpty ())
@@ -160,6 +158,19 @@ void MainWindow::save()
 
 void MainWindow::load()
 {
+    // 1. Choose file dialog
+    CatalogDialog dlg(this);
+    dlg.exec();
+
+//    // 2. Show progress dialog
+//    if(ngsCatalogObjectLoad(shapePath, m_storePath.c_str(), nullptr,
+//                            ngsTestProgressFunc,
+//                            nullptr) != ngsErrorCodes::EC_SUCCESS) {
+//        QString message = QString(tr("Load %1 to store failed")).arg (shapePath);
+//        QMessageBox::critical (this, tr("Error"), message);
+//    }
+    // 3. Hide/destroy progress dialog
+
     // TODO: need methods (C API?) to get various filtes and  "All vector datasets", "All raster datasets" filters. Also for selected dataset need corresponding GDALDriver, and create/open options.
     // TODO: Own data model for datasets
 /*    QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
@@ -275,32 +286,20 @@ bool MainWindow::createDatastore()
     // Check if datastore exists
     std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr);
     std::string catalogPath = ngsCatalogPathFromSystem(path.c_str());
-    ngsCatalogObjectInfo* pathInfo = ngsCatalogObjectQuery(catalogPath.c_str());
-    int count = 0;
-    bool exists = false;
     std::string storeName("main.ngst");
-    while(pathInfo[count].name) {
-        if(storeName.compare(pathInfo[count].name) == 0) {
-            exists = true;
-            break;
-        }
-        count++;
-    }
-    ngsFree(pathInfo);
-
     m_storePath = catalogPath + "/" + storeName;
 
-    if(exists)
-        return true;
+    if(ngsCatalogObjectGet(m_storePath.c_str()) == nullptr) {
+        char** options = nullptr;
+        options = ngsAddNameValue(
+                    options, "TYPE", std::to_string(
+                        ngsCatalogObjectType::CAT_CONTAINER_NGS).c_str());
+        options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
 
-    char** options = nullptr;
-    options = ngsAddNameValue(options,
-                              "TYPE", std::to_string(
-                                  ngsCatalogObjectType::CAT_CONTAINER_NGS).c_str());
-    options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
-
-    return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
-                                  options) == ngsErrorCodes::EC_SUCCESS;
+        return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
+                                      options) == ngsErrorCodes::EC_SUCCESS;
+    }
+    return true;
 }
 
 void MainWindow::createMenus()

@@ -50,6 +50,7 @@ endif()
 
 # Tell CMake to run moc when necessary:
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 
 # As moc files are generated in the binary dir, tell CMake
 # to always look for includes there:
@@ -82,6 +83,7 @@ set(PROJECT_HEADERS
     src/eventsstatus.h
     src/progressstatus.h
     src/locationstatus.h
+    src/catalogdialog.h
 )
 
 set(PROJECT_SOURCES
@@ -92,6 +94,11 @@ set(PROJECT_SOURCES
     src/eventsstatus.cpp
     src/progressstatus.cpp
     src/locationstatus.cpp
+    src/catalogdialog.cpp
+)
+
+set(UIS_HDRS
+    src/catalogdialog.ui
 )
 
 if(MSVC)

@@ -52,6 +52,6 @@ int main(int argc, char *argv[])
     MainWindow wnd;
     wnd.show();
     
-    return app.exec ();
+    return app.exec();
 }
 
