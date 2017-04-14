@@ -21,27 +21,37 @@
 #ifndef CATALOGMODEL_H
 #define CATALOGMODEL_H
 
+#include "ngstore/api.h"
+
 #include <QAbstractItemModel>
 
 class CatalogItem
 {
 public:
-    CatalogItem(const QList<QVariant> &data, CatalogItem *parent = 0);
+    CatalogItem(const std::string& name, enum ngsCatalogObjectType type, int filter = 0,
+                CatalogItem *parent = 0);
     ~CatalogItem() { qDeleteAll(childItems); }
 
     void appendChild(CatalogItem *child) { childItems.append(child); }
 
     CatalogItem *child(int row) { return childItems.value(row); }
-    int childCount() const;
-    int columnCount() const { return itemData.count(); }
-    QVariant data(int column) const { return itemData.value(column); }
+    int childCount();
+    int columnCount() const { return 2; }
+    QVariant data(int column) const;
     int row() const;
     CatalogItem *parent() { return parentItem; }
+    std::string getPath() const;
+
+    // static
+public:
+    static std::string getTypeText(enum ngsCatalogObjectType type);
 
 private:
     QList<CatalogItem*> childItems;
-    QList<QVariant> itemData;
     CatalogItem *parentItem;
+    std::string m_name;
+    enum ngsCatalogObjectType m_type;
+    int m_filter;
 };
 
 class CatalogModel : public QAbstractItemModel
@@ -49,7 +59,8 @@ class CatalogModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    explicit CatalogModel(QObject *parent = 0);
+    explicit CatalogModel(int filter = ngsCatalogObjectType::CAT_UNKNOWN,
+                          QObject *parent = 0);
     ~CatalogModel() { delete rootItem; }
 
     // Basic functionality:
