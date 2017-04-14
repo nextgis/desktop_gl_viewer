@@ -26,8 +26,6 @@
 
 #include <string>
 
-namespace ngv {
-
 class IProgressFinish
 {
 public:
@@ -60,7 +58,5 @@ protected:
     bool m_continue;
     IProgressFinish* m_finishObject;
 };
-
-}
 
 #endif // PROGRESSSTATUS_H

@@ -28,8 +28,6 @@
 
 #include <QMainWindow>
 
-namespace ngv {
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -72,7 +70,5 @@ private:
 private:
     std::string m_storePath;
 };
-
-}
 
 #endif // MAINWINDOW_H

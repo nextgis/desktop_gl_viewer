@@ -20,8 +20,6 @@
 #include "locationstatus.h"
 #include <QHBoxLayout>
 
-using namespace ngv;
-
 LocationStatus::LocationStatus()
 {
     m_text = new QLabel(tr("unknown"));

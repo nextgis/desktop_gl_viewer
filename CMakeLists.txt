@@ -84,6 +84,7 @@ set(PROJECT_HEADERS
     src/progressstatus.h
     src/locationstatus.h
     src/catalogdialog.h
+    src/catalogmodel.h
 )
 
 set(PROJECT_SOURCES
@@ -95,6 +96,7 @@ set(PROJECT_SOURCES
     src/progressstatus.cpp
     src/locationstatus.cpp
     src/catalogdialog.cpp
+    src/catalogmodel.cpp
 )
 
 set(UIS_HDRS

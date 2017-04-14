@@ -21,11 +21,12 @@
 #include "catalogdialog.h"
 #include "ui_catalogdialog.h"
 
-CatalogDialog::CatalogDialog(QWidget *parent) :
+CatalogDialog::CatalogDialog(const QString &title, int filter, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CatalogDialog)
 {
     ui->setupUi(this);
+    setWindowTitle(title);
 }
 
 CatalogDialog::~CatalogDialog()

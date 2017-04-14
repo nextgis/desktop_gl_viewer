@@ -24,8 +24,6 @@
 
 #define ICON_SIZE 14
 
-using namespace ngv;
-
 EventsStatus::EventsStatus(QWidget *parent) : QWidget(parent), m_errorCount(0),
     m_messageCount(0), m_warningCount(0)
 {

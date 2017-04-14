@@ -33,8 +33,6 @@
 #include "catalogdialog.h"
 #include "version.h"
 
-using namespace ngv;
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     char** options = nullptr;
@@ -159,7 +157,8 @@ void MainWindow::save()
 void MainWindow::load()
 {
     // 1. Choose file dialog
-    CatalogDialog dlg(this);
+    CatalogDialog dlg(tr("Select data to load"), ngsCatalogObjectType::CAT_FC_ANY,
+                      this);
     dlg.exec();
 
 //    // 2. Show progress dialog

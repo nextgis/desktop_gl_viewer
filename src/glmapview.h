@@ -28,8 +28,6 @@
 #include "progressstatus.h"
 #include "ngstore/api.h"
 
-namespace ngv {
-
 class GlMapView : public QOpenGLWidget, public IProgressFinish
 {
     Q_OBJECT
@@ -75,7 +73,5 @@ protected:
 public:
     virtual void onFinish(unsigned int taskId) override;
 };
-
-}
 
 #endif // GLMAPVIEW_H

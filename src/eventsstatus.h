@@ -23,8 +23,6 @@
 #include <QWidget>
 #include <QLabel>
 
-namespace ngv {
-
 class EventsStatus : public QWidget
 {
     Q_OBJECT
@@ -42,5 +40,4 @@ protected:
     int m_errorCount, m_messageCount, m_warningCount;
 };
 
-}
 #endif // EVENTSSTATUS_H

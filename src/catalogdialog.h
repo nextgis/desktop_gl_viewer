@@ -32,7 +32,7 @@ class CatalogDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CatalogDialog(QWidget *parent = 0);
+    explicit CatalogDialog(const QString & title, int filter = 0, QWidget *parent = 0);
     ~CatalogDialog();
 
 private:

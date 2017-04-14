@@ -27,8 +27,6 @@
 
 #define DELTA 0.00000001
 
-using namespace ngv;
-
 ProgressStatus::ProgressStatus(QWidget *parent) : QWidget(parent),
     m_continue(true), m_finishObject(nullptr)
 {
@@ -73,7 +71,7 @@ void ProgressStatus::onFinish(unsigned int taskId)
     setVisible (false);
 }
 
-int ngv::LoadingProgressFunc(unsigned int taskId, double complete,
+int LoadingProgressFunc(unsigned int taskId, double complete,
                              const char* /*message*/, void* progressArguments) {
 //    if(nullptr != message)
 //        qDebug() << "Qt load notiy: " << complete << " msg:" << message;

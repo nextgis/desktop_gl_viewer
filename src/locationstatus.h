@@ -23,8 +23,6 @@
 #include <QWidget>
 #include <QLabel>
 
-namespace ngv {
-
 class ILocationStatus {
 public:
     virtual ~ILocationStatus() {}
@@ -43,7 +41,5 @@ public:
 protected:
     QLabel *m_text;
 };
-
-}
 
 #endif // LOCATIONSTATUS_H

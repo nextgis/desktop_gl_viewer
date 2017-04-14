@@ -23,8 +23,6 @@
 #include <QSurfaceFormat>
 #include "version.h"
 
-using namespace ngv;
-
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);

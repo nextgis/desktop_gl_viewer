@@ -41,8 +41,6 @@
 
 static double gComplete = 0;
 
-using namespace ngv;
-
 int ngsQtDrawingProgressFunc(unsigned int /*taskId*/, double complete,
                              const char* /*message*/,
                              void* progressArguments) {
