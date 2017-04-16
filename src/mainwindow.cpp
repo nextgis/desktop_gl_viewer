@@ -34,7 +34,7 @@
 #include "version.h"
 
 // progress function
-int loadProgressFunction(enum ngsErrorCodes /*status*/,
+int loadProgressFunction(enum ngsErrorCode /*status*/,
                           double complete,
                           const char* /*message*/,
                           void* progressArguments)
@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ngsDestroyList(options);
 
-    if(result == ngsErrorCodes::EC_SUCCESS && createDatastore()) {
+    if(result == ngsErrorCode::EC_SUCCESS && createDatastore()) {
 
         createActions ();
         createMenus();
@@ -217,8 +217,8 @@ void MainWindow::removeMapLayer()
 void MainWindow::handleFinished()
 {
     int result = m_watcher.result();
-    if(result != ngsErrorCodes::EC_SUCCESS &&
-            result != ngsErrorCodes::EC_CANCELED) {
+    if(result != ngsErrorCode::EC_SUCCESS &&
+            result != ngsErrorCode::EC_CANCELED) {
         QString message = QString(tr("Load to store failed.\nError: %1")).arg(
                     ngsGetLastErrorMessage());
         QMessageBox::critical(this, tr("Error"), message);
@@ -304,7 +304,7 @@ bool MainWindow::createDatastore()
         options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
 
         return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
-                                      options) == ngsErrorCodes::EC_SUCCESS;
+                                      options) == ngsErrorCode::EC_SUCCESS;
     }
     return true;
 }
