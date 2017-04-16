@@ -33,7 +33,27 @@
 #include "catalogdialog.h"
 #include "version.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+// progress function
+int loadProgressFunction(enum ngsErrorCodes /*status*/,
+                          double complete,
+                          const char* /*message*/,
+                          void* progressArguments)
+{
+    QCoreApplication::processEvents();
+    ProgressDialog* dlg = static_cast<ProgressDialog*>(progressArguments);
+    if(nullptr != dlg) {
+        dlg->setProgress(static_cast<int>(complete * 100));
+        if(dlg->isCancel()) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    m_progressDlg(nullptr)
 {
     char** options = nullptr;
     options = ngsAddNameValue(options, "DEBUG_MODE", "ON");
@@ -72,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         /*m_eventsStatus->addMessage ();
         m_eventsStatus->addWarning ();
         m_eventsStatus->addError ();*/
+
+        connect(&m_watcher, SIGNAL(finished()), this, SLOT(handleFinished()));
 
     }
     else {
@@ -161,52 +183,25 @@ void MainWindow::load()
                       this);
     dlg.exec();
 
-//    // 2. Show progress dialog
-//    if(ngsCatalogObjectLoad(shapePath, m_storePath.c_str(), nullptr,
-//                            ngsTestProgressFunc,
-//                            nullptr) != ngsErrorCodes::EC_SUCCESS) {
-//        QString message = QString(tr("Load %1 to store failed")).arg (shapePath);
-//        QMessageBox::critical (this, tr("Error"), message);
-//    }
-    // 3. Hide/destroy progress dialog
+    std::string shapePath = dlg.getCatalogPath();
 
-    // TODO: need methods (C API?) to get various filtes and  "All vector datasets", "All raster datasets" filters. Also for selected dataset need corresponding GDALDriver, and create/open options.
-    // TODO: Own data model for datasets
-/*    QString vecFilters(ngsGetFilters(DT_VECTOR_ALL, FM_READ, ""));
-    QString rasFilters(ngsGetFilters(DT_RASTER_ALL, FM_READ, ""));
-    QString filters(vecFilters + ";;" + rasFilters);
-    QString selectedFilter;
+    // 2. Show progress dialog
+    m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
 
-    QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Load file to storage"), "", filters, &selectedFilter);
-    // TODO: m_progressStatus should have child progresses and show full status of all progresses
-    if(fileName.isEmpty ())
-        return;
+    const char *options[2] = {"FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
+    char** popt = const_cast<char**>(options);
+    ngsProgressFunc func = loadProgressFunction;
 
-    const char* pszPath = fileName.toUtf8().constData();
-    QFileInfo fileInfo(fileName);
-    const char* pszName = fileInfo.baseName ().toUtf8().constData();
+    QFuture<int> future = QtConcurrent::run(ngsCatalogObjectLoad,
+                                                           shapePath.c_str(),
+                                                           m_storePath.c_str(),
+                                                           popt,
+                                                           func,
+                                            static_cast<void*>(m_progressDlg));
 
-    if(selectedFilter.startsWith ("Vector")) {
-        const char *options[3] = {"LOAD_OP=COPY", "FEATURES_SKIP=EMPTY_GEOMETRY",
-                                  nullptr};
+    m_watcher.setFuture(future);
 
-/*        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
-                   m_progressStatus) == 0) {
-            QString message = QString(tr("Load %1 failed")).arg (fileName);
-            QMessageBox::critical (this, tr("Error"), message);
-        }*//*
-    }
-    else if(selectedFilter.startsWith ("Raster")) {
-        const char *options[3] = {"LOAD_OP=COPY", "RASTER_PROJECT=ON",
-                                  nullptr};
-
-/*        if(ngsDataStoreLoad(pszName, pszPath, "", options, LoadingProgressFunc,
-                   m_progressStatus) == 0) {
-            QString message = QString(tr("Load %1 failed")).arg (fileName);
-            QMessageBox::critical (this, tr("Error"), message);
-        }*//*
-    }*/
+    m_progressDlg->open();
 }
 
 void MainWindow::addMapLayer()
@@ -217,6 +212,19 @@ void MainWindow::addMapLayer()
 void MainWindow::removeMapLayer()
 {
 
+}
+
+void MainWindow::handleFinished()
+{
+    int result = m_watcher.result();
+    if(result != ngsErrorCodes::EC_SUCCESS &&
+            result != ngsErrorCodes::EC_CANCELED) {
+        QString message = QString(tr("Load to store failed.\nError: %1")).arg(
+                    ngsGetLastErrorMessage());
+        QMessageBox::critical(this, tr("Error"), message);
+    }
+    delete m_progressDlg;
+    m_progressDlg = nullptr;
 }
 
 void MainWindow::about()

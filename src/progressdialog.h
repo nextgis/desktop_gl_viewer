@@ -18,32 +18,31 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-#ifndef CATALOGDIALOG_H
-#define CATALOGDIALOG_H
+#ifndef PROGRESSDIALOG_H
+#define PROGRESSDIALOG_H
 
 #include <QDialog>
-#include <QItemSelection>
 
 namespace Ui {
-class CatalogDialog;
+class ProgressDialog;
 }
 
-class CatalogDialog : public QDialog
+class ProgressDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit CatalogDialog(const QString & title, int filter = 0, QWidget *parent = 0);
-    ~CatalogDialog();
-    std::string getCatalogPath();
-    std::string getNewName();
+    explicit ProgressDialog(const QString & title, QWidget *parent = 0);
+    ~ProgressDialog();
+    bool isCancel();
+    void setProgress(int progress);
 
-protected slots:
-    void selectionChanged(const QItemSelection &selected,
-                          const QItemSelection &deselected);
+private slots:
+    void onCancelClicked();
 
 private:
-    Ui::CatalogDialog *ui;
+    Ui::ProgressDialog *ui;
+    bool m_cancel;
 };
 
-#endif // CATALOGDIALOG_H
+#endif // PROGRESSDIALOG_H

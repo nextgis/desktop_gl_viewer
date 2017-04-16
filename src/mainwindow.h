@@ -20,13 +20,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QtConcurrent/QtConcurrent>
+#include <QMainWindow>
+
 #include "eventsstatus.h"
 #include "progressstatus.h"
 #include "locationstatus.h"
 #include "mapview.h"
 #include "glmapview.h"
-
-#include <QMainWindow>
+#include "progressdialog.h"
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +44,7 @@ public slots:
     void load();
     void addMapLayer();
     void removeMapLayer();
+    void handleFinished();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -60,8 +63,10 @@ private:
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
     QAction *m_pAddLayerAct, *m_pDeleteLayerAct;
+    ProgressDialog *m_progressDlg;
 
 private:
+    QFutureWatcher<int> m_watcher;
     EventsStatus *m_eventsStatus;
     ProgressStatus *m_progressStatus;
     LocationStatus *m_locationStatus;
