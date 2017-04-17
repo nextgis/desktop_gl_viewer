@@ -61,7 +61,7 @@ class CatalogModel : public QAbstractItemModel
 public:
     explicit CatalogModel(int filter = ngsCatalogObjectType::CAT_UNKNOWN,
                           QObject *parent = 0);
-    ~CatalogModel() { delete rootItem; }
+    ~CatalogModel() { delete m_rootItem; }
 
     // Basic functionality:
     QModelIndex index(int row, int column,
@@ -78,7 +78,7 @@ public:
                         int role = Qt::DisplayRole) const override;
 
 private:
-    CatalogItem *rootItem;
+    CatalogItem *m_rootItem;
 };
 
 #endif // CATALOGMODEL_H

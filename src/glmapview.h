@@ -23,20 +23,19 @@
 #include <QOpenGLWidget>
 #include <QTimer>
 
-
-#include "locationstatus.h"
-#include "progressstatus.h"
+// ngstore
 #include "ngstore/api.h"
 
-class GlMapView : public QOpenGLWidget, public IProgressFinish
+#include "locationstatus.h"
+#include "mapmodel.h"
+
+class GlMapView : public QOpenGLWidget
 {
     Q_OBJECT
 public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
-    void closeMap();
-    void newMap();
-    bool openMap(const QString &path);
-    bool saveMap(const QString &path);
+    void setModel(MapModel *mapModel) { m_mapModel = mapModel; }
+
 
 signals:
 
@@ -60,7 +59,6 @@ protected:
     void draw(enum ngsDrawState state);
 
 protected:
-    unsigned char m_mapId;
     ngsCoordinate m_mapCenter;
     QPoint m_mouseStartPoint;
     QPoint m_center;
@@ -68,10 +66,7 @@ protected:
     ILocationStatus *m_locationStatus;
     enum ngsDrawState m_drawState;
     QTimer* m_timer;
-
-    // IProgressFinish interface
-public:
-    virtual void onFinish(unsigned int taskId) override;
+    MapModel *m_mapModel;
 };
 
 #endif // GLMAPVIEW_H

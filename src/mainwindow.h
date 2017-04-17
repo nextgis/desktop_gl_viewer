@@ -21,12 +21,13 @@
 #define MAINWINDOW_H
 
 #include <QtConcurrent/QtConcurrent>
+#include <QListView>
 #include <QMainWindow>
+#include <QSplitter>
 
 #include "eventsstatus.h"
-#include "progressstatus.h"
 #include "locationstatus.h"
-#include "mapview.h"
+#include "mapmodel.h"
 #include "glmapview.h"
 #include "progressdialog.h"
 
@@ -44,7 +45,7 @@ public slots:
     void load();
     void addMapLayer();
     void removeMapLayer();
-    void handleFinished();
+    void loadFinished();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -52,6 +53,7 @@ protected:
     void readSettings();
     void createMenus();
     void createActions();
+    void createDockWindows();
     bool createDatastore();
 
 private:
@@ -64,13 +66,15 @@ private:
     QAction *m_pExitAct;
     QAction *m_pAddLayerAct, *m_pDeleteLayerAct;
     ProgressDialog *m_progressDlg;
+    QSplitter *m_splitter;
 
 private:
     QFutureWatcher<int> m_watcher;
     EventsStatus *m_eventsStatus;
-    ProgressStatus *m_progressStatus;
     LocationStatus *m_locationStatus;
     GlMapView *m_mapView;
+    QListView* m_mapLayersView;
+    MapModel *m_mapModel;
 
 private:
     std::string m_storePath;

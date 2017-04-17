@@ -205,18 +205,18 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
 CatalogModel::CatalogModel(int filter, QObject *parent)
     : QAbstractItemModel(parent)
 {
-    rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
+    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
 }
 
 QModelIndex CatalogModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
-            return QModelIndex();
+        return QModelIndex();
 
     CatalogItem *parentItem;
 
     if (!parent.isValid())
-        parentItem = rootItem;
+        parentItem = m_rootItem;
     else
         parentItem = static_cast<CatalogItem*>(parent.internalPointer());
 
@@ -235,7 +235,7 @@ QModelIndex CatalogModel::parent(const QModelIndex &index) const
     CatalogItem *childItem = static_cast<CatalogItem*>(index.internalPointer());
     CatalogItem *parentItem = childItem->parent();
 
-    if (parentItem == rootItem)
+    if (parentItem == m_rootItem)
         return QModelIndex();
 
     return createIndex(parentItem->row(), 0, parentItem);
@@ -248,7 +248,7 @@ int CatalogModel::rowCount(const QModelIndex &parent) const
         return 0;
 
     if (!parent.isValid())
-        parentItem = rootItem;
+        parentItem = m_rootItem;
     else
         parentItem = static_cast<CatalogItem*>(parent.internalPointer());
 
@@ -260,13 +260,13 @@ int CatalogModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return static_cast<CatalogItem*>(parent.internalPointer())->columnCount();
     else
-        return rootItem->columnCount();
+        return m_rootItem->columnCount();
 }
 
 QVariant CatalogModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
-            return QVariant();
+        return QVariant();
 
     if (role != Qt::DisplayRole)
         return QVariant();
@@ -279,7 +279,7 @@ QVariant CatalogModel::data(const QModelIndex &index, int role) const
 Qt::ItemFlags CatalogModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
-        return 0;
+        return Qt::NoItemFlags;
 
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
@@ -288,7 +288,7 @@ QVariant CatalogModel::headerData(int section, Qt::Orientation orientation,
                                int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-        return rootItem->data(section);
+        return m_rootItem->data(section);
 
     return QVariant();
 }

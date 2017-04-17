@@ -78,27 +78,25 @@ qt5_add_resources(RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/glviewer.qrc")
 set(PROJECT_HEADERS
     src/version.h
     src/mainwindow.h
-#    src/mapview.h
     src/glmapview.h
     src/eventsstatus.h
-    src/progressstatus.h
     src/locationstatus.h
     src/catalogdialog.h
     src/catalogmodel.h
     src/progressdialog.h
+    src/mapmodel.h
 )
 
 set(PROJECT_SOURCES
     src/main.cpp
     src/mainwindow.cpp
-#    src/mapview.cpp
     src/glmapview.cpp
     src/eventsstatus.cpp
-    src/progressstatus.cpp
     src/locationstatus.cpp
     src/catalogdialog.cpp
     src/catalogmodel.cpp
     src/progressdialog.cpp
+    src/mapmodel.cpp
 )
 
 set(UIS_HDRS

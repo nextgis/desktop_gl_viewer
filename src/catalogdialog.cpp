@@ -23,17 +23,18 @@
 
 #include <QPushButton>
 
-#include "catalogmodel.h"
-
-CatalogDialog::CatalogDialog(const QString &title, int filter, QWidget *parent) :
+CatalogDialog::CatalogDialog(Type type, const QString &title, int filter,
+                             QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CatalogDialog)
+    ui(new Ui::CatalogDialog),
+    m_type(type)
 {
     ui->setupUi(this);
     setWindowTitle(title);
 
     // set model
-    ui->treeView->setModel(new CatalogModel(filter));
+    m_model = new CatalogModel(filter);
+    ui->treeView->setModel(m_model);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 
     connect(ui->treeView->selectionModel(),
@@ -44,6 +45,7 @@ CatalogDialog::CatalogDialog(const QString &title, int filter, QWidget *parent) 
 
 CatalogDialog::~CatalogDialog()
 {
+    delete m_model;
     delete ui;
 }
 
@@ -52,14 +54,20 @@ std::string CatalogDialog::getCatalogPath()
     QModelIndex index = ui->treeView->currentIndex();
     CatalogItem *item = static_cast<CatalogItem*>(index.internalPointer());
     if(nullptr != item) {
-        return item->getPath();
+        if(m_type == Type::OPEN) {
+            return item->getPath();
+        }
+        else {
+            std::string fileName =  ui->lineEdit->text().toStdString();
+            return item->getPath() + "/" + fileName;
+        }
     }
     return "";
 }
 
 std::string CatalogDialog::getNewName()
 {
-    return ui->lineEdit->text().toUtf8().constData();
+    return ui->lineEdit->text().toStdString();
 }
 
 void CatalogDialog::selectionChanged(const QItemSelection &/*selected*/,

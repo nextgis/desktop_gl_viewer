@@ -39,7 +39,6 @@ int loadProgressFunction(enum ngsErrorCode /*status*/,
                           const char* /*message*/,
                           void* progressArguments)
 {
-    QCoreApplication::processEvents();
     ProgressDialog* dlg = static_cast<ProgressDialog*>(progressArguments);
     if(nullptr != dlg) {
         dlg->setProgress(static_cast<int>(complete * 100));
@@ -47,7 +46,6 @@ int loadProgressFunction(enum ngsErrorCode /*status*/,
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -55,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_progressDlg(nullptr)
 {
+    setWindowIcon(QIcon(":/images/main_logo.svg"));
+
     char** options = nullptr;
     options = ngsAddNameValue(options, "DEBUG_MODE", "ON");
     options = ngsAddNameValue(options, "SETTINGS_DIR",
@@ -66,34 +66,31 @@ MainWindow::MainWindow(QWidget *parent) :
     ngsDestroyList(options);
 
     if(result == ngsErrorCode::EC_SUCCESS && createDatastore()) {
+        m_mapModel = new MapModel();
+        // create empty map
+        m_mapModel->create();
 
         createActions ();
         createMenus();
+        createDockWindows();
         readSettings();
 
 
         // statusbar setup
-        statusBar ()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
-        m_progressStatus = new ProgressStatus;
-        statusBar ()->addPermanentWidget (m_progressStatus);
-        m_progressStatus->hide ();
+        statusBar()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
         m_locationStatus = new LocationStatus;
-        statusBar ()->addPermanentWidget (m_locationStatus);
+        statusBar()->addPermanentWidget(m_locationStatus);
 
         m_eventsStatus = new EventsStatus;
-        statusBar ()->addPermanentWidget (m_eventsStatus);
-        statusBar ()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
-
-        // mapview setup
-        m_mapView = new GlMapView(m_locationStatus);
-        setCentralWidget (m_mapView);
-        m_progressStatus->setFinish (m_mapView);
+        statusBar()->addPermanentWidget(m_eventsStatus);
+        statusBar()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
 
         /*m_eventsStatus->addMessage ();
         m_eventsStatus->addWarning ();
         m_eventsStatus->addError ();*/
 
-        connect(&m_watcher, SIGNAL(finished()), this, SLOT(handleFinished()));
+
+        connect(&m_watcher, SIGNAL(finished()), this, SLOT(loadFinished()));
 
     }
     else {
@@ -103,8 +100,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    ngsUnInit();
     writeSettings();
+    delete m_mapModel;
+    ngsUnInit();
     event->accept();
 }
 
@@ -114,94 +112,105 @@ void MainWindow::writeSettings()
 
     settings.beginGroup("MainWindow");
     if(isMaximized()){
-        settings.setValue("frame/maximized", true);
+        settings.setValue("frame_maximized", true);
     }
     else{
-        settings.setValue("frame/size", size());
-        settings.setValue("frame/pos", pos());
+        settings.setValue("frame_size", size());
+        settings.setValue("frame_pos", pos());
     }
-    settings.setValue("frame/state", saveState());
-    settings.setValue("frame/statusbar_shown", statusBar()->isVisible());
+    settings.setValue("frame_state", saveState());
+    settings.setValue("frame_statusbar_shown", statusBar()->isVisible());
+    settings.setValue("splitter_sizes", m_splitter->saveState());
     settings.endGroup();
 }
 
 void MainWindow::readSettings()
 {
-    setWindowIcon(QIcon(":/images/main_logo.svg"));
-
     QSettings settings;
+
     settings.beginGroup("MainWindow");
-    if(settings.value("frame/maximized", false).toBool()){
+    if(settings.value("frame_maximized", false).toBool()){
         showMaximized();
     }
     else{
-        resize(settings.value("frame/size", QSize(400, 400)).toSize());
-        move(settings.value("frame/pos", QPoint(200, 200)).toPoint());
+        resize(settings.value("frame_size", QSize(400, 400)).toSize());
+        move(settings.value("frame_pos", QPoint(200, 200)).toPoint());
     }
-    restoreState(settings.value("frame/state").toByteArray());
-    statusBar()->setVisible(settings.value("frame/statusbar_shown", true).toBool());
-
+    restoreState(settings.value("frame_state").toByteArray());
+    statusBar()->setVisible(settings.value("frame_statusbar_shown", true).toBool());
+    m_splitter->restoreState(settings.value("splitter_sizes").toByteArray());
     settings.endGroup();
 }
 
 void MainWindow::newFile()
 {
-    m_mapView->newMap();
+    m_mapModel->create();
 }
 
 void MainWindow::open()
 {
-    // TODO: Change on catalog open dialog
-    QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Load map"), "", tr("NextGIS map document (*.ngmd)"));
-    if(fileName.isEmpty ())
-        return;
-    if(!m_mapView->openMap (fileName)) {
-        QMessageBox::critical(this, tr("Error"), tr("Map load failed"));
+    CatalogDialog dlg(CatalogDialog::OPEN, tr("Open map"),
+                      ngsCatalogObjectType::CAT_FILE_NGMAPDOCUMENT, this);
+    int result = dlg.exec();
+
+    if(1 == result) {
+        std::string openPath = dlg.getCatalogPath().c_str();
+        if(!m_mapModel->open(openPath.c_str())) {
+            QMessageBox::critical(this, tr("Error"), tr("Map load failed"));
+        }
+        else {
+            statusBar ()->showMessage(tr("Map opened"), 10000); // time limit 10 sec.
+        }
     }
 }
 
 void MainWindow::save()
 {
-    // TODO: Change on catalog save dialog
-    QString fileName = QFileDialog::getSaveFileName(this,
-        tr("Save map as ..."), "", tr("NextGIS map document (*.ngmd)"));
-    if(fileName.isEmpty ())
-        return;
-    if(!m_mapView->saveMap (fileName)) {
-        QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
-    }
-    else {
-        statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
+    CatalogDialog dlg(CatalogDialog::SAVE, tr("Save map as..."),
+                      ngsCatalogObjectType::CAT_FILE_NGMAPDOCUMENT, this);
+    int result = dlg.exec();
+
+    if(1 == result) {
+        std::string savePath = dlg.getCatalogPath();
+
+        if(ngsMapSave(m_mapModel->mapId(), savePath.c_str()) !=
+                ngsErrorCode::EC_SUCCESS) {
+            QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
+        }
+        else {
+            statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
+        }
     }
 }
 
 void MainWindow::load()
 {
     // 1. Choose file dialog
-    CatalogDialog dlg(tr("Select data to load"), ngsCatalogObjectType::CAT_FC_ANY,
-                      this);
-    dlg.exec();
+    CatalogDialog dlg(CatalogDialog::OPEN, tr("Select data to load"),
+                      ngsCatalogObjectType::CAT_FC_ANY, this);
+    int result = dlg.exec();
 
-    std::string shapePath = dlg.getCatalogPath();
+    if(1 == result) {
+        std::string shapePath = dlg.getCatalogPath();
 
-    // 2. Show progress dialog
-    m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
+        // 2. Show progress dialog
+        m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
 
-    const char *options[2] = {"FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
-    char** popt = const_cast<char**>(options);
-    ngsProgressFunc func = loadProgressFunction;
+        const char *options[2] = {"FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
+        char** popt = const_cast<char**>(options);
+        ngsProgressFunc func = loadProgressFunction;
 
-    QFuture<int> future = QtConcurrent::run(ngsCatalogObjectLoad,
-                                                           shapePath.c_str(),
-                                                           m_storePath.c_str(),
-                                                           popt,
-                                                           func,
-                                            static_cast<void*>(m_progressDlg));
+        QFuture<int> future = QtConcurrent::run(ngsCatalogObjectLoad,
+                                                shapePath.c_str(),
+                                                m_storePath.c_str(),
+                                                popt,
+                                                func,
+                                                static_cast<void*>(m_progressDlg));
 
-    m_watcher.setFuture(future);
+        m_watcher.setFuture(future);
 
-    m_progressDlg->open();
+        m_progressDlg->open();
+    }
 }
 
 void MainWindow::addMapLayer()
@@ -214,7 +223,7 @@ void MainWindow::removeMapLayer()
 
 }
 
-void MainWindow::handleFinished()
+void MainWindow::loadFinished()
 {
     int result = m_watcher.result();
     if(result != ngsErrorCode::EC_SUCCESS &&
@@ -328,4 +337,26 @@ void MainWindow::createMenus()
     QMenu *pHelpMenu = menuBar()->addMenu(tr("&Help"));
     pHelpMenu->addAction(m_pAboutAct);
     pHelpMenu->addAction(m_pAboutQtAct);
+}
+
+void MainWindow::createDockWindows()
+{
+    m_splitter = new QSplitter(Qt::Horizontal);
+    m_mapLayersView = new QListView();
+    m_mapLayersView->setStyleSheet("QListView { border: none; }");
+    m_mapLayersView->setAttribute(Qt::WA_MacShowFocusRect, false);
+    m_mapLayersView->setDragEnabled(true);
+    m_mapLayersView->setDragDropMode(QAbstractItemView::InternalMove);
+    m_mapLayersView->setModel(m_mapModel);
+    m_splitter->addWidget(m_mapLayersView);
+
+    // mapview setup
+    m_mapView = new GlMapView(m_locationStatus);
+    m_mapView->setModel(m_mapModel);
+
+    m_splitter->addWidget(m_mapView);
+    m_splitter->setHandleWidth(1);
+    m_splitter->setStretchFactor(1, 3);
+
+    setCentralWidget(m_splitter);
 }
