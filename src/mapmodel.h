@@ -23,6 +23,8 @@
 
 #include <QAbstractItemModel>
 
+#include "ngstore/api.h"
+
 constexpr const char * DEFAULT_MAP_NAME = "default";
 constexpr const char * DEFAULT_MAP_DESCRIPTION = "default map";
 constexpr unsigned short DEFAULT_EPSG = 3857;
@@ -30,10 +32,6 @@ constexpr double DEFAULT_MAX_X = 20037508.34; // 180.0
 constexpr double DEFAULT_MAX_Y = 20037508.34; // 90.0
 constexpr double DEFAULT_MIN_X = -DEFAULT_MAX_X;
 constexpr double DEFAULT_MIN_Y = -DEFAULT_MAX_Y;
-
-//#define MIN_OFF_PX 2
-//#define TM_ZOOMING 200
-//#define YORIENT 0
 
 class MapModel : public QAbstractItemModel
 {
@@ -78,7 +76,13 @@ public:
     bool removeRows(int row, int count,
                     const QModelIndex &parent = QModelIndex()) override;
 
+    // Map functions
     unsigned char mapId() const;
+    void setSize(int w, int h, bool YAxisInverted = false);
+    void draw(enum ngsDrawState state, ngsProgressFunc callback,
+                 void* callbackData);
+    void setBackground(const ngsRGBA &color);
+    ngsCoordinate getCenter();
 
 private:
     unsigned char m_mapId;

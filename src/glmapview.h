@@ -23,9 +23,6 @@
 #include <QOpenGLWidget>
 #include <QTimer>
 
-// ngstore
-#include "ngstore/api.h"
-
 #include "locationstatus.h"
 #include "mapmodel.h"
 
@@ -34,8 +31,8 @@ class GlMapView : public QOpenGLWidget
     Q_OBJECT
 public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
-    void setModel(MapModel *mapModel) { m_mapModel = mapModel; }
-
+    void setModel(MapModel *mapModel);
+    bool cancelDraw() const { return false; }
 
 signals:
 
@@ -44,7 +41,6 @@ public slots:
 
     // QOpenGLWidget interface
 protected:
-    virtual void initializeGL() override;
     virtual void resizeGL(int w, int h) override;
     virtual void paintGL() override;
 
@@ -54,8 +50,8 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void wheelEvent(QWheelEvent* event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
+
 protected:
-    void initMap();
     void draw(enum ngsDrawState state);
 
 protected:

@@ -20,8 +20,6 @@
  ****************************************************************************/
 #include "mapmodel.h"
 
-#include "ngstore/api.h"
-
 MapModel::MapModel(QObject *parent)
     : QAbstractItemModel(parent), m_mapId(0)
 {
@@ -147,4 +145,33 @@ bool MapModel::removeRows(int row, int count, const QModelIndex &parent)
 unsigned char MapModel::mapId() const
 {
     return m_mapId;
+}
+
+void MapModel::setSize(int w, int h, bool YAxisInverted)
+{
+    if(0 == m_mapId)
+        return;
+    ngsMapSetSize(m_mapId, w, h, YAxisInverted ? 1 : 0);
+}
+
+void MapModel::draw(ngsDrawState state, ngsProgressFunc callback,
+                       void *callbackData)
+{
+    if(0 == m_mapId)
+        return;
+    ngsMapDraw(m_mapId, state, callback, callbackData);
+}
+
+void MapModel::setBackground(const ngsRGBA &color)
+{
+    if(0 == m_mapId)
+        return;
+    ngsMapSetBackgroundColor(m_mapId, color);
+}
+
+ngsCoordinate MapModel::getCenter()
+{
+    if(0 == m_mapId)
+        return {0, 0, 0};
+    return ngsMapGetCenter(m_mapId);
 }

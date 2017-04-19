@@ -19,31 +19,24 @@
 ******************************************************************************/
 #include "glmapview.h"
 
-#include <cmath>
-#include <complex.h>
-
 #include <QKeyEvent>
 #include <QApplication>
 #include <QMessageBox>
-#include <QFileInfo>
-#include <QDir>
 #include <QDebug>
 
-static double gComplete = 0;
+constexpr short TM_ZOOMING = 250;
+//#define MIN_OFF_PX 2
 
-int ngsQtDrawingProgressFunc(unsigned int /*taskId*/, double complete,
-                             const char* /*message*/,
+int ngsQtDrawingProgressFunc(enum ngsErrorCode /*status*/,
+                             double complete,
+                             const char* message,
                              void* progressArguments) {
 
-    qDebug() << "Qt draw notiy: " << complete << " g:" << gComplete;
+    qDebug() << "Qt draw notify: " << message << " - complete: " << complete * 100;
 
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
-    if(complete - gComplete > 0.045 || complete > 0.999999) { // each 5% redraw
-        pView->update ();
-        gComplete = complete;
-    }
-
-    return /*pView->continueDraw() ?*/ 1 /*: 0*/;
+    pView->update();
+    return pView->cancelDraw() ? 0 : 1;
 }
 
 
@@ -58,36 +51,44 @@ GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     setFocusPolicy(Qt::WheelFocus);
 }
 
+void GlMapView::setModel(MapModel *mapModel)
+{
+    m_mapModel = mapModel;
+    if(nullptr == m_mapModel)
+        return;
+    const QSize viewSize = size();
+    m_mapModel->setSize(viewSize.width(), viewSize.height());
+    m_mapCenter = m_mapModel->getCenter();
+    ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
+    m_mapModel->setBackground(bk);
+}
+
 void GlMapView::onTimer()
 {
     m_timer->stop(); // one shoot for update gl view
     draw(DS_NORMAL);
 }
 
-void GlMapView::initializeGL()
-{
-//    if(0 == m_mapId)
-//        return;
-//    ngsMapInit(m_mapId);
-}
-
 void GlMapView::resizeGL(int w, int h)
 {
-//    if(0 == m_mapId)
-//        return;
-//    m_drawState = DS_PRESERVED;
-//    m_center.setX (w / 2);
-//    m_center.setY (h / 2);
-//    ngsMapSetSize(m_mapId, w, h, YORIENT);
-//    // send event to full redraw
-//    m_timer->start(TM_ZOOMING);
+    if(nullptr == m_mapModel)
+        return;
+    m_drawState = DS_PRESERVED;
+    m_center.setX (w / 2);
+    m_center.setY (h / 2);
+    m_mapModel->setSize(w, h);
+    // send event to full redraw
+    m_timer->start(TM_ZOOMING);
 }
 
 
 void GlMapView::paintGL()
 {
-//    ngsMapDraw(m_mapId, m_drawState, ngsQtDrawingProgressFunc, (void*)this);
-//    m_drawState = DS_PRESERVED; // draw from cache on display update
+    if(nullptr == m_mapModel)
+        return;
+    m_mapModel->draw(m_drawState, ngsQtDrawingProgressFunc,
+                        static_cast<void*>(this));
+    m_drawState = DS_PRESERVED; // draw from cache on display update
 }
 
 void GlMapView::mousePressEvent(QMouseEvent *event)
@@ -192,25 +193,8 @@ void GlMapView::wheelEvent(QWheelEvent* event)
     */
 }
 
-void GlMapView::initMap()
-{
-/*    if(0 == m_mapId)
-        return;
-
-    const QSize viewSize = size();
-    if(ngsMapSetSize (m_mapId, viewSize.width (), viewSize.height (), YORIENT) ==
-            ngsErrorCodes::EC_SUCCESS) {
-        m_mapCenter = ngsMapGetCenter(m_mapId);
-    }
-    ngsMapSetBackgroundColor (m_mapId, 0, 255, 0, 255);
-    makeCurrent();
-    ngsMapInit(m_mapId);
-    */
-}
-
 void GlMapView::draw(ngsDrawState state)
 {
-    gComplete = 0;
     m_drawState = state;
     update();
 }
