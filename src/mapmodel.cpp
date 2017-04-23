@@ -175,3 +175,11 @@ ngsCoordinate MapModel::getCenter()
         return {0, 0, 0};
     return ngsMapGetCenter(m_mapId);
 }
+
+ngsCoordinate MapModel::getCoordinate(int x, int y)
+{
+    if(0 == m_mapId)
+        return {0, 0, 0};
+    return ngsMapGetCoordinate(m_mapId, static_cast<double>(x),
+                               static_cast<double>(y));
+}

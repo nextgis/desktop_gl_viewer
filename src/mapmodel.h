@@ -83,6 +83,7 @@ public:
                  void* callbackData);
     void setBackground(const ngsRGBA &color);
     ngsCoordinate getCenter();
+    ngsCoordinate getCoordinate(int x, int y);
 
 private:
     unsigned char m_mapId;

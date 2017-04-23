@@ -36,11 +36,12 @@ int main(int argc, char *argv[])
     // gl stuff
     QSurfaceFormat format;
 #ifdef Q_OS_MACOS
+    format.setSamples(4);
     format.setRenderableType(QSurfaceFormat::OpenGL);
 #else
-    //    format.setDepthBufferSize(16);
-    //    format.setStencilBufferSize(8);
-    //    format.setProfile(QSurfaceFormat::CoreProfile);
+//    format.setDepthBufferSize(16);
+//    format.setStencilBufferSize(8);
+//    format.setProfile(QSurfaceFormat::CoreProfile);
     format.setVersion(2, 0);
     format.setRenderableType(QSurfaceFormat::OpenGLES);
 #endif

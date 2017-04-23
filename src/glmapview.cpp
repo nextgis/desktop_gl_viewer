@@ -151,13 +151,13 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
         draw (DS_PRESERVED);
         m_timer->start(TM_ZOOMING);
     }
+    */
 
     if(m_locationStatus) {
-        ngsCoordinate coord = ngsMapGetCoordinate (m_mapId, event->pos ().x (),
-                                                   event->pos ().y ());
-        m_locationStatus->setLocation (coord.X, coord.Y);
+        ngsCoordinate coord = m_mapModel->getCoordinate(event->pos().x(),
+                                                        event->pos().y());
+        m_locationStatus->setLocation(coord.X, coord.Y);
     }
-    */
 }
 
 void GlMapView::mouseReleaseEvent(QMouseEvent *event)

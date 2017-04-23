@@ -70,10 +70,6 @@ MainWindow::MainWindow(QWidget *parent) :
         // create empty map
         m_mapModel->create();
 
-        createActions ();
-        createMenus();
-        createDockWindows();
-        readSettings();
 
 
         // statusbar setup
@@ -84,6 +80,11 @@ MainWindow::MainWindow(QWidget *parent) :
         m_eventsStatus = new EventsStatus;
         statusBar()->addPermanentWidget(m_eventsStatus);
         statusBar()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
+
+        createActions ();
+        createMenus();
+        createDockWindows();
+        readSettings();
 
         /*m_eventsStatus->addMessage ();
         m_eventsStatus->addWarning ();
