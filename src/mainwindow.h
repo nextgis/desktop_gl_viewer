@@ -46,6 +46,7 @@ public slots:
     void addMapLayer();
     void removeMapLayer();
     void loadFinished();
+    void showContextMenu(const QPoint &pos);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -64,7 +65,8 @@ private:
     QAction *m_pLoadAct;
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
-    QAction *m_pAddLayerAct, *m_pDeleteLayerAct;
+    QAction *m_pAddLayerAct;
+    QAction *m_pDeleteLayerAct;
     ProgressDialog *m_progressDlg;
     QSplitter *m_splitter;
 

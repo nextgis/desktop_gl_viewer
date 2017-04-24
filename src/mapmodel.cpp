@@ -72,19 +72,13 @@ QModelIndex MapModel::parent(const QModelIndex &/*index*/) const
     return QModelIndex(); // Plain list now
 }
 
-int MapModel::rowCount(const QModelIndex &parent) const
+int MapModel::rowCount(const QModelIndex &/*parent*/) const
 {
-    if (!parent.isValid())
-        return 0;
-
     return ngsMapLayerCount(m_mapId);
 }
 
-int MapModel::columnCount(const QModelIndex &parent) const
+int MapModel::columnCount(const QModelIndex &/*parent*/) const
 {
-    if (!parent.isValid())
-        return 0;
-
     return 1; // Only layer name
 }
 
@@ -93,7 +87,7 @@ QVariant MapModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    if (role != Qt::DisplayRole)
+    if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
     LayerH layer = static_cast<LayerH>(index.internalPointer());
@@ -182,4 +176,24 @@ ngsCoordinate MapModel::getCoordinate(int x, int y)
         return {0, 0, 0};
     return ngsMapGetCoordinate(m_mapId, static_cast<double>(x),
                                static_cast<double>(y));
+}
+
+void MapModel::createLayer(const char *name, const char *path)
+{
+    if(0 == m_mapId)
+        return;
+    int result = ngsMapCreateLayer(m_mapId, name, path);
+    if(-1 != result) {
+        insertRow(result);
+    }
+}
+
+void MapModel::deleteLayer(const QModelIndex &index)
+{
+    if(0 == m_mapId)
+        return;
+    LayerH layer = static_cast<LayerH>(index.internalPointer());
+    if(ngsMapLayerDelete(m_mapId, layer) == ngsErrorCode::EC_SUCCESS) {
+        removeRow(index.row());
+    }
 }

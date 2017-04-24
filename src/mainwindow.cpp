@@ -70,8 +70,6 @@ MainWindow::MainWindow(QWidget *parent) :
         // create empty map
         m_mapModel->create();
 
-
-
         // statusbar setup
         statusBar()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
         m_locationStatus = new LocationStatus;
@@ -216,12 +214,24 @@ void MainWindow::load()
 
 void MainWindow::addMapLayer()
 {
+    // 1. Choose file dialog
+    CatalogDialog dlg(CatalogDialog::OPEN, tr("Select data to add to map"),
+                      ngsCatalogObjectType::CAT_RASTER_FC_ANY, this);
+    int result = dlg.exec();
 
+    if(1 == result) {
+        std::string path = dlg.getCatalogPath();
+        std::string name = "Layer " + std::to_string(m_mapModel->rowCount());
+        m_mapModel->createLayer(name.c_str(), path.c_str());
+    }
 }
 
 void MainWindow::removeMapLayer()
 {
-
+    QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
+    for(const QModelIndex& index : selection) {
+        m_mapModel->deleteLayer(index);
+    }
 }
 
 void MainWindow::loadFinished()
@@ -277,6 +287,10 @@ void MainWindow::createActions()
     m_pLoadAct->setStatusTip(tr("Load spatial data to internal storage"));
     connect(m_pLoadAct, SIGNAL(triggered()), this, SLOT(load()));
 
+    m_pAddLayerAct = new QAction(tr("Add layer"), this);
+    m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
+    connect(m_pAddLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
+
     m_pExitAct = new QAction(tr("E&xit"), this);
     m_pExitAct->setShortcuts(QKeySequence::Quit);
     m_pExitAct->setStatusTip(tr("Exit the application"));
@@ -292,10 +306,6 @@ void MainWindow::createActions()
     m_pAboutQtAct->setMenuRole(QAction::AboutQtRole);
     connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
-    m_pAddLayerAct = new QAction(tr("Add layer"), this);
-    connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(addMapLayer()));
-    m_pDeleteLayerAct = new QAction(tr("Remove layer"), this);
-    connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(removeMapLayer()));
 }
 
 bool MainWindow::createDatastore()
@@ -333,7 +343,6 @@ void MainWindow::createMenus()
 
     QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
     pMapMenu->addAction(m_pAddLayerAct);
-    pMapMenu->addAction(m_pDeleteLayerAct);
 
     QMenu *pHelpMenu = menuBar()->addMenu(tr("&Help"));
     pHelpMenu->addAction(m_pAboutAct);
@@ -349,6 +358,11 @@ void MainWindow::createDockWindows()
     m_mapLayersView->setDragEnabled(true);
     m_mapLayersView->setDragDropMode(QAbstractItemView::InternalMove);
     m_mapLayersView->setModel(m_mapModel);
+    m_mapLayersView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_mapLayersView, SIGNAL(customContextMenuRequested(QPoint)), this,
+            SLOT(showContextMenu(QPoint)));
+
+
     m_splitter->addWidget(m_mapLayersView);
 
     // mapview setup
@@ -361,3 +375,17 @@ void MainWindow::createDockWindows()
 
     setCentralWidget(m_splitter);
 }
+
+void MainWindow::showContextMenu(const QPoint &pos)
+{
+    // Handle global position
+    QPoint globalPos = m_mapLayersView->mapToGlobal(pos);
+
+    // Create menu and insert some actions
+    QMenu myMenu;
+    myMenu.addAction("Remove", this, SLOT(removeMapLayer()));
+
+    // Show context menu at handling position
+    myMenu.exec(globalPos);
+}
+

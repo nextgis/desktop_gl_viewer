@@ -84,6 +84,8 @@ public:
     void setBackground(const ngsRGBA &color);
     ngsCoordinate getCenter();
     ngsCoordinate getCoordinate(int x, int y);
+    void createLayer(const char *name, const char* path);
+    void deleteLayer(const QModelIndex &index);
 
 private:
     unsigned char m_mapId;
