@@ -28,7 +28,7 @@ EventsStatus::EventsStatus(QWidget *parent) : QWidget(parent), m_errorCount(0),
     m_messageCount(0), m_warningCount(0)
 {
     QHBoxLayout *layout = new QHBoxLayout;
-    // TODO: does this needed? Or can be overridy by style.
+    // Vertical one pixel width line
     QFrame* vFrame = new QFrame;
     vFrame->setFrameShape(QFrame::VLine);
     layout->addWidget (vFrame);

@@ -25,7 +25,7 @@ LocationStatus::LocationStatus()
     m_text = new QLabel(tr("unknown"));
     m_text->setMinimumWidth (260);
     QHBoxLayout *layout = new QHBoxLayout;
-    // TODO: does this needed? Or can be overridy by style.
+    // Vertical one pixel width line
     QFrame* vFrame = new QFrame;
     vFrame->setFrameShape(QFrame::VLine);
     layout->addWidget (vFrame);
