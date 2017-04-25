@@ -356,9 +356,13 @@ void MainWindow::createDockWindows()
     m_mapLayersView->setStyleSheet("QListView { border: none; }");
     m_mapLayersView->setAttribute(Qt::WA_MacShowFocusRect, false);
     m_mapLayersView->setDragEnabled(true);
-    m_mapLayersView->setDragDropMode(QAbstractItemView::InternalMove);
     m_mapLayersView->setModel(m_mapModel);
     m_mapLayersView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_mapLayersView->setDragDropMode(QAbstractItemView::InternalMove);
+    m_mapLayersView->setDefaultDropAction(Qt::MoveAction);
+    //m_mapLayersView->setDropIndicatorShown(true);
+    m_mapLayersView->setMovement(QListView::Snap);
+    m_mapLayersView->setDragDropOverwriteMode(false);
     connect(m_mapLayersView, SIGNAL(customContextMenuRequested(QPoint)), this,
             SLOT(showContextMenu(QPoint)));
 

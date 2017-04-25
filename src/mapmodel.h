@@ -68,13 +68,9 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-    // Add data:
-    bool insertRows(int row, int count,
-                    const QModelIndex &parent = QModelIndex()) override;
-
-    // Remove data:
-    bool removeRows(int row, int count,
-                    const QModelIndex &parent = QModelIndex()) override;
+    Qt::DropActions supportedDropActions() const override {
+        return Qt::MoveAction;
+    }
 
     // Map functions
     unsigned char mapId() const;
@@ -89,6 +85,13 @@ public:
 
 private:
     unsigned char m_mapId;
+
+    // QAbstractItemModel interface
+public:
+    virtual QStringList mimeTypes() const override;
+    virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
+                        int row, int column, const QModelIndex &parent) override;
+    virtual QMimeData *mimeData(const QModelIndexList &indexes) const override;
 };
 
 #endif // MAPMODEL_H

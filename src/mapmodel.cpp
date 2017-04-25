@@ -20,6 +20,11 @@
  ****************************************************************************/
 #include "mapmodel.h"
 
+#include <QDataStream>
+#include <QMimeData>
+
+constexpr const char* MIME = "application/vnd.map.layer";
+
 MapModel::MapModel(QObject *parent)
     : QAbstractItemModel(parent), m_mapId(0)
 {
@@ -118,24 +123,6 @@ Qt::ItemFlags MapModel::flags(const QModelIndex &index) const
         return Qt::ItemIsDropEnabled | defaultFlags;
 }
 
-bool MapModel::insertRows(int row, int count, const QModelIndex &parent)
-{
-    beginInsertRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
-    endInsertRows();
-
-    return false;
-}
-
-bool MapModel::removeRows(int row, int count, const QModelIndex &parent)
-{
-    beginRemoveRows(parent, row, row + count - 1);
-    // FIXME: Implement me!
-    endRemoveRows();
-
-    return false;
-}
-
 unsigned char MapModel::mapId() const
 {
     return m_mapId;
@@ -184,7 +171,9 @@ void MapModel::createLayer(const char *name, const char *path)
         return;
     int result = ngsMapCreateLayer(m_mapId, name, path);
     if(-1 != result) {
+        beginInsertRows(QModelIndex(), result, result);
         insertRow(result);
+        endInsertRows();
     }
 }
 
@@ -194,6 +183,67 @@ void MapModel::deleteLayer(const QModelIndex &index)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
     if(ngsMapLayerDelete(m_mapId, layer) == ngsErrorCode::EC_SUCCESS) {
+        beginRemoveRows(index.parent(), index.row(), index.row());
         removeRow(index.row());
+        endRemoveRows();
     }
+}
+
+QStringList MapModel::mimeTypes() const
+{
+    QStringList types;
+    types << MIME;
+    return types;
+}
+
+bool MapModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+                            int row, int /*column*/, const QModelIndex &parent)
+{
+    if(0 == m_mapId)
+        return false;
+
+    if (action == Qt::IgnoreAction)
+        return true;
+
+    if (!data->hasFormat(MIME))
+        return false;
+
+    LayerH beforeLayer = parent.internalPointer();
+
+    QByteArray encodedData = data->data(MIME);
+    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+
+     while (!stream.atEnd()) {
+         qint64 pointer;
+         stream >> pointer;
+         LayerH movedLayer = reinterpret_cast<LayerH>(pointer);
+
+         bool result;
+         beginResetModel();
+         result = ngsMapLayerReorder(m_mapId, beforeLayer, movedLayer) ==
+                              ngsErrorCode::EC_SUCCESS;
+         endResetModel();
+         return result;
+     }
+
+    return false;
+}
+
+
+QMimeData *MapModel::mimeData(const QModelIndexList &indexes) const
+{
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+     foreach (QModelIndex index, indexes) {
+         if (index.isValid()) {
+             qint64 pointer = reinterpret_cast<qint64>(index.internalPointer());
+             stream << pointer;
+         }
+     }
+
+     mimeData->setData(MIME, encodedData);
+     return mimeData;
 }
