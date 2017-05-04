@@ -23,19 +23,46 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QDebug>
+#include <QElapsedTimer>
+
+#ifdef _DEBUG
+#   include <chrono>
+#endif //DEBUG
 
 constexpr short TM_ZOOMING = 250;
 //#define MIN_OFF_PX 2
+static bool fixDrawTime = false;
+static QElapsedTimer fixDrawtimer;
 
-int ngsQtDrawingProgressFunc(enum ngsErrorCode /*status*/,
-                             double complete,
-                             const char* message,
+int ngsQtDrawingProgressFunc(enum ngsErrorCode status,
+                             double /*complete*/,
+                             const char* /*message*/,
                              void* progressArguments) {
 
-    qDebug() << "Qt draw notify: " << message << " - complete: " << complete * 100;
+//    qDebug() << "Qt draw notify: " << message << " - complete: " << complete * 100;
+
+    if(status == ngsErrorCode::EC_FINISHED) {
+        if(fixDrawTime) {
+            fixDrawTime = false;
+
+            if(fixDrawtimer.isValid()) {
+                qDebug() << "The drawing took " << fixDrawtimer.elapsed() << " milliseconds";
+            }
+
+            fixDrawtimer.invalidate();
+        }
+        return 1;
+    }
+    else if(!fixDrawTime && status == ngsErrorCode::EC_IN_PROCESS) {
+        fixDrawTime = true;
+        fixDrawtimer.start();
+    }
+
 
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
-    pView->update();
+    if(status == ngsErrorCode::EC_CONTINUE) {
+        pView->update();
+    }
     return pView->cancelDraw() ? 0 : 1;
 }
 
