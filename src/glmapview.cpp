@@ -34,14 +34,14 @@ constexpr short TM_ZOOMING = 250;
 static bool fixDrawTime = false;
 static QElapsedTimer fixDrawtimer;
 
-int ngsQtDrawingProgressFunc(enum ngsErrorCode status,
+int ngsQtDrawingProgressFunc(enum ngsCode status,
                              double /*complete*/,
                              const char* /*message*/,
                              void* progressArguments) {
 
 //    qDebug() << "Qt draw notify: " << message << " - complete: " << complete * 100;
 
-    if(status == ngsErrorCode::EC_FINISHED) {
+    if(status == ngsCode::COD_FINISHED) {
         if(fixDrawTime) {
             fixDrawTime = false;
 
@@ -53,14 +53,14 @@ int ngsQtDrawingProgressFunc(enum ngsErrorCode status,
         }
         return 1;
     }
-    else if(!fixDrawTime && status == ngsErrorCode::EC_IN_PROCESS) {
+    else if(!fixDrawTime && status == ngsCode::COD_IN_PROCESS) {
         fixDrawTime = true;
         fixDrawtimer.start();
     }
 
 
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
-    if(status == ngsErrorCode::EC_CONTINUE) {
+    if(status == ngsCode::COD_CONTINUE) {
         pView->update();
     }
     return pView->cancelDraw() ? 0 : 1;

@@ -34,7 +34,7 @@
 #include "version.h"
 
 // progress function
-int loadProgressFunction(enum ngsErrorCode /*status*/,
+int loadProgressFunction(enum ngsCode /*status*/,
                           double complete,
                           const char* /*message*/,
                           void* progressArguments)
@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ngsDestroyList(options);
 
-    if(result == ngsErrorCode::EC_SUCCESS && createDatastore()) {
+    if(result == ngsCode::COD_SUCCESS && createDatastore()) {
         m_mapModel = new MapModel();
         // create empty map
         m_mapModel->create();
@@ -173,7 +173,7 @@ void MainWindow::save()
         std::string savePath = dlg.getCatalogPath();
 
         if(ngsMapSave(m_mapModel->mapId(), savePath.c_str()) !=
-                ngsErrorCode::EC_SUCCESS) {
+                ngsCode::COD_SUCCESS) {
             QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
         }
         else {
@@ -237,8 +237,8 @@ void MainWindow::removeMapLayer()
 void MainWindow::loadFinished()
 {
     int result = m_watcher.result();
-    if(result != ngsErrorCode::EC_SUCCESS &&
-            result != ngsErrorCode::EC_CANCELED) {
+    if(result != ngsCode::COD_SUCCESS &&
+            result != ngsCode::COD_CANCELED) {
         QString message = QString(tr("Load to store failed.\nError: %1")).arg(
                     ngsGetLastErrorMessage());
         QMessageBox::critical(this, tr("Error"), message);
@@ -324,7 +324,7 @@ bool MainWindow::createDatastore()
         options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
 
         return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
-                                      options) == ngsErrorCode::EC_SUCCESS;
+                                      options) == ngsCode::COD_SUCCESS;
     }
     return true;
 }

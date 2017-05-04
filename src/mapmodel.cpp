@@ -104,7 +104,7 @@ bool MapModel::setData(const QModelIndex &index, const QVariant &value, int role
     if (data(index, role) != value) {
         LayerH layer = static_cast<LayerH>(index.internalPointer());
         if(ngsLayerSetName(layer, value.toString().toUtf8()) !=
-                ngsErrorCode::EC_SUCCESS)
+                ngsCode::COD_SUCCESS)
             return false;
         emit dataChanged(index, index, QVector<int>() << role);
         return true;
@@ -182,7 +182,7 @@ void MapModel::deleteLayer(const QModelIndex &index)
     if(0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if(ngsMapLayerDelete(m_mapId, layer) == ngsErrorCode::EC_SUCCESS) {
+    if(ngsMapLayerDelete(m_mapId, layer) == ngsCode::COD_SUCCESS) {
         beginRemoveRows(index.parent(), index.row(), index.row());
         removeRow(index.row());
         endRemoveRows();
@@ -221,7 +221,7 @@ bool MapModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
          bool result;
          beginResetModel();
          result = ngsMapLayerReorder(m_mapId, beforeLayer, movedLayer) ==
-                              ngsErrorCode::EC_SUCCESS;
+                              ngsCode::COD_SUCCESS;
          endResetModel();
          return result;
      }
