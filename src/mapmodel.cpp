@@ -150,19 +150,61 @@ void MapModel::setBackground(const ngsRGBA &color)
     ngsMapSetBackgroundColor(m_mapId, color);
 }
 
-ngsCoordinate MapModel::getCenter()
+ngsCoordinate MapModel::getCenter() const
 {
     if(0 == m_mapId)
         return {0, 0, 0};
     return ngsMapGetCenter(m_mapId);
 }
 
-ngsCoordinate MapModel::getCoordinate(int x, int y)
+bool MapModel::setCenter(const ngsCoordinate &newCenter)
+{
+    if(0 == m_mapId)
+        return false;
+    return ngsMapSetCenter(m_mapId, newCenter.X, newCenter.Y);
+}
+
+ngsCoordinate MapModel::getCoordinate(int x, int y) const
 {
     if(0 == m_mapId)
         return {0, 0, 0};
     return ngsMapGetCoordinate(m_mapId, static_cast<double>(x),
                                static_cast<double>(y));
+}
+
+ngsCoordinate MapModel::getDistance(const QPoint &pt) const
+{
+    if(0 == m_mapId)
+        return {0, 0, 0};
+    return ngsMapGetDistance(m_mapId, pt.x(), pt.y());
+}
+
+double MapModel::getRotate(ngsDirection dir) const
+{
+    if(0 == m_mapId)
+        return 0.0;
+    return ngsMapGetRotate(m_mapId, dir);
+}
+
+bool MapModel::setRotate(ngsDirection dir, double value)
+{
+    if(0 == m_mapId)
+        return false;
+    return ngsMapSetRotate(m_mapId, dir, value) == ngsCode::COD_SUCCESS;
+}
+
+double MapModel::getScale() const
+{
+    if(0 == m_mapId)
+        return 1.0;
+    return ngsMapGetScale(m_mapId);
+}
+
+bool MapModel::setScale(double value)
+{
+    if(0 == m_mapId)
+        return false;
+    return ngsMapSetScale(m_mapId, value);
 }
 
 void MapModel::createLayer(const char *name, const char *path)

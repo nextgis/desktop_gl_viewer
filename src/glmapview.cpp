@@ -19,6 +19,8 @@
 ******************************************************************************/
 #include "glmapview.h"
 
+#include <math.h>
+
 #include <QKeyEvent>
 #include <QApplication>
 #include <QMessageBox>
@@ -30,7 +32,7 @@
 #endif //DEBUG
 
 constexpr short TM_ZOOMING = 250;
-//#define MIN_OFF_PX 2
+constexpr short MIN_OFF_PX = 2;
 static bool fixDrawTime = false;
 static QElapsedTimer fixDrawtimer;
 
@@ -120,65 +122,69 @@ void GlMapView::paintGL()
 
 void GlMapView::mousePressEvent(QMouseEvent *event)
 {
-/*    if (event->button() == Qt::LeftButton) {
+    if(nullptr == m_mapModel)
+        return;
+
+    if (event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
-            m_startRotateZ = ngsMapGetRotate (m_mapId, ngsDirection::DIR_Z);
+            m_startRotateZ = m_mapModel->getRotate(ngsDirection::DIR_Z);
             QSize winSize = size ();
             m_mouseStartPoint.setX (winSize.width () / 2);
             m_mouseStartPoint.setY (winSize.height () / 2);
-            m_beginRotateAngle = atan2 (event->pos().y () - m_mouseStartPoint.y (),
-                                        event->pos().x () - m_mouseStartPoint.x ());
+            m_beginRotateAngle = atan2(event->pos().y() - m_mouseStartPoint.y(),
+                                        event->pos().x() - m_mouseStartPoint.x());
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
-            m_startRotateX = ngsMapGetRotate (m_mapId, ngsDirection::DIR_X);
-            m_mouseStartPoint = event->pos ();
+            m_startRotateX = m_mapModel->getRotate(ngsDirection::DIR_X);
+            m_mouseStartPoint = event->pos();
         }
         else {
-            m_mouseStartPoint = event->pos ();
+            m_mouseStartPoint = event->pos();
         }
     }
-    */
 }
 
 void GlMapView::mouseMoveEvent(QMouseEvent *event)
 {
-/*    if (event->buttons() & Qt::LeftButton) {
-        if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
-            // rotate
-            double rotate = atan2 (event->pos().y () - m_mouseStartPoint.y (),
-                   event->pos().x () - m_mouseStartPoint.x ()) - m_beginRotateAngle;
+    if(nullptr == m_mapModel) {
+        return;
+    }
 
-            ngsMapSetRotate (m_mapId, ngsDirection::Z, -rotate + m_startRotateZ);
-        }
-        else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
+    if (event->buttons() & Qt::LeftButton) {
+        if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true) {
             // rotate
-            double rotate = (event->pos().y () - m_mouseStartPoint.y ()) *
-                    M_PI / size().height ();
+            double rotate = atan2(event->pos().y() - m_mouseStartPoint.y(),
+                   event->pos().x() - m_mouseStartPoint.x()) - m_beginRotateAngle;
+
+            m_mapModel->setRotate(ngsDirection::DIR_Z, -rotate + m_startRotateZ);
+        }
+        else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true) {
+            // rotate
+            double rotate = (event->pos().y() - m_mouseStartPoint.y()) *
+                    M_PI / size().height();
 
             double newAng = m_startRotateX + rotate;
 
             // limit from -17 to 80 degree
             if(newAng < -0.3 || newAng > 1.41)
                 return;
-            ngsMapSetRotate (m_mapId, ngsDirection::DIR_X, newAng);
+            m_mapModel->setRotate(ngsDirection::DIR_X, newAng);
         }
         else {
             // pan
             QPoint mapOffset = event->pos() - m_mouseStartPoint;
-            if(abs(mapOffset.x ()) > MIN_OFF_PX ||
-               abs(mapOffset.y ()) > MIN_OFF_PX) {
-                ngsCoordinate offset = ngsMapGetDistance (m_mapId, mapOffset.x (),
-                                                            mapOffset.y ());
+            if(abs(mapOffset.x()) > MIN_OFF_PX ||
+               abs(mapOffset.y()) > MIN_OFF_PX) {
+                ngsCoordinate offset = m_mapModel->getDistance(mapOffset);
                 m_mapCenter.X -= offset.X;
                 m_mapCenter.Y += offset.Y;
-                ngsMapSetCenter (m_mapId, m_mapCenter.X, m_mapCenter.Y);
+                m_mapModel->setCenter(m_mapCenter);
                 m_mouseStartPoint = event->pos();
             }
         }
         draw (DS_PRESERVED);
         m_timer->start(TM_ZOOMING);
     }
-    */
 
     if(m_locationStatus) {
         ngsCoordinate coord = m_mapModel->getCoordinate(event->pos().x(),
@@ -189,35 +195,39 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
 
 void GlMapView::mouseReleaseEvent(QMouseEvent *event)
 {
-/*    if (event->buttons() & Qt::LeftButton) {
+    if(nullptr == m_mapModel)
+        return;
+
+    if(event->buttons() & Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
         }
         else {
-            m_mapCenter = ngsMapGetCenter(m_mapId);
+            m_mapCenter = m_mapModel->getCenter();
         }
     }
-    */
 }
 
 void GlMapView::wheelEvent(QWheelEvent* event)
 {
-/*    double scale = 1;
+    if(nullptr == m_mapModel)
+        return;
+
+    double scale = 1;
     double delta = event->delta();
     double add = fabs(delta) / 80;
-    scale = ngsMapGetScale(m_mapId);
+    scale = m_mapModel->getScale();
     if(delta > 0)
         scale *= add;
     else
         scale /= add;
 
-    ngsMapSetScale(m_mapId, scale);
+    m_mapModel->setScale(scale);
     draw(DS_PRESERVED);
 
-    // send event to full redraw
+    // Send event to full redraw
     m_timer->start(TM_ZOOMING);
-    */
 }
 
 void GlMapView::draw(ngsDrawState state)

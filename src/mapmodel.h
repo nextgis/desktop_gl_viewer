@@ -22,6 +22,7 @@
 #define MAPMODEL_H
 
 #include <QAbstractItemModel>
+#include <QPointF>
 
 #include "ngstore/api.h"
 
@@ -78,8 +79,14 @@ public:
     void draw(enum ngsDrawState state, ngsProgressFunc callback,
                  void* callbackData);
     void setBackground(const ngsRGBA &color);
-    ngsCoordinate getCenter();
-    ngsCoordinate getCoordinate(int x, int y);
+    ngsCoordinate getCenter() const;
+    bool setCenter(const ngsCoordinate& newCenter);
+    ngsCoordinate getCoordinate(int x, int y) const;
+    ngsCoordinate getDistance(const QPoint& pt) const;
+    double getRotate(enum ngsDirection dir) const;
+    bool setRotate(enum ngsDirection dir, double value);
+    double getScale() const;
+    bool setScale(double value);
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
 
