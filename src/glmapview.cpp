@@ -31,7 +31,7 @@
 #   include <chrono>
 #endif //DEBUG
 
-constexpr short TM_ZOOMING = 250;
+constexpr short TM_ZOOMING = 400;
 constexpr short MIN_OFF_PX = 2;
 static bool fixDrawTime = false;
 static QElapsedTimer fixDrawtimer;
@@ -70,8 +70,10 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
 
 
 GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
-    QOpenGLWidget(parent), m_locationStatus(status),
-    m_drawState(DS_NORMAL)
+    QOpenGLWidget(parent),
+    m_locationStatus(status),
+    m_drawState(DS_NORMAL),
+    m_mapModel(nullptr)
 {
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
@@ -82,6 +84,24 @@ GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
 
 void GlMapView::setModel(MapModel *mapModel)
 {
+    if (m_mapModel == mapModel)
+        return;
+
+    if(nullptr != m_mapModel) {
+        disconnect(m_mapModel, SIGNAL(destroyed()),
+                   this, SLOT(modelDestroyed()));
+        disconnect(m_mapModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+                   this, SLOT(dataChanged(QModelIndex,QModelIndex,QVector<int>)));
+        disconnect(m_mapModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
+                   this, SLOT(layersInserted(QModelIndex,int,int)));
+        disconnect(m_mapModel, SIGNAL(rowsRemoved(QModelIndex,int,int)),
+                   this, SLOT(layersRemoved(QModelIndex,int,int)));
+        disconnect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
+                   this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
+        disconnect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    }
+
+
     m_mapModel = mapModel;
     if(nullptr == m_mapModel)
         return;
@@ -90,12 +110,64 @@ void GlMapView::setModel(MapModel *mapModel)
     m_mapCenter = m_mapModel->getCenter();
     ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
     m_mapModel->setBackground(bk);
+
+    connect(m_mapModel, SIGNAL(destroyed()), this, SLOT(modelDestroyed()));
+    connect(m_mapModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+               this, SLOT(dataChanged(QModelIndex,QModelIndex,QVector<int>)));
+    connect(m_mapModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
+               this, SLOT(layersInserted(QModelIndex,int,int)));
+    connect(m_mapModel, SIGNAL(rowsRemoved(QModelIndex,int,int)),
+               this, SLOT(layersRemoved(QModelIndex,int,int)));
+    connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
+               this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
+    connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+
+    draw(DS_REDRAW);
 }
 
 void GlMapView::onTimer()
 {
     m_timer->stop(); // one shoot for update gl view
     draw(DS_NORMAL);
+}
+
+void GlMapView::modelDestroyed()
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::modelReset()
+{
+    const QSize viewSize = size();
+    m_mapModel->setSize(viewSize.width(), viewSize.height());
+    m_mapCenter = m_mapModel->getCenter();
+    ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
+    m_mapModel->setBackground(bk);
+
+    draw(DS_REDRAW);
+}
+
+void GlMapView::dataChanged(const QModelIndex &/*topLeft*/,
+                            const QModelIndex &/*bottomRight*/,
+                            const QVector<int> &/*roles*/)
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::layersInserted(const QModelIndex &/*parent*/, int /*start*/, int /*end*/)
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::layersRemoved(const QModelIndex &/*parent*/, int /*first*/, int /*last*/)
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*end*/,
+                            const QModelIndex &/*destination*/, int /*row*/)
+{
+    draw(DS_REDRAW);
 }
 
 void GlMapView::resizeGL(int w, int h)

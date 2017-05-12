@@ -36,8 +36,17 @@ public:
 
 signals:
 
-public slots:
-    void onTimer(void);
+protected slots:
+    virtual void onTimer(void);
+    virtual void modelDestroyed();
+    virtual void modelReset();
+    virtual void dataChanged(const QModelIndex &topLeft,
+                             const QModelIndex &bottomRight,
+                             const QVector<int> &roles = QVector<int>());
+    virtual void layersInserted(const QModelIndex &parent, int start, int end);
+    virtual void layersRemoved(const QModelIndex &parent, int first, int last);
+    virtual void layersMoved(const QModelIndex &parent, int start, int end,
+                             const QModelIndex &destination, int row);
 
     // QOpenGLWidget interface
 protected:
