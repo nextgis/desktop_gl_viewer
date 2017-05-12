@@ -138,6 +138,9 @@ void GlMapView::modelDestroyed()
 
 void GlMapView::modelReset()
 {
+    if(nullptr == m_mapModel)
+        return;
+
     const QSize viewSize = size();
     m_mapModel->setSize(viewSize.width(), viewSize.height());
     m_mapCenter = m_mapModel->getCenter();
