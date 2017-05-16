@@ -174,7 +174,9 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
     case ngsCatalogObjectType::CAT_RASTER_VRT:
         return "Virtual raster";
     case ngsCatalogObjectType::CAT_RASTER_WMS:
+        return "WMS Layer";
     case ngsCatalogObjectType::CAT_RASTER_TMS:
+        return "TMS raster";
     case ngsCatalogObjectType::CAT_RASTER_POSTGIS:
     case ngsCatalogObjectType::CAT_RASTER_GDB:
     case ngsCatalogObjectType::CAT_RASTER_GPKG:
