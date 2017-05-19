@@ -60,7 +60,9 @@ MainWindow::MainWindow(QWidget *parent) :
     options = ngsAddNameValue(options, "SETTINGS_DIR",
                               ngsFormFileName(ngsGetCurrentDirectory(), "tmp",
                                               nullptr));
-
+    options = ngsAddNameValue(options, "GDAL_DATA",
+                              qgetenv("GDAL_DATA").constData());
+    options = ngsAddNameValue(options, "NUM_THREADS", "1");
     int result = ngsInit(options);
 
     ngsDestroyList(options);
