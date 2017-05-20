@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                               nullptr));
     options = ngsAddNameValue(options, "GDAL_DATA",
                               qgetenv("GDAL_DATA").constData());
-//    options = ngsAddNameValue(options, "NUM_THREADS", "1");
+    options = ngsAddNameValue(options, "NUM_THREADS", "7");
     int result = ngsInit(options);
 
     ngsDestroyList(options);
