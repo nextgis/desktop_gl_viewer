@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
         m_mapModel->create();
 
         // statusbar setup
-        statusBar()->showMessage(tr("Ready"), 30000); // time limit 30 sec.
+        setStatusText(tr("Ready"), 30000); // time limit 30 sec.
         m_locationStatus = new LocationStatus;
         statusBar()->addPermanentWidget(m_locationStatus);
 
@@ -97,6 +97,11 @@ MainWindow::MainWindow(QWidget *parent) :
     else {
         QMessageBox::critical(this, tr("Error"), tr("Storage initialize failed"));
     }
+}
+
+void MainWindow::setStatusText(const QString &text, int timeout)
+{
+    statusBar()->showMessage(text, timeout);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -372,7 +377,7 @@ void MainWindow::createDockWindows()
     m_splitter->addWidget(m_mapLayersView);
 
     // mapview setup
-    m_mapView = new GlMapView(m_locationStatus);
+    m_mapView = new GlMapView(m_locationStatus, this);
     m_mapView->setModel(m_mapModel);
 
     m_splitter->addWidget(m_mapView);

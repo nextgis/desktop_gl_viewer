@@ -33,8 +33,10 @@ public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
     void setModel(MapModel *mapModel);
     bool cancelDraw() const { return false; }
+    void reportSpeed(qint64 ms);
 
 signals:
+    void setStatusText(const QString &text, int timeout = 0);
 
 protected slots:
     virtual void onTimer(void);

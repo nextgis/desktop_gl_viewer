@@ -47,6 +47,7 @@ public slots:
     void removeMapLayer();
     void loadFinished();
     void showContextMenu(const QPoint &pos);
+    void setStatusText(const QString &text, int timeout = 0);
 
 protected:
     void closeEvent(QCloseEvent *event);

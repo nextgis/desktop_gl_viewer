@@ -18,6 +18,7 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 #include "glmapview.h"
+#include "mainwindow.h"
 
 #include <math.h>
 
@@ -50,6 +51,8 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
 
             if(fixDrawtimer.isValid()) {
                 qDebug() << "The drawing took " << fixDrawtimer.elapsed() << " milliseconds";
+                GlMapView* pView = static_cast<GlMapView*>(progressArguments);
+                pView->reportSpeed(fixDrawtimer.elapsed());
             }
             fixDrawtimer.invalidate();
         }
@@ -77,6 +80,9 @@ GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
 
     setMouseTracking(true);
     setFocusPolicy(Qt::WheelFocus);
+
+    connect(this, SIGNAL(setStatusText(QString, int)), parent,
+            SLOT(setStatusText(QString, int)));
 }
 
 void GlMapView::setModel(MapModel *mapModel)
@@ -120,6 +126,11 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
 
     draw(DS_REDRAW);
+}
+
+void GlMapView::reportSpeed(qint64 ms)
+{
+    emit setStatusText(tr("Drawing took %1 ms").arg(ms), 2000);
 }
 
 void GlMapView::onTimer()
