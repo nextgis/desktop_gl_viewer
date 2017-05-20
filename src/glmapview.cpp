@@ -43,6 +43,7 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
 
 //    qDebug() << "Qt draw notify: " << message << " - complete: " << complete * 100;
 
+
     if(status == ngsCode::COD_FINISHED) {
         if(fixDrawTime) {
             fixDrawTime = false;
@@ -50,21 +51,17 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
             if(fixDrawtimer.isValid()) {
                 qDebug() << "The drawing took " << fixDrawtimer.elapsed() << " milliseconds";
             }
-
             fixDrawtimer.invalidate();
         }
         return 1;
     }
-    else if(!fixDrawTime && status == ngsCode::COD_IN_PROCESS) {
+    else if(!fixDrawTime) {
         fixDrawTime = true;
         fixDrawtimer.start();
     }
 
-
     GlMapView* pView = static_cast<GlMapView*>(progressArguments);
-    if(status == ngsCode::COD_CONTINUE) {
-        pView->update();
-    }
+    pView->update();
     return pView->cancelDraw() ? 0 : 1;
 }
 
