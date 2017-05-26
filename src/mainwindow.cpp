@@ -107,7 +107,9 @@ void MainWindow::setStatusText(const QString &text, int timeout)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
-    delete m_mapModel;
+    if(m_mapModel)
+        delete m_mapModel;
+    m_mapModel = nullptr;
     ngsUnInit();
     event->accept();
 }
@@ -206,9 +208,12 @@ void MainWindow::load()
         char** popt = const_cast<char**>(options);
         ngsProgressFunc func = loadProgressFunction;
 
+
+        CatalogObjectH shapeFile = ngsCatalogObjectGet(shapePath.c_str());
+        CatalogObjectH store = ngsCatalogObjectGet(m_storePath.c_str());
         QFuture<int> future = QtConcurrent::run(ngsCatalogObjectLoad,
-                                                shapePath.c_str(),
-                                                m_storePath.c_str(),
+                                                shapeFile,
+                                                store,
                                                 popt,
                                                 func,
                                                 static_cast<void*>(m_progressDlg));
@@ -330,7 +335,8 @@ bool MainWindow::createDatastore()
                         ngsCatalogObjectType::CAT_CONTAINER_NGS).c_str());
         options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
 
-        return ngsCatalogObjectCreate(catalogPath.c_str(), storeName.c_str(),
+        CatalogObjectH storeDir = ngsCatalogObjectGet(catalogPath.c_str());
+        return ngsCatalogObjectCreate(storeDir, storeName.c_str(),
                                       options) == ngsCode::COD_SUCCESS;
     }
     return true;

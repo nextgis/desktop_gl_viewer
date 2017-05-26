@@ -46,10 +46,12 @@ int CatalogItem::childCount()
         // load children
         ngsCatalogObjectInfo* pathInfo;
         if(nullptr == parentItem) {
-            pathInfo = ngsCatalogObjectQuery("ngc://", m_filter);
+            CatalogObjectH catalog = ngsCatalogObjectGet("ngc://");
+            pathInfo = ngsCatalogObjectQuery(catalog, m_filter);
         }
         else {
-            pathInfo = ngsCatalogObjectQuery(getPath().c_str(), m_filter);
+            CatalogObjectH directory = ngsCatalogObjectGet(getPath().c_str());
+            pathInfo = ngsCatalogObjectQuery(directory, m_filter);
         }
         if(nullptr != pathInfo) {
             int count = 0;

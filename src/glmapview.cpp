@@ -299,7 +299,7 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
     double scale = 1;
     double delta = event->delta();
-    double add = fabs(delta) / 80;
+    double add = fabs(delta) / 60;
     scale = m_mapModel->getScale();
     if(delta > 0)
         scale *= add;
