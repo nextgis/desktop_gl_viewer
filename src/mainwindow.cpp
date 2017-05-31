@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     options = ngsAddNameValue(options, "GDAL_DATA",
                               qgetenv("GDAL_DATA").constData());
     options = ngsAddNameValue(options, "NUM_THREADS", "7");
+    options = ngsAddNameValue(options, "GL_MULTISAMPLE", "ON");
     int result = ngsInit(options);
 
     ngsDestroyList(options);

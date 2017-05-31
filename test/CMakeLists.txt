@@ -19,6 +19,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #***************************************************************************
 
+add_custom_target (clean_tests ALL COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/tmp" )
+
 if(UNIX AND NOT APPLE)
 
     find_package (EGL REQUIRED)
@@ -48,8 +50,6 @@ if(UNIX AND NOT APPLE)
         esTransform.c
         esUtil.c
     )
-
-    add_custom_target (clean_tests ALL COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/tmp" )
 
     add_executable(egltriangle Hello_Triangle.c ${CSOURCES} ${HHEADERS})
     target_link_libraries(egltriangle ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES}
