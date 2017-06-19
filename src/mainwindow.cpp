@@ -324,8 +324,12 @@ void MainWindow::createActions()
 bool MainWindow::createDatastore()
 {
     // Check if datastore exists
-    std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr);
-    std::string catalogPath = ngsCatalogPathFromSystem(path.c_str());
+    std::string path(ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr));
+
+    char* tempStr = ngsCatalogPathFromSystem(path.c_str());
+    std::string catalogPath(tempStr);
+    ngsFree(tempStr);
+
     std::string storeName("main.ngst");
     m_storePath = catalogPath + "/" + storeName;
 
