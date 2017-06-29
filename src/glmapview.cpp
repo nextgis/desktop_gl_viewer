@@ -262,6 +262,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                 m_mapCenter.X -= offset.X;
                 m_mapCenter.Y += offset.Y;
                 m_mapModel->setCenter(m_mapCenter);
+                m_mapCenter = m_mapModel->getCenter(); // center may be not changed
                 m_mouseStartPoint = event->pos();
             }
         }

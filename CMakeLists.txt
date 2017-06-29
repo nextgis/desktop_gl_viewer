@@ -134,8 +134,11 @@ else()
     add_executable(${APP_NAME} ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
 endif()
 
+find_library(CARBON_FRAMEWORK Carbon)
+find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${APP_NAME} Qt5::Widgets Qt5::Svg ngstore)
+target_link_libraries(${APP_NAME} Qt5::Widgets Qt5::Svg ngstore ${COREFOUNDATION_FRAMEWORK} ${CARBON_FRAMEWORK})
 
 # install
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )

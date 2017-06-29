@@ -43,7 +43,7 @@ bool MapModel::create(const char *name, const char *description,
     beginResetModel();
     if(isValid())
         ngsMapClose(m_mapId);
-    m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);
+    m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);    
     endResetModel();
     return isValid();
 }
@@ -133,6 +133,7 @@ void MapModel::setSize(int w, int h, bool YAxisInverted)
     if(0 == m_mapId)
         return;
     ngsMapSetSize(m_mapId, w, h, YAxisInverted ? 1 : 0);
+    ngsMapSetExtentLimits(m_mapId, -20037508.34, -20037508.34, 20037508.34, 20037508.34);
 }
 
 void MapModel::draw(ngsDrawState state, ngsProgressFunc callback,
