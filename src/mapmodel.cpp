@@ -54,6 +54,7 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
+    setOverlayVisible(MOT_EDIT, true); // FIXME: for test, remove it
     endResetModel();
 
     return isValid();
@@ -289,4 +290,11 @@ QMimeData *MapModel::mimeData(const QModelIndexList &indexes) const
 
      mimeData->setData(MIME, encodedData);
      return mimeData;
+}
+
+void MapModel::setOverlayVisible(ngsMapOverlyType typeMask, char visible)
+{
+    if (0 == m_mapId)
+        return;
+    ngsOverlaySetVisible(m_mapId, typeMask, visible);
 }
