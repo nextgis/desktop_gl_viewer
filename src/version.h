@@ -26,7 +26,7 @@
 #define APP_COMMENT "Application for view geospatial data"
 
 #define NGGLV_MAJOR_VERSION     0
-#define NGGLV_MINOR_VERSION     2
+#define NGGLV_MINOR_VERSION     3
 #define NGGLV_PATCH_NUMBER      0
 
 #define NGGLV_VERSION_NUMBER ( NGGLV_MAJOR_VERSION * 1000) + ( NGGLV_MINOR_VERSION \

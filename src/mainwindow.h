@@ -43,6 +43,7 @@ public slots:
     void open();
     void newFile();
     void load();
+    void createOverviews();
     void addMapLayer();
     void removeMapLayer();
     void loadFinished();
@@ -64,6 +65,7 @@ private:
     QAction *m_pSaveAct;
     QAction *m_pAboutAct;
     QAction *m_pLoadAct;
+    QAction *m_createOverviewsAct;
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
     QAction *m_pAddLayerAct;

@@ -225,6 +225,11 @@ void MainWindow::load()
     }
 }
 
+void MainWindow::createOverviews()
+{
+
+}
+
 void MainWindow::addMapLayer()
 {
     // 1. Choose file dialog
@@ -300,6 +305,10 @@ void MainWindow::createActions()
     m_pLoadAct->setStatusTip(tr("Load spatial data to internal storage"));
     connect(m_pLoadAct, SIGNAL(triggered()), this, SLOT(load()));
 
+    m_createOverviewsAct = new QAction(tr("Create vector overviews"), this);
+    m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
+    connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
+
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
     connect(m_pAddLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
@@ -354,6 +363,7 @@ void MainWindow::createMenus()
 
     QMenu *pDataMenu = menuBar()->addMenu(tr("&Data"));
     pDataMenu->addAction(m_pLoadAct);
+    pDataMenu->addAction(m_createOverviewsAct);
 
     QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
     pMapMenu->addAction(m_pAddLayerAct);
