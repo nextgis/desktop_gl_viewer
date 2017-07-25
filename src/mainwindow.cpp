@@ -227,7 +227,36 @@ void MainWindow::load()
 
 void MainWindow::createOverviews()
 {
+    // Select feature class
+    CatalogDialog dlg(CatalogDialog::OPEN, tr("Select feature class to create overviews"),
+                      ngsCatalogObjectType::CAT_FC_ANY, this);
+    int result = dlg.exec();
 
+    if(1 == result) {
+        std::string shapePath = dlg.getCatalogPath();
+
+        // 2. Show progress dialog
+        m_progressDlg = new ProgressDialog(tr("Proceeding ..."), this);
+
+        const char *options[3] = {"FORCE=ON",
+                                  "ZOOM_LEVELS=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                                  nullptr};
+        char** popt = const_cast<char**>(options);
+        ngsProgressFunc func = loadProgressFunction;
+
+
+        CatalogObjectH shapeFile = ngsCatalogObjectGet(shapePath.c_str());
+        // Run overview create
+        QFuture<int> future = QtConcurrent::run(ngsFeatureClassCreateOverviews,
+                                                shapeFile,
+                                                popt,
+                                                func,
+                                                static_cast<void*>(m_progressDlg));
+
+        m_watcher.setFuture(future);
+
+        m_progressDlg->open();
+    }
 }
 
 void MainWindow::addMapLayer()
