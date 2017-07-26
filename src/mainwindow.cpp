@@ -259,6 +259,15 @@ void MainWindow::createOverviews()
     }
 }
 
+void MainWindow::createGeometry()
+{
+    QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
+    for(const QModelIndex& index : selection) {
+        m_mapModel->createGeometry(index);
+        break;
+    }
+}
+
 void MainWindow::addMapLayer()
 {
     // 1. Choose file dialog
@@ -338,6 +347,10 @@ void MainWindow::createActions()
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
     connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
 
+    m_createGeometryAct = new QAction(tr("Create new geometry"), this);
+    m_createGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
+    connect(m_createGeometryAct, SIGNAL(triggered()), this, SLOT(createGeometry()));
+
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
     connect(m_pAddLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
@@ -393,6 +406,7 @@ void MainWindow::createMenus()
     QMenu *pDataMenu = menuBar()->addMenu(tr("&Data"));
     pDataMenu->addAction(m_pLoadAct);
     pDataMenu->addAction(m_createOverviewsAct);
+    pDataMenu->addAction(m_createGeometryAct);
 
     QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
     pMapMenu->addAction(m_pAddLayerAct);

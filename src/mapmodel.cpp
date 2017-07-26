@@ -233,6 +233,16 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
+void MapModel::createGeometry(const QModelIndex& index)
+{
+    if (0 == m_mapId)
+        return;
+    LayerH layer = static_cast<LayerH>(index.internalPointer());
+    if (ngsLayerCreateGeometry(m_mapId, layer) == ngsCode::COD_SUCCESS) {
+        emit geometryCreated(index);
+    }
+}
+
 QStringList MapModel::mimeTypes() const
 {
     QStringList types;
