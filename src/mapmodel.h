@@ -90,6 +90,11 @@ public:
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
+    void createGeometry(const QModelIndex &index);
+
+signals:
+    void geometryCreated(const QModelIndex &index);
+
 
 private:
     unsigned char m_mapId;

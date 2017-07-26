@@ -124,6 +124,8 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
+               this, SLOT(geometryCreated(QModelIndex)));
 
     draw(DS_REDRAW);
 }
@@ -179,6 +181,11 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
                             const QModelIndex &/*destination*/, int /*row*/)
 {
     draw(DS_REDRAW);
+}
+
+void GlMapView::geometryCreated(const QModelIndex& parent)
+{
+    draw(DS_PRESERVED);
 }
 
 void GlMapView::resizeGL(int w, int h)
