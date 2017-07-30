@@ -104,8 +104,7 @@ bool MapModel::setData(const QModelIndex &index, const QVariant &value, int role
 {
     if (data(index, role) != value) {
         LayerH layer = static_cast<LayerH>(index.internalPointer());
-        if(ngsLayerSetName(layer, value.toString().toUtf8()) !=
-                ngsCode::COD_SUCCESS)
+        if(ngsLayerSetName(layer, value.toString().toUtf8()) != COD_SUCCESS)
             return false;
         emit dataChanged(index, index, QVector<int>() << role);
         return true;
@@ -192,7 +191,7 @@ bool MapModel::setRotate(ngsDirection dir, double value)
 {
     if(0 == m_mapId)
         return false;
-    return ngsMapSetRotate(m_mapId, dir, value) == ngsCode::COD_SUCCESS;
+    return ngsMapSetRotate(m_mapId, dir, value) == COD_SUCCESS;
 }
 
 double MapModel::getScale() const
@@ -226,7 +225,7 @@ void MapModel::deleteLayer(const QModelIndex &index)
     if(0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if(ngsMapLayerDelete(m_mapId, layer) == ngsCode::COD_SUCCESS) {
+    if(ngsMapLayerDelete(m_mapId, layer) == COD_SUCCESS) {
         beginRemoveRows(index.parent(), index.row(), index.row());
         removeRow(index.row());
         endRemoveRows();
@@ -238,7 +237,7 @@ void MapModel::createGeometry(const QModelIndex& index)
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsLayerCreateGeometry(m_mapId, layer) == ngsCode::COD_SUCCESS) {
+    if (ngsLayerCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
         emit geometryCreated(index);
     }
 }
@@ -275,7 +274,7 @@ bool MapModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
          bool result;
          beginResetModel();
          result = ngsMapLayerReorder(m_mapId, beforeLayer, movedLayer) ==
-                              ngsCode::COD_SUCCESS;
+                              COD_SUCCESS;
          endResetModel();
          return result;
      }
