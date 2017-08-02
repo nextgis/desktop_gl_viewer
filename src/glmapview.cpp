@@ -110,7 +110,6 @@ void GlMapView::setModel(MapModel *mapModel)
         return;
     const QSize viewSize = size();
     m_mapModel->setSize(viewSize.width(), viewSize.height());
-    m_mapCenter = m_mapModel->getCenter();
     ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
     m_mapModel->setBackground(bk);
 
@@ -153,7 +152,6 @@ void GlMapView::modelReset()
 
     const QSize viewSize = size();
     m_mapModel->setSize(viewSize.width(), viewSize.height());
-    m_mapCenter = m_mapModel->getCenter();
     ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
     m_mapModel->setBackground(bk);
 
@@ -183,7 +181,7 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
     draw(DS_REDRAW);
 }
 
-void GlMapView::geometryCreated(const QModelIndex& parent)
+void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
 {
     draw(DS_PRESERVED);
 }
@@ -215,6 +213,7 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
     if(nullptr == m_mapModel)
         return;
 
+    // For mouse press event this includes the button that caused the event.
     if (event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
             m_startRotateZ = m_mapModel->getRotate(ngsDirection::DIR_Z);
@@ -230,6 +229,8 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
         }
         else {
             m_mouseStartPoint = event->pos();
+            m_mapModel->mapTouch(
+                    m_mouseStartPoint.x(), m_mouseStartPoint.y(), MTT_ON_DOWN);
         }
     }
 }
@@ -240,15 +241,16 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
         return;
     }
 
+    // For mouse move events, this is all buttons that are pressed down.
     if (event->buttons() & Qt::LeftButton) {
-        if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true) {
+        if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
             // rotate
             double rotate = atan2(event->pos().y() - m_mouseStartPoint.y(),
                    event->pos().x() - m_mouseStartPoint.x()) - m_beginRotateAngle;
 
             m_mapModel->setRotate(ngsDirection::DIR_Z, -rotate + m_startRotateZ);
         }
-        else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true) {
+        else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)) {
             // rotate
             double rotate = (event->pos().y() - m_mouseStartPoint.y()) *
                     M_PI / size().height();
@@ -265,12 +267,9 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             QPoint mapOffset = event->pos() - m_mouseStartPoint;
             if(abs(mapOffset.x()) > MIN_OFF_PX ||
                abs(mapOffset.y()) > MIN_OFF_PX) {
-                ngsCoordinate offset = m_mapModel->getDistance(mapOffset);
-                m_mapCenter.X -= offset.X;
-                m_mapCenter.Y += offset.Y;
-                m_mapModel->setCenter(m_mapCenter);
-                m_mapCenter = m_mapModel->getCenter(); // center may be not changed
                 m_mouseStartPoint = event->pos();
+                m_mapModel->mapTouch(m_mouseStartPoint.x(),
+                        m_mouseStartPoint.y(), MTT_ON_MOVE);
             }
         }
         draw (DS_PRESERVED);
@@ -289,13 +288,16 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
     if(nullptr == m_mapModel)
         return;
 
-    if(event->buttons() & Qt::LeftButton) {
+    // For mouse release events this excludes the button that caused the event.
+    if(!(event->modifiers() & Qt::LeftButton)) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
         }
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
         }
         else {
-            m_mapCenter = m_mapModel->getCenter();
+            ngsDrawState drawState = m_mapModel->mapTouch(
+                    m_mouseStartPoint.x(), m_mouseStartPoint.y(), MTT_ON_UP);
+            draw(drawState);
         }
     }
 }

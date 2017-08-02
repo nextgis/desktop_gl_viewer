@@ -91,6 +91,7 @@ public:
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
     void createGeometry(const QModelIndex &index);
+    ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
     void geometryCreated(const QModelIndex &index);

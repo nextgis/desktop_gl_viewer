@@ -242,6 +242,13 @@ void MapModel::createGeometry(const QModelIndex& index)
     }
 }
 
+ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
+{
+    if (0 == m_mapId)
+        return DS_NOTHING;
+    return ngsMapTouch(m_mapId, x, y, type);
+}
+
 QStringList MapModel::mimeTypes() const
 {
     QStringList types;

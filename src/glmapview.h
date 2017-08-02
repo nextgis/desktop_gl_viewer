@@ -67,7 +67,6 @@ protected:
     void draw(enum ngsDrawState state);
 
 protected:
-    ngsCoordinate m_mapCenter;
     QPoint m_mouseStartPoint;
     QPoint m_center;
     double m_startRotateZ, m_startRotateX, m_beginRotateAngle;
