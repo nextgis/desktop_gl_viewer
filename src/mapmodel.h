@@ -75,7 +75,7 @@ public:
 
     // Map functions
     unsigned char mapId() const;
-    void setSize(int w, int h, bool YAxisInverted = false);
+    void setSize(int w, int h, bool YAxisInverted = true);
     void draw(enum ngsDrawState state, ngsProgressFunc callback,
                  void* callbackData);
     void setBackground(const ngsRGBA &color);
@@ -91,6 +91,7 @@ public:
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
     void createGeometry(const QModelIndex &index);
+    ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
     void geometryCreated(const QModelIndex &index);
