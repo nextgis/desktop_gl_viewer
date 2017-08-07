@@ -75,7 +75,7 @@ public:
 
     // Map functions
     unsigned char mapId() const;
-    void setSize(int w, int h, bool YAxisInverted = false);
+    void setSize(int w, int h, bool YAxisInverted = true);
     void draw(enum ngsDrawState state, ngsProgressFunc callback,
                  void* callbackData);
     void setBackground(const ngsRGBA &color);
