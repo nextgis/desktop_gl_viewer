@@ -146,7 +146,7 @@ void MainWindow::readSettings()
         move(settings.value("frame_pos", QPoint(200, 200)).toPoint());
     }
     restoreState(settings.value("frame_state").toByteArray());
-    statusBar()->setVisible(settings.value("frame_statusbar_shown", true).toBool());
+    statusBar()->setVisible(true);// settings.value("frame_statusbar_shown", true).toBool());
     m_splitter->restoreState(settings.value("splitter_sizes").toByteArray());
     settings.endGroup();
 }

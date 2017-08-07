@@ -195,7 +195,7 @@ void GlMapView::resizeGL(int w, int h)
     m_drawState = DS_PRESERVED;
     m_center.setX (w / 2);
     m_center.setY (h / 2);
-    m_mapModel->setSize(w, h);
+    m_mapModel->setSize(w, h, true);
     // send event to full redraw
     m_timer->start(TM_ZOOMING);
 }
@@ -267,7 +267,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                abs(mapOffset.y()) > MIN_OFF_PX) {
                 ngsCoordinate offset = m_mapModel->getDistance(mapOffset);
                 m_mapCenter.X -= offset.X;
-                m_mapCenter.Y += offset.Y;
+                m_mapCenter.Y -= offset.Y;
                 m_mapModel->setCenter(m_mapCenter);
                 m_mapCenter = m_mapModel->getCenter(); // center may be not changed
                 m_mouseStartPoint = event->pos();
@@ -275,12 +275,12 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
         }
         draw (DS_PRESERVED);
         m_timer->start(TM_ZOOMING);
-    }
-
-    if(m_locationStatus) {
-        ngsCoordinate coord = m_mapModel->getCoordinate(event->pos().x(),
-                                                        event->pos().y());
-        m_locationStatus->setLocation(coord.X, coord.Y);
+    } else {
+        if(m_locationStatus) {
+            ngsCoordinate coord = m_mapModel->getCoordinate(event->pos().x(),
+                                                            event->pos().y());
+            m_locationStatus->setLocation(coord.X, coord.Y);
+        }
     }
 }
 
