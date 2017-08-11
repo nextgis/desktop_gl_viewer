@@ -3,7 +3,7 @@ Language:        Cpp
 DisableFormat:   false
 # BasedOnStyle:  Chromium
 AccessModifierOffset: -4
-AlignAfterOpenBracket: DontAlign
+AlignAfterOpenBracket: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlinesLeft: true
@@ -26,7 +26,7 @@ BraceWrapping:
   AfterControlStatement: false
   AfterEnum:       true
   AfterFunction:   true
-  AfterNamespace:  true
+  AfterNamespace:  false
   AfterObjCDeclaration: false
   AfterStruct:     true
   AfterUnion:      true
@@ -75,9 +75,9 @@ ReflowComments:  false
 SortIncludes:    true
 SpaceAfterCStyleCast: true
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens: ControlStatements
+SpaceBeforeParens: Never
 SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 2
+SpacesBeforeTrailingComments: 1
 SpacesInAngles:  false
 SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
