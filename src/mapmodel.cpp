@@ -251,6 +251,15 @@ void MapModel::editAddGeometry()
     }
 }
 
+void MapModel::editDeleteGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditDeleteGeometry(m_mapId) == COD_SUCCESS) {
+        emit editGeometryDeleted();
+    }
+}
+
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
 {
     if (0 == m_mapId)

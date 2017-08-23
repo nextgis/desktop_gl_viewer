@@ -51,6 +51,7 @@ protected slots:
                              const QModelIndex &destination, int row);
     virtual void editGeometryCreated(const QModelIndex& parent);
     virtual void editGeometryAdded();
+    virtual void editGeometryDeleted();
 
     // QOpenGLWidget interface
 protected:

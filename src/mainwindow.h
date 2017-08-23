@@ -46,6 +46,7 @@ public slots:
     void createOverviews();
     void editCreateGeometry();
     void editAddGeometry();
+    void editDeleteGeometry();
     void addMapLayer();
     void removeMapLayer();
     void loadFinished();
@@ -70,6 +71,7 @@ private:
     QAction *m_createOverviewsAct;
     QAction *m_editCreateGeometryAct;
     QAction *m_editAddGeometryAct;
+    QAction *m_editDeleteGeometryAct;
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
     QAction *m_pAddLayerAct;

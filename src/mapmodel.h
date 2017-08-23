@@ -92,11 +92,13 @@ public:
     void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
     void editCreateGeometry(const QModelIndex &index);
     void editAddGeometry();
+    void editDeleteGeometry();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
     void editGeometryCreated(const QModelIndex &index);
     void editGeometryAdded();
+    void editGeometryDeleted();
 
 
 private:
