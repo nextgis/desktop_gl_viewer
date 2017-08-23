@@ -90,11 +90,13 @@ public:
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
-    void createGeometry(const QModelIndex &index);
+    void editCreateGeometry(const QModelIndex &index);
+    void editAddGeometry();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
-    void geometryCreated(const QModelIndex &index);
+    void editGeometryCreated(const QModelIndex &index);
+    void editGeometryAdded();
 
 
 private:

@@ -232,13 +232,22 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
-void MapModel::createGeometry(const QModelIndex& index)
+void MapModel::editCreateGeometry(const QModelIndex& index)
 {
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsLayerCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
-        emit geometryCreated(index);
+    if (ngsLayerEditCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+        emit editGeometryCreated(index);
+    }
+}
+
+void MapModel::editAddGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditAddGeometry(m_mapId) == COD_SUCCESS) {
+        emit editGeometryAdded();
     }
 }
 

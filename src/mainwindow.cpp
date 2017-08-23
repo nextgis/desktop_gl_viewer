@@ -258,13 +258,18 @@ void MainWindow::createOverviews()
     }
 }
 
-void MainWindow::createGeometry()
+void MainWindow::editCreateGeometry()
 {
     QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
     for(const QModelIndex& index : selection) {
-        m_mapModel->createGeometry(index);
+        m_mapModel->editCreateGeometry(index);
         break;
     }
+}
+
+void MainWindow::editAddGeometry()
+{
+    m_mapModel->editAddGeometry();
 }
 
 void MainWindow::addMapLayer()
@@ -345,9 +350,13 @@ void MainWindow::createActions()
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
     connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
 
-    m_createGeometryAct = new QAction(tr("Create new geometry"), this);
-    m_createGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
-    connect(m_createGeometryAct, SIGNAL(triggered()), this, SLOT(createGeometry()));
+    m_editCreateGeometryAct = new QAction(tr("Create new geometry"), this);
+    m_editCreateGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
+    connect(m_editCreateGeometryAct, SIGNAL(triggered()), this, SLOT(editCreateGeometry()));
+
+    m_editAddGeometryAct = new QAction(tr("Add new geometry"), this);
+    m_editAddGeometryAct->setStatusTip(tr("Add new geometry to multi geometry"));
+    connect(m_editAddGeometryAct, SIGNAL(triggered()), this, SLOT(editAddGeometry()));
 
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
@@ -404,7 +413,8 @@ void MainWindow::createMenus()
     QMenu *pDataMenu = menuBar()->addMenu(tr("&Data"));
     pDataMenu->addAction(m_pLoadAct);
     pDataMenu->addAction(m_createOverviewsAct);
-    pDataMenu->addAction(m_createGeometryAct);
+    pDataMenu->addAction(m_editCreateGeometryAct);
+    pDataMenu->addAction(m_editAddGeometryAct);
 
     QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
     pMapMenu->addAction(m_pAddLayerAct);
