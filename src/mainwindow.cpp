@@ -277,6 +277,16 @@ void MainWindow::editDeleteGeometry()
     m_mapModel->editDeleteGeometry();
 }
 
+void MainWindow::editHistoryUndo()
+{
+    m_mapModel->editHistoryUndo();
+}
+
+void MainWindow::editHistoryRedo()
+{
+    m_mapModel->editHistoryRedo();
+}
+
 void MainWindow::addMapLayer()
 {
     // 1. Choose file dialog
@@ -367,6 +377,14 @@ void MainWindow::createActions()
     m_editDeleteGeometryAct->setStatusTip(tr("Delete geometry from multi geometry"));
     connect(m_editDeleteGeometryAct, SIGNAL(triggered()), this, SLOT(editDeleteGeometry()));
 
+    m_editHistoryUndoAct = new QAction(tr("Undo editing"), this);
+    m_editHistoryUndoAct->setStatusTip(tr("Undo editing"));
+    connect(m_editHistoryUndoAct, SIGNAL(triggered()), this, SLOT(editHistoryUndo()));
+
+    m_editHistoryRedoAct = new QAction(tr("Redo editing"), this);
+    m_editHistoryRedoAct->setStatusTip(tr("Redo editing"));
+    connect(m_editHistoryRedoAct, SIGNAL(triggered()), this, SLOT(editHistoryRedo()));
+
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
     connect(m_pAddLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
@@ -425,6 +443,8 @@ void MainWindow::createMenus()
     pDataMenu->addAction(m_editCreateGeometryAct);
     pDataMenu->addAction(m_editAddGeometryAct);
     pDataMenu->addAction(m_editDeleteGeometryAct);
+    pDataMenu->addAction(m_editHistoryUndoAct);
+    pDataMenu->addAction(m_editHistoryRedoAct);
 
     QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
     pMapMenu->addAction(m_pAddLayerAct);

@@ -108,6 +108,10 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(editGeometryAdded()));
         disconnect(m_mapModel, SIGNAL(editGeometryDeleted()),
                    this, SLOT(editGeometryDeleted()));
+        disconnect(m_mapModel, SIGNAL(editHistoryUndoMade()),
+                   this, SLOT(editHistoryUndoMade()));
+        disconnect(m_mapModel, SIGNAL(editHistoryRedoMade()),
+                   this, SLOT(editHistoryRedoMade()));
     }
 
 
@@ -135,6 +139,10 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(editGeometryAdded()));
     connect(m_mapModel, SIGNAL(editGeometryDeleted()),
                this, SLOT(editGeometryDeleted()));
+    connect(m_mapModel, SIGNAL(editHistoryUndoMade()),
+               this, SLOT(editHistoryUndoMade()));
+    connect(m_mapModel, SIGNAL(editHistoryRedoMade()),
+               this, SLOT(editHistoryRedoMade()));
 
     draw(DS_REDRAW);
 }
@@ -202,6 +210,16 @@ void GlMapView::editGeometryAdded()
 }
 
 void GlMapView::editGeometryDeleted()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editHistoryUndoMade()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editHistoryRedoMade()
 {
     draw(DS_PRESERVED);
 }

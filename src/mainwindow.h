@@ -47,6 +47,8 @@ public slots:
     void editCreateGeometry();
     void editAddGeometry();
     void editDeleteGeometry();
+    void editHistoryUndo();
+    void editHistoryRedo();
     void addMapLayer();
     void removeMapLayer();
     void loadFinished();
@@ -72,6 +74,8 @@ private:
     QAction *m_editCreateGeometryAct;
     QAction *m_editAddGeometryAct;
     QAction *m_editDeleteGeometryAct;
+    QAction *m_editHistoryUndoAct;
+    QAction *m_editHistoryRedoAct;
     QAction *m_pAboutQtAct;
     QAction *m_pExitAct;
     QAction *m_pAddLayerAct;

@@ -260,6 +260,38 @@ void MapModel::editDeleteGeometry()
     }
 }
 
+void MapModel::editHistoryUndo()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditHistoryUndo(m_mapId)) {
+        emit editHistoryUndoMade();
+    }
+}
+
+void MapModel::editHistoryRedo()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditHistoryRedo(m_mapId)) {
+        emit editHistoryRedoMade();
+    }
+}
+
+bool MapModel::editCanHistoryUndo()
+{
+    if (0 == m_mapId)
+        return false;
+    return ngsLayerEditCanHistoryUndo(m_mapId);
+}
+
+bool MapModel::editCanHistoryRedo()
+{
+    if (0 == m_mapId)
+        return false;
+    return ngsLayerEditCanHistoryRedo(m_mapId);
+}
+
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
 {
     if (0 == m_mapId)

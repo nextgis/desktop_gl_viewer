@@ -93,12 +93,18 @@ public:
     void editCreateGeometry(const QModelIndex &index);
     void editAddGeometry();
     void editDeleteGeometry();
+    void editHistoryUndo();
+    void editHistoryRedo();
+    bool editCanHistoryUndo();
+    bool editCanHistoryRedo();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
     void editGeometryCreated(const QModelIndex &index);
     void editGeometryAdded();
     void editGeometryDeleted();
+    void editHistoryUndoMade();
+    void editHistoryRedoMade();
 
 
 private:
