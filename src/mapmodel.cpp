@@ -308,7 +308,7 @@ QMimeData *MapModel::mimeData(const QModelIndexList &indexes) const
      return mimeData;
 }
 
-void MapModel::setOverlayVisible(ngsMapOverlyType typeMask, char visible)
+void MapModel::setOverlayVisible(ngsMapOverlayType typeMask, char visible)
 {
     if (0 == m_mapId)
         return;

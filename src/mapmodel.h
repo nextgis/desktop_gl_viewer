@@ -89,7 +89,7 @@ public:
     bool setScale(double value);
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
-    void setOverlayVisible(ngsMapOverlyType typeMask, char visible);
+    void setOverlayVisible(ngsMapOverlayType typeMask, char visible);
     void createGeometry(const QModelIndex &index);
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
