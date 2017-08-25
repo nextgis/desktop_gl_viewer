@@ -102,6 +102,16 @@ void GlMapView::setModel(MapModel *mapModel)
         disconnect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                    this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
         disconnect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+        disconnect(m_mapModel, SIGNAL(editGeometryCreated(QModelIndex)),
+                   this, SLOT(editGeometryCreated(QModelIndex)));
+        disconnect(m_mapModel, SIGNAL(editGeometryAdded()),
+                   this, SLOT(editGeometryAdded()));
+        disconnect(m_mapModel, SIGNAL(editGeometryDeleted()),
+                   this, SLOT(editGeometryDeleted()));
+        disconnect(m_mapModel, SIGNAL(editHistoryUndoMade()),
+                   this, SLOT(editHistoryUndoMade()));
+        disconnect(m_mapModel, SIGNAL(editHistoryRedoMade()),
+                   this, SLOT(editHistoryRedoMade()));
     }
 
 
@@ -123,8 +133,16 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
-               this, SLOT(geometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(editGeometryCreated(QModelIndex)),
+               this, SLOT(editGeometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(editGeometryAdded()),
+               this, SLOT(editGeometryAdded()));
+    connect(m_mapModel, SIGNAL(editGeometryDeleted()),
+               this, SLOT(editGeometryDeleted()));
+    connect(m_mapModel, SIGNAL(editHistoryUndoMade()),
+               this, SLOT(editHistoryUndoMade()));
+    connect(m_mapModel, SIGNAL(editHistoryRedoMade()),
+               this, SLOT(editHistoryRedoMade()));
 
     draw(DS_REDRAW);
 }
@@ -181,7 +199,27 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
     draw(DS_REDRAW);
 }
 
-void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
+void GlMapView::editGeometryCreated(const QModelIndex& /*parent*/)
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editGeometryAdded()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editGeometryDeleted()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editHistoryUndoMade()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editHistoryRedoMade()
 {
     draw(DS_PRESERVED);
 }

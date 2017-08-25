@@ -232,14 +232,64 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
-void MapModel::createGeometry(const QModelIndex& index)
+void MapModel::editCreateGeometry(const QModelIndex& index)
 {
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsLayerCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
-        emit geometryCreated(index);
+    if (ngsLayerEditCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+        emit editGeometryCreated(index);
     }
+}
+
+void MapModel::editAddGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditAddGeometry(m_mapId) == COD_SUCCESS) {
+        emit editGeometryAdded();
+    }
+}
+
+void MapModel::editDeleteGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditDeleteGeometry(m_mapId) == COD_SUCCESS) {
+        emit editGeometryDeleted();
+    }
+}
+
+void MapModel::editHistoryUndo()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditHistoryUndo(m_mapId)) {
+        emit editHistoryUndoMade();
+    }
+}
+
+void MapModel::editHistoryRedo()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsLayerEditHistoryRedo(m_mapId)) {
+        emit editHistoryRedoMade();
+    }
+}
+
+bool MapModel::editCanHistoryUndo()
+{
+    if (0 == m_mapId)
+        return false;
+    return ngsLayerEditCanHistoryUndo(m_mapId);
+}
+
+bool MapModel::editCanHistoryRedo()
+{
+    if (0 == m_mapId)
+        return false;
+    return ngsLayerEditCanHistoryRedo(m_mapId);
 }
 
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)

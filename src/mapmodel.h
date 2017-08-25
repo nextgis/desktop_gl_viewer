@@ -90,11 +90,21 @@ public:
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlayType typeMask, char visible);
-    void createGeometry(const QModelIndex &index);
+    void editCreateGeometry(const QModelIndex &index);
+    void editAddGeometry();
+    void editDeleteGeometry();
+    void editHistoryUndo();
+    void editHistoryRedo();
+    bool editCanHistoryUndo();
+    bool editCanHistoryRedo();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
 
 signals:
-    void geometryCreated(const QModelIndex &index);
+    void editGeometryCreated(const QModelIndex &index);
+    void editGeometryAdded();
+    void editGeometryDeleted();
+    void editHistoryUndoMade();
+    void editHistoryRedoMade();
 
 
 private:

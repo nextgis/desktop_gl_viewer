@@ -49,7 +49,11 @@ protected slots:
     virtual void layersRemoved(const QModelIndex &parent, int first, int last);
     virtual void layersMoved(const QModelIndex &parent, int start, int end,
                              const QModelIndex &destination, int row);
-    virtual void geometryCreated(const QModelIndex& parent);
+    virtual void editGeometryCreated(const QModelIndex& parent);
+    virtual void editGeometryAdded();
+    virtual void editGeometryDeleted();
+    virtual void editHistoryUndoMade();
+    virtual void editHistoryRedoMade();
 
     // QOpenGLWidget interface
 protected:
