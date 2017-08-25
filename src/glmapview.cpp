@@ -281,6 +281,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
 
     // For mouse move events, this is all buttons that are pressed down.
     if (event->buttons() & Qt::LeftButton) {
+        ngsDrawState drawState = DS_PRESERVED;
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier)) {
             // rotate
             double rotate = atan2(event->pos().y() - m_mouseStartPoint.y(),
@@ -306,11 +307,11 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             if(abs(mapOffset.x()) > MIN_OFF_PX ||
                abs(mapOffset.y()) > MIN_OFF_PX) {
                 m_mouseStartPoint = event->pos();
-                m_mapModel->mapTouch(m_mouseStartPoint.x(),
+                drawState = m_mapModel->mapTouch(m_mouseStartPoint.x(),
                         m_mouseStartPoint.y(), MTT_ON_MOVE);
             }
         }
-        draw (DS_PRESERVED);
+        draw(drawState);
         m_timer->start(TM_ZOOMING);
     }
 
@@ -363,6 +364,8 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
 void GlMapView::draw(ngsDrawState state)
 {
+    if(DS_NOTHING == state)
+        return;
     m_drawState = state;
     update();
 }
