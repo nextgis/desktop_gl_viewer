@@ -369,12 +369,12 @@ void MainWindow::createActions()
     m_editCreateGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
     connect(m_editCreateGeometryAct, SIGNAL(triggered()), this, SLOT(editCreateGeometry()));
 
-    m_editAddGeometryAct = new QAction(tr("Add new geometry"), this);
-    m_editAddGeometryAct->setStatusTip(tr("Add new geometry to multi geometry"));
+    m_editAddGeometryAct = new QAction(tr("Add geometry part"), this);
+    m_editAddGeometryAct->setStatusTip(tr("Add part to multi geometry"));
     connect(m_editAddGeometryAct, SIGNAL(triggered()), this, SLOT(editAddGeometry()));
 
-    m_editDeleteGeometryAct = new QAction(tr("Delete geometry"), this);
-    m_editDeleteGeometryAct->setStatusTip(tr("Delete geometry from multi geometry"));
+    m_editDeleteGeometryAct = new QAction(tr("Delete geometry part"), this);
+    m_editDeleteGeometryAct->setStatusTip(tr("Delete part from multi geometry"));
     connect(m_editDeleteGeometryAct, SIGNAL(triggered()), this, SLOT(editDeleteGeometry()));
 
     m_editHistoryUndoAct = new QAction(tr("Undo editing"), this);
@@ -430,28 +430,30 @@ bool MainWindow::createDatastore()
 
 void MainWindow::createMenus()
 {
-    QMenu *pFileMenu = menuBar()->addMenu(tr("&File"));
-    pFileMenu->addAction(m_pNewAct);
-    pFileMenu->addAction(m_pOpenAct);
-    pFileMenu->addAction(m_pSaveAct);
-    pFileMenu->addSeparator();
-    pFileMenu->addAction(m_pExitAct);
+    QMenu* fileMenu = menuBar()->addMenu(tr("&File"));
+    fileMenu->addAction(m_pNewAct);
+    fileMenu->addAction(m_pOpenAct);
+    fileMenu->addAction(m_pSaveAct);
+    fileMenu->addSeparator();
+    fileMenu->addAction(m_pExitAct);
 
-    QMenu *pDataMenu = menuBar()->addMenu(tr("&Data"));
-    pDataMenu->addAction(m_pLoadAct);
-    pDataMenu->addAction(m_createOverviewsAct);
-    pDataMenu->addAction(m_editCreateGeometryAct);
-    pDataMenu->addAction(m_editAddGeometryAct);
-    pDataMenu->addAction(m_editDeleteGeometryAct);
-    pDataMenu->addAction(m_editHistoryUndoAct);
-    pDataMenu->addAction(m_editHistoryRedoAct);
+    QMenu* dataMenu = menuBar()->addMenu(tr("&Data"));
+    dataMenu->addAction(m_pLoadAct);
+    dataMenu->addAction(m_createOverviewsAct);
 
-    QMenu *pMapMenu = menuBar()->addMenu(tr("&Map"));
-    pMapMenu->addAction(m_pAddLayerAct);
+    QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
+    editMenu->addAction(m_editCreateGeometryAct);
+    editMenu->addAction(m_editAddGeometryAct);
+    editMenu->addAction(m_editDeleteGeometryAct);
+    editMenu->addAction(m_editHistoryUndoAct);
+    editMenu->addAction(m_editHistoryRedoAct);
 
-    QMenu *pHelpMenu = menuBar()->addMenu(tr("&Help"));
-    pHelpMenu->addAction(m_pAboutAct);
-    pHelpMenu->addAction(m_pAboutQtAct);
+    QMenu* mapMenu = menuBar()->addMenu(tr("&Map"));
+    mapMenu->addAction(m_pAddLayerAct);
+
+    QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
+    helpMenu->addAction(m_pAboutAct);
+    helpMenu->addAction(m_pAboutQtAct);
 }
 
 void MainWindow::createDockWindows()
