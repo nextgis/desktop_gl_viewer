@@ -105,6 +105,12 @@ void MainWindow::setStatusText(const QString &text, int timeout)
     statusBar()->showMessage(text, timeout);
 }
 
+void MainWindow::statusBarShowHide()
+{
+    statusBar()->setVisible(!statusBar()->isVisible());
+    m_statusBarAct->setChecked(statusBar()->isVisible());
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
@@ -146,7 +152,8 @@ void MainWindow::readSettings()
         move(settings.value("frame_pos", QPoint(200, 200)).toPoint());
     }
     restoreState(settings.value("frame_state").toByteArray());
-    statusBar()->setVisible(true);// settings.value("frame_statusbar_shown", true).toBool());
+    statusBar()->setVisible(settings.value("frame_statusbar_shown", true).toBool());
+    m_statusBarAct->setChecked(statusBar()->isVisible());
     m_splitter->restoreState(settings.value("splitter_sizes").toByteArray());
     settings.endGroup();
 }
@@ -168,7 +175,7 @@ void MainWindow::open()
             QMessageBox::critical(this, tr("Error"), tr("Map load failed"));
         }
         else {
-            statusBar ()->showMessage(tr("Map opened"), 10000); // time limit 10 sec.
+            statusBar()->showMessage(tr("Map opened"), 10000); // time limit 10 sec.
         }
     }
 }
@@ -404,6 +411,11 @@ void MainWindow::createActions()
     m_pAboutQtAct->setMenuRole(QAction::AboutQtRole);
     connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
+    m_statusBarAct = new QAction(tr("Status bar"), this);
+    m_statusBarAct->setStatusTip(tr("Show/hide status bar"));
+    m_statusBarAct->setCheckable(true);
+    m_statusBarAct->setChecked(statusBar()->isVisible());
+    connect(m_statusBarAct, SIGNAL(triggered()), this, SLOT(statusBarShowHide()));
 }
 
 bool MainWindow::createDatastore()
@@ -437,10 +449,6 @@ void MainWindow::createMenus()
     fileMenu->addSeparator();
     fileMenu->addAction(m_pExitAct);
 
-    QMenu* dataMenu = menuBar()->addMenu(tr("&Data"));
-    dataMenu->addAction(m_pLoadAct);
-    dataMenu->addAction(m_createOverviewsAct);
-
     QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
     editMenu->addAction(m_editCreateGeometryAct);
     editMenu->addAction(m_editAddGeometryAct);
@@ -448,8 +456,22 @@ void MainWindow::createMenus()
     editMenu->addAction(m_editHistoryUndoAct);
     editMenu->addAction(m_editHistoryRedoAct);
 
+    QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
+    viewMenu->addAction(m_statusBarAct);
+//  refresh
+
+    QMenu* dataMenu = menuBar()->addMenu(tr("&Data"));
+    dataMenu->addAction(m_pLoadAct);
+    dataMenu->addAction(m_createOverviewsAct);
+
     QMenu* mapMenu = menuBar()->addMenu(tr("&Map"));
     mapMenu->addAction(m_pAddLayerAct);
+    // pan
+    // identify
+    // zoom in
+    // zoom out
+    // prev extent
+    // next extent
 
     QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(m_pAboutAct);

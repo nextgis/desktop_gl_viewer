@@ -54,6 +54,7 @@ public slots:
     void loadFinished();
     void showContextMenu(const QPoint &pos);
     void setStatusText(const QString &text, int timeout = 0);
+    void statusBarShowHide();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -65,21 +66,23 @@ protected:
     bool createDatastore();
 
 private:
-    QAction *m_pNewAct;
-    QAction *m_pOpenAct;
-    QAction *m_pSaveAct;
-    QAction *m_pAboutAct;
-    QAction *m_pLoadAct;
-    QAction *m_createOverviewsAct;
-    QAction *m_editCreateGeometryAct;
-    QAction *m_editAddGeometryAct;
-    QAction *m_editDeleteGeometryAct;
-    QAction *m_editHistoryUndoAct;
-    QAction *m_editHistoryRedoAct;
-    QAction *m_pAboutQtAct;
-    QAction *m_pExitAct;
-    QAction *m_pAddLayerAct;
-    QAction *m_pDeleteLayerAct;
+    QAction* m_pNewAct;
+    QAction* m_pOpenAct;
+    QAction* m_pSaveAct;
+    QAction* m_pAboutAct;
+    QAction* m_pLoadAct;
+    QAction* m_createOverviewsAct;
+    QAction* m_editCreateGeometryAct;
+    QAction* m_editAddGeometryAct;
+    QAction* m_editDeleteGeometryAct;
+    QAction* m_editHistoryUndoAct;
+    QAction* m_editHistoryRedoAct;
+    QAction* m_pAboutQtAct;
+    QAction* m_pExitAct;
+    QAction* m_pAddLayerAct;
+    QAction* m_pDeleteLayerAct;
+    QAction* m_statusBarAct;
+
     ProgressDialog *m_progressDlg;
     QSplitter *m_splitter;
 
