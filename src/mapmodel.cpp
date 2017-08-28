@@ -254,7 +254,7 @@ void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayAddPart(m_mapId) == COD_SUCCESS) {
+    if (ngsEditOverlayAddGeometryPart(m_mapId) == COD_SUCCESS) {
         emit geometryPartAdded();
     }
 }
@@ -263,7 +263,7 @@ void MapModel::deleteGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayDeletePart(m_mapId) == COD_SUCCESS) {
+    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
         emit geometryPartDeleted();
     }
 }
