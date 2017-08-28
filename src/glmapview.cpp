@@ -36,6 +36,8 @@
 
 constexpr short TM_ZOOMING = 400;
 constexpr short MIN_OFF_PX = 2;
+constexpr double CLICK_BUFFER = 4.0;
+
 static bool fixDrawTime = false;
 static QElapsedTimer fixDrawtimer;
 
@@ -247,20 +249,21 @@ void GlMapView::paintGL()
     m_mapModel->draw(m_drawState, ngsQtDrawingProgressFunc,
                         static_cast<void*>(this));
 
-    if(m_mode != M_PAN) {
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if(m_mode != M_PAN && m_mouseCurrentPoint != m_mouseStartPoint) {
+        // TODO: move draw selection rectangle to overlay
+////    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    QPainter painter(this);
-    painter.setPen(Qt::blue);
+//    QPainter painter(this);
+//    painter.setPen(Qt::blue);
 
-//    ngsCoordinate beg = m_mapModel->getCoordinate(m_mouseStartPoint.x(), m_mouseStartPoint.y());
-//    ngsCoordinate end = m_mapModel->getCoordinate(m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+////    ngsCoordinate beg = m_mapModel->getCoordinate(m_mouseStartPoint.x(), m_mouseStartPoint.y());
+////    ngsCoordinate end = m_mapModel->getCoordinate(m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
 
-    QRectF rectangle;
-    rectangle.setCoords(m_mouseStartPoint.x(), m_mouseStartPoint.y(),
-                     m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
-//    rectangle.setCoords(beg.X, beg.Y, end.X, end.Y);
-    painter.drawRect(rectangle);
+//    QRectF rectangle;
+//    rectangle.setCoords(m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+//                     m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+////    rectangle.setCoords(beg.X, beg.Y, end.X, end.Y);
+//    painter.drawRect(rectangle);
     }
     m_drawState = DS_PRESERVED; // draw from cache on display update
 }
@@ -370,6 +373,17 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
                 double maxX = qMax(beg.X, end.X);
                 double minY = qMin(beg.Y, end.Y);
                 double maxY = qMax(beg.Y, end.Y);
+
+                double adds = CLICK_BUFFER / m_mapModel->getScale();
+
+                if(fabs(minX - maxX) < 0.0000001) {
+                    minX -= adds;
+                    maxX += adds;
+                }
+                if(fabs(minY - maxY) < 0.0000001) {
+                    minY -= adds;
+                    maxY += adds;
+                }
                 QVector<Layer> layers = m_mapModel->identify(minX, minY, maxX, maxY);
 
                 QSet<long long> ids;
@@ -385,8 +399,9 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
                     layer.setSelection(ids);
                     m_mapModel->invalidate(ext);
                     draw(DS_NORMAL);
-//                    draw(DS_REFILL); // TODO: refill only tiles overlap ids
                 }
+
+                m_mouseCurrentPoint = m_mouseStartPoint;
                 return;
             }
 
