@@ -44,7 +44,7 @@ bool MapModel::create(const char *name, const char *description,
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);    
-    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 8.0);
+    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 4.0);
     endResetModel();
     return isValid();
 }
@@ -56,7 +56,7 @@ bool MapModel::open(const char *path)
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
     setOverlayVisible(MOT_EDIT, true); // FIXME: for test, remove it
-    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 8.0);
+    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 4.0);
     endResetModel();
 
     return isValid();
