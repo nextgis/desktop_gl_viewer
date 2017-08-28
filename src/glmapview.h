@@ -30,10 +30,19 @@ class GlMapView : public QOpenGLWidget
 {
     Q_OBJECT
 public:
+    enum ViewMode {
+        M_PAN,
+        M_IDENTIFY,
+        M_ZOOMIN,
+        M_ZOOMOUT
+    };
+
+public:
     GlMapView(ILocationStatus *status = 0, QWidget *parent = 0);
     void setModel(MapModel *mapModel);
     bool cancelDraw() const { return false; }
     void reportSpeed(qint64 ms);
+    void setMode(enum ViewMode mode);
 
 signals:
     void setStatusText(const QString &text, int timeout = 0);
@@ -49,11 +58,11 @@ protected slots:
     virtual void layersRemoved(const QModelIndex &parent, int first, int last);
     virtual void layersMoved(const QModelIndex &parent, int start, int end,
                              const QModelIndex &destination, int row);
-    virtual void editGeometryCreated(const QModelIndex& parent);
-    virtual void editGeometryAdded();
-    virtual void editGeometryDeleted();
-    virtual void editHistoryUndoMade();
-    virtual void editHistoryRedoMade();
+    virtual void geometryCreated(const QModelIndex& parent);
+    virtual void geometryPartAdded();
+    virtual void geometryPartDeleted();
+    virtual void undoEditFinished();
+    virtual void redoEditFinished();
 
     // QOpenGLWidget interface
 protected:
@@ -72,12 +81,14 @@ protected:
 
 protected:
     QPoint m_mouseStartPoint;
+    QPoint m_mouseCurrentPoint;
     QPoint m_center;
     double m_startRotateZ, m_startRotateX, m_beginRotateAngle;
     ILocationStatus *m_locationStatus;
     enum ngsDrawState m_drawState;
     QTimer* m_timer;
-    MapModel *m_mapModel;
+    MapModel* m_mapModel;
+    enum ViewMode m_mode;
 };
 
 #endif // GLMAPVIEW_H

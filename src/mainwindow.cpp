@@ -269,29 +269,29 @@ void MainWindow::editCreateGeometry()
 {
     QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
     for(const QModelIndex& index : selection) {
-        m_mapModel->editCreateGeometry(index);
+        m_mapModel->createNewGeometry(index);
         break;
     }
 }
 
 void MainWindow::editAddGeometry()
 {
-    m_mapModel->editAddGeometry();
+    m_mapModel->addGeometryPart();
 }
 
 void MainWindow::editDeleteGeometry()
 {
-    m_mapModel->editDeleteGeometry();
+    m_mapModel->deleteGeometryPart();
 }
 
 void MainWindow::editHistoryUndo()
 {
-    m_mapModel->editHistoryUndo();
+    m_mapModel->undoEdit();
 }
 
 void MainWindow::editHistoryRedo()
 {
-    m_mapModel->editHistoryRedo();
+    m_mapModel->redoEdit();
 }
 
 void MainWindow::addMapLayer()
@@ -416,6 +416,34 @@ void MainWindow::createActions()
     m_statusBarAct->setCheckable(true);
     m_statusBarAct->setChecked(statusBar()->isVisible());
     connect(m_statusBarAct, SIGNAL(triggered()), this, SLOT(statusBarShowHide()));
+
+    m_identify = new QAction(tr("Identify"), this);
+    m_identify->setStatusTip(tr("Identify features"));
+    m_identify->setCheckable(true);
+    connect(m_identify, SIGNAL(triggered()), this, SLOT(identifyMode()));
+
+    m_pan = new QAction(tr("Pan"), this);
+    m_pan->setStatusTip(tr("Pan map"));
+    m_pan->setCheckable(true);
+    connect(m_pan, SIGNAL(triggered()), this, SLOT(panMode()));
+
+    m_zoomIn = new QAction(tr("Zoom in"), this);
+    m_zoomIn->setStatusTip(tr("Zoom in map"));
+    m_zoomIn->setCheckable(true);
+    connect(m_zoomIn, SIGNAL(triggered()), this, SLOT(zoomInMode()));
+
+    m_zoomOut = new QAction(tr("Zoom out"), this);
+    m_zoomOut->setStatusTip(tr("Zoom out map"));
+    m_zoomOut->setCheckable(true);
+    connect(m_zoomOut, SIGNAL(triggered()), this, SLOT(zoomOutMode()));
+
+
+    m_mapGroup = new QActionGroup(this);
+    m_mapGroup->addAction(m_pan);
+    m_mapGroup->addAction(m_identify);
+    m_mapGroup->addAction(m_zoomIn);
+    m_mapGroup->addAction(m_zoomOut);
+    m_pan->setChecked(true);
 }
 
 bool MainWindow::createDatastore()
@@ -451,6 +479,7 @@ void MainWindow::createMenus()
 
     QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
     editMenu->addAction(m_editCreateGeometryAct);
+    editMenu->addSeparator();
     editMenu->addAction(m_editAddGeometryAct);
     editMenu->addAction(m_editDeleteGeometryAct);
     editMenu->addAction(m_editHistoryUndoAct);
@@ -466,10 +495,11 @@ void MainWindow::createMenus()
 
     QMenu* mapMenu = menuBar()->addMenu(tr("&Map"));
     mapMenu->addAction(m_pAddLayerAct);
-    // pan
-    // identify
-    // zoom in
-    // zoom out
+    mapMenu->addSeparator();
+    mapMenu->addAction(m_identify);
+    mapMenu->addAction(m_pan);
+    mapMenu->addAction(m_zoomIn);
+    mapMenu->addAction(m_zoomOut);
     // prev extent
     // next extent
 
@@ -501,6 +531,7 @@ void MainWindow::createDockWindows()
     // mapview setup
     m_mapView = new GlMapView(m_locationStatus, this);
     m_mapView->setModel(m_mapModel);
+    m_mapView->setMode(GlMapView::M_PAN);
 
     m_splitter->addWidget(m_mapView);
     m_splitter->setHandleWidth(1);
@@ -521,4 +552,25 @@ void MainWindow::showContextMenu(const QPoint &pos)
     // Show context menu at handling position
     myMenu.exec(globalPos);
 }
+
+void MainWindow::identifyMode()
+{
+    m_mapView->setMode(GlMapView::M_IDENTIFY);
+}
+
+void MainWindow::panMode()
+{
+    m_mapView->setMode(GlMapView::M_PAN);
+}
+
+void MainWindow::zoomInMode()
+{
+    m_mapView->setMode(GlMapView::M_ZOOMIN);
+}
+
+void MainWindow::zoomOutMode()
+{
+    m_mapView->setMode(GlMapView::M_ZOOMOUT);
+}
+
 

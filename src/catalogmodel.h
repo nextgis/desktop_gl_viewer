@@ -23,12 +23,65 @@
 
 #include "ngstore/api.h"
 
+#include "QSharedPointer"
+
 #include <QAbstractItemModel>
+
+constexpr double BIG_VALUE = 100000000;
+
+static bool isExtentInit(const ngsExtent &ext) {
+    return ext.maxX < BIG_VALUE && ext.maxY < BIG_VALUE &&
+            ext.minX > -BIG_VALUE && ext.minY > -BIG_VALUE;
+}
+
+static ngsExtent mergeExtent(const ngsExtent &ext1, const ngsExtent &ext2) {
+    ngsExtent out;
+    if(isExtentInit(ext1)) {
+        out.minX = qMin(ext1.minX, ext2.minX);
+        out.maxX = qMax(ext1.maxX, ext2.maxX);
+        out.minY = qMin(ext1.minY, ext2.minY);
+        out.maxY = qMax(ext1.maxY, ext2.maxY);
+    }
+    else {
+        out.minX = ext2.minX;
+        out.maxX = ext2.maxX;
+        out.minY = ext2.minY;
+        out.maxY = ext2.maxY;
+    }
+    return out;
+}
+
+class Geometry
+{
+public:
+    Geometry(GeometryH handle, bool owns) : m_handle(handle), m_owns(owns) {}
+    ~Geometry() { if(m_owns) ngsGeometryFree(m_handle); }
+    ngsExtent envelope() const { return ngsGeometryGetEnvelope(m_handle); }
+private:
+    GeometryH m_handle;
+    bool m_owns;
+};
+typedef QSharedPointer<Geometry> GeometryPtr;
+
+class Feature
+{
+public:
+    Feature(FeatureH handle) : m_handle(handle) {}
+    ~Feature() { ngsFeatureFree(m_handle); }
+    long long id() const { return ngsFeatureGetId(m_handle); }
+    GeometryPtr geometry() const { return GeometryPtr(
+                    new Geometry(ngsFeatureGetGeometry(m_handle), false));
+                                 }
+private:
+    FeatureH m_handle;
+};
+typedef QSharedPointer<Feature> FeaturePtr;
 
 class CatalogItem
 {
 public:
-    CatalogItem(const std::string& name, enum ngsCatalogObjectType type, int filter = 0,
+    CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
+                int filter = 0,
                 CatalogItem *parent = 0);
     ~CatalogItem() { qDeleteAll(childItems); }
 

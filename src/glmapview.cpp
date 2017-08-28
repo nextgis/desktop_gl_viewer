@@ -22,11 +22,13 @@
 
 #include <math.h>
 
-#include <QKeyEvent>
 #include <QApplication>
-#include <QMessageBox>
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QKeyEvent>
+#include <QMessageBox>
+#include <QPainter>
+#include <QSet>
 
 #ifdef _DEBUG
 #   include <chrono>
@@ -102,16 +104,16 @@ void GlMapView::setModel(MapModel *mapModel)
         disconnect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                    this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
         disconnect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-        disconnect(m_mapModel, SIGNAL(editGeometryCreated(QModelIndex)),
-                   this, SLOT(editGeometryCreated(QModelIndex)));
-        disconnect(m_mapModel, SIGNAL(editGeometryAdded()),
-                   this, SLOT(editGeometryAdded()));
-        disconnect(m_mapModel, SIGNAL(editGeometryDeleted()),
-                   this, SLOT(editGeometryDeleted()));
-        disconnect(m_mapModel, SIGNAL(editHistoryUndoMade()),
-                   this, SLOT(editHistoryUndoMade()));
-        disconnect(m_mapModel, SIGNAL(editHistoryRedoMade()),
-                   this, SLOT(editHistoryRedoMade()));
+        disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
+                   this, SLOT(geometryCreated(QModelIndex)));
+        disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
+                   this, SLOT(geometryPartAdded()));
+        disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
+                   this, SLOT(geometryPartDeleted()));
+        disconnect(m_mapModel, SIGNAL(undoEditFinished()),
+                   this, SLOT(undoEditFinished()));
+        disconnect(m_mapModel, SIGNAL(redoEditFinished()),
+                   this, SLOT(redoEditFinished()));
     }
 
 
@@ -123,6 +125,8 @@ void GlMapView::setModel(MapModel *mapModel)
     ngsRGBA bk = {230, 255, 255, 255}; // green {0, 255, 0, 255};
     m_mapModel->setBackground(bk);
 
+//    Moved to model m_mapModel->setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 8.0);
+
     connect(m_mapModel, SIGNAL(destroyed()), this, SLOT(modelDestroyed()));
     connect(m_mapModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
                this, SLOT(dataChanged(QModelIndex,QModelIndex,QVector<int>)));
@@ -133,16 +137,16 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-    connect(m_mapModel, SIGNAL(editGeometryCreated(QModelIndex)),
-               this, SLOT(editGeometryCreated(QModelIndex)));
-    connect(m_mapModel, SIGNAL(editGeometryAdded()),
-               this, SLOT(editGeometryAdded()));
-    connect(m_mapModel, SIGNAL(editGeometryDeleted()),
-               this, SLOT(editGeometryDeleted()));
-    connect(m_mapModel, SIGNAL(editHistoryUndoMade()),
-               this, SLOT(editHistoryUndoMade()));
-    connect(m_mapModel, SIGNAL(editHistoryRedoMade()),
-               this, SLOT(editHistoryRedoMade()));
+    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
+               this, SLOT(geometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(geometryPartAdded()),
+               this, SLOT(geometryPartAdded()));
+    connect(m_mapModel, SIGNAL(geometryPartDeleted()),
+               this, SLOT(geometryPartDeleted()));
+    connect(m_mapModel, SIGNAL(undoEditFinished()),
+               this, SLOT(undoEditFinished()));
+    connect(m_mapModel, SIGNAL(redoEditFinished()),
+               this, SLOT(redoEditFinished()));
 
     draw(DS_REDRAW);
 }
@@ -199,27 +203,27 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
     draw(DS_REDRAW);
 }
 
-void GlMapView::editGeometryCreated(const QModelIndex& /*parent*/)
+void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
 {
     draw(DS_PRESERVED);
 }
 
-void GlMapView::editGeometryAdded()
+void GlMapView::geometryPartAdded()
 {
     draw(DS_PRESERVED);
 }
 
-void GlMapView::editGeometryDeleted()
+void GlMapView::geometryPartDeleted()
 {
     draw(DS_PRESERVED);
 }
 
-void GlMapView::editHistoryUndoMade()
+void GlMapView::undoEditFinished()
 {
     draw(DS_PRESERVED);
 }
 
-void GlMapView::editHistoryRedoMade()
+void GlMapView::redoEditFinished()
 {
     draw(DS_PRESERVED);
 }
@@ -236,13 +240,28 @@ void GlMapView::resizeGL(int w, int h)
     m_timer->start(TM_ZOOMING);
 }
 
-
 void GlMapView::paintGL()
 {
     if(nullptr == m_mapModel)
         return;
     m_mapModel->draw(m_drawState, ngsQtDrawingProgressFunc,
                         static_cast<void*>(this));
+
+    if(m_mode != M_PAN) {
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    QPainter painter(this);
+    painter.setPen(Qt::blue);
+
+//    ngsCoordinate beg = m_mapModel->getCoordinate(m_mouseStartPoint.x(), m_mouseStartPoint.y());
+//    ngsCoordinate end = m_mapModel->getCoordinate(m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+
+    QRectF rectangle;
+    rectangle.setCoords(m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+                     m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+//    rectangle.setCoords(beg.X, beg.Y, end.X, end.Y);
+    painter.drawRect(rectangle);
+    }
     m_drawState = DS_PRESERVED; // draw from cache on display update
 }
 
@@ -267,6 +286,7 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
         }
         else {
             m_mouseStartPoint = event->pos();
+            m_mouseCurrentPoint = event->pos();
             m_mapModel->mapTouch(
                     m_mouseStartPoint.x(), m_mouseStartPoint.y(), MTT_ON_DOWN);
         }
@@ -301,13 +321,19 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
             m_mapModel->setRotate(ngsDirection::DIR_X, newAng);
         }
         else {
-            // pan
-            QPoint mapOffset = event->pos() - m_mouseStartPoint;
-            if(abs(mapOffset.x()) > MIN_OFF_PX ||
-               abs(mapOffset.y()) > MIN_OFF_PX) {
-                m_mouseStartPoint = event->pos();
-                m_mapModel->mapTouch(m_mouseStartPoint.x(),
-                        m_mouseStartPoint.y(), MTT_ON_MOVE);
+
+            if(m_mode == M_PAN) {
+                // pan
+                QPoint mapOffset = event->pos() - m_mouseStartPoint;
+                if(abs(mapOffset.x()) > MIN_OFF_PX ||
+                   abs(mapOffset.y()) > MIN_OFF_PX) {
+                    m_mouseStartPoint = event->pos();
+                    m_mapModel->mapTouch(m_mouseStartPoint.x(),
+                            m_mouseStartPoint.y(), MTT_ON_MOVE);
+                }
+            }
+            else {
+                m_mouseCurrentPoint = event->pos();
             }
         }
         draw (DS_PRESERVED);
@@ -333,9 +359,39 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
         else if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier) == true){
         }
         else {
+
+            if(m_mode != M_PAN) {
+                ngsCoordinate beg = m_mapModel->getCoordinate(
+                            m_mouseStartPoint.x(), m_mouseStartPoint.y());
+                ngsCoordinate end = m_mapModel->getCoordinate(
+                            m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+                double minX = qMin(beg.X, end.X);
+                double maxX = qMax(beg.X, end.X);
+                double minY = qMin(beg.Y, end.Y);
+                double maxY = qMax(beg.Y, end.Y);
+                QVector<Layer> layers = m_mapModel->identify(minX, minY, maxX, maxY);
+
+                QSet<long long> ids;
+                if(!layers.empty()) {
+                    ngsExtent ext = {-BIG_VALUE, -BIG_VALUE, BIG_VALUE, BIG_VALUE};
+                    Layer layer = layers[0]; // NOTE: Show selection from first layer
+                    for(const FeaturePtr& feature : layer.featureSet()) {
+                        ids.insert(feature->id());
+                        GeometryPtr geom = feature->geometry();
+                        ngsExtent env = geom->envelope();
+                        ext = mergeExtent(ext, env);
+                    }
+                    layer.setSelection(ids);
+                    m_mapModel->invalidate(ext);
+                    draw(DS_NORMAL);
+//                    draw(DS_REFILL); // TODO: refill only tiles overlap ids
+                }
+                return;
+            }
+
             ngsDrawState drawState = m_mapModel->mapTouch(
                     m_mouseStartPoint.x(), m_mouseStartPoint.y(), MTT_ON_UP);
-            draw(drawState);
+//            draw(drawState);
         }
     }
 }
@@ -347,7 +403,7 @@ void GlMapView::wheelEvent(QWheelEvent* event)
 
     double scale = 1;
     double delta = event->delta();
-    double add = fabs(delta) / 60;
+    double add = fabs(delta) / 60.0;
     scale = m_mapModel->getScale();
     if(delta > 0)
         scale *= add;
@@ -375,4 +431,23 @@ void GlMapView::keyPressEvent(QKeyEvent *event)
     }
 
     QWidget::keyPressEvent(event);
+}
+
+void GlMapView::setMode(enum ViewMode mode)
+{
+    switch (mode) {
+    case M_PAN:
+        setCursor(Qt::OpenHandCursor);
+        break;
+    case M_IDENTIFY:
+        setCursor(Qt::ArrowCursor);
+        break;
+    case M_ZOOMIN:
+        setCursor(Qt::SizeAllCursor);
+        break;
+    case M_ZOOMOUT:
+        setCursor(Qt::SizeAllCursor);
+        break;
+    }
+    m_mode = mode;
 }

@@ -23,8 +23,12 @@
 
 #include <QAbstractItemModel>
 #include <QPointF>
+#include <QSet>
+#include <QVector>
 
 #include "ngstore/api.h"
+
+#include "catalogmodel.h"
 
 constexpr const char * DEFAULT_MAP_NAME = "default";
 constexpr const char * DEFAULT_MAP_DESCRIPTION = "default map";
@@ -33,6 +37,24 @@ constexpr double DEFAULT_MAX_X = 20037508.34; // 180.0
 constexpr double DEFAULT_MAX_Y = 20037508.34; // 90.0
 constexpr double DEFAULT_MIN_X = -DEFAULT_MAX_X;
 constexpr double DEFAULT_MIN_Y = -DEFAULT_MAX_Y;
+
+
+class Layer
+{
+public:
+    Layer() : m_handle(nullptr) {}
+    explicit Layer(LayerH layerH) : m_handle(layerH) {}
+    ~Layer() = default;
+    LayerH handle() const { return  m_handle; }
+    void setSelection(const QSet<long long> &ids);
+    void emptyFeatureSet() { m_featureSet.empty(); }
+    QVector<FeaturePtr> featureSet() const { return m_featureSet; }
+    void addFeatureToSet(const FeaturePtr& feature) { m_featureSet.append(feature); }
+
+private:
+    LayerH m_handle;
+    QVector<FeaturePtr> m_featureSet;
+};
 
 class MapModel : public QAbstractItemModel
 {
@@ -78,6 +100,7 @@ public:
     void setSize(int w, int h, bool YAxisInverted = true);
     void draw(enum ngsDrawState state, ngsProgressFunc callback,
                  void* callbackData);
+    void invalidate(const ngsExtent& bounds);
     void setBackground(const ngsRGBA &color);
     ngsCoordinate getCenter() const;
     bool setCenter(const ngsCoordinate& newCenter);
@@ -90,22 +113,26 @@ public:
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlayType typeMask, char visible);
-    void editCreateGeometry(const QModelIndex &index);
-    void editAddGeometry();
-    void editDeleteGeometry();
-    void editHistoryUndo();
-    void editHistoryRedo();
-    bool editCanHistoryUndo();
-    bool editCanHistoryRedo();
+    void createNewGeometry(const QModelIndex &index);
+    void addGeometryPart();
+    void deleteGeometryPart();
+    void undoEdit();
+    void redoEdit();
+    bool canUndoEdit();
+    bool canRedoEdit();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
+    void setSelectionStyle(const ngsRGBA &fillColor, const ngsRGBA &borderColor,
+                           double width);
+    QVector<Layer> identify(double minX, double minY,
+                  double maxX, double maxY);
+    bool isFeatureClass(enum ngsCatalogObjectType type) const;
 
 signals:
-    void editGeometryCreated(const QModelIndex &index);
-    void editGeometryAdded();
-    void editGeometryDeleted();
-    void editHistoryUndoMade();
-    void editHistoryRedoMade();
-
+    void geometryCreated(const QModelIndex &index);
+    void geometryPartAdded();
+    void geometryPartDeleted();
+    void undoEditFinished();
+    void redoEditFinished();
 
 private:
     unsigned char m_mapId;

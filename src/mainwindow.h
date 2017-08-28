@@ -20,6 +20,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QActionGroup>
 #include <QtConcurrent/QtConcurrent>
 #include <QListView>
 #include <QMainWindow>
@@ -55,6 +56,10 @@ public slots:
     void showContextMenu(const QPoint &pos);
     void setStatusText(const QString &text, int timeout = 0);
     void statusBarShowHide();
+    void identifyMode();
+    void panMode();
+    void zoomInMode();
+    void zoomOutMode();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -82,6 +87,11 @@ private:
     QAction* m_pAddLayerAct;
     QAction* m_pDeleteLayerAct;
     QAction* m_statusBarAct;
+    QAction* m_identify;
+    QAction* m_pan;
+    QAction* m_zoomIn;
+    QAction* m_zoomOut;
+    QActionGroup* m_mapGroup;
 
     ProgressDialog *m_progressDlg;
     QSplitter *m_splitter;

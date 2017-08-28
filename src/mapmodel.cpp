@@ -44,6 +44,7 @@ bool MapModel::create(const char *name, const char *description,
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);    
+    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 8.0);
     endResetModel();
     return isValid();
 }
@@ -55,6 +56,7 @@ bool MapModel::open(const char *path)
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
     setOverlayVisible(MOT_EDIT, true); // FIXME: for test, remove it
+    setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 8.0);
     endResetModel();
 
     return isValid();
@@ -142,6 +144,13 @@ void MapModel::draw(ngsDrawState state, ngsProgressFunc callback,
     if(0 == m_mapId)
         return;
     ngsMapDraw(m_mapId, state, callback, callbackData);
+}
+
+void MapModel::invalidate(const ngsExtent& bounds)
+{
+    if(0 == m_mapId)
+        return;
+    ngsMapInvalidate(m_mapId, bounds);
 }
 
 void MapModel::setBackground(const ngsRGBA &color)
@@ -232,64 +241,64 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
-void MapModel::editCreateGeometry(const QModelIndex& index)
+void MapModel::createNewGeometry(const QModelIndex& index)
 {
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsLayerEditCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
-        emit editGeometryCreated(index);
+    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+        emit geometryCreated(index);
     }
 }
 
-void MapModel::editAddGeometry()
+void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsLayerEditAddGeometry(m_mapId) == COD_SUCCESS) {
-        emit editGeometryAdded();
+    if (ngsEditOverlayAddPart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartAdded();
     }
 }
 
-void MapModel::editDeleteGeometry()
+void MapModel::deleteGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsLayerEditDeleteGeometry(m_mapId) == COD_SUCCESS) {
-        emit editGeometryDeleted();
+    if (ngsEditOverlayDeletePart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartDeleted();
     }
 }
 
-void MapModel::editHistoryUndo()
+void MapModel::undoEdit()
 {
     if (0 == m_mapId)
         return;
-    if (ngsLayerEditHistoryUndo(m_mapId)) {
-        emit editHistoryUndoMade();
+    if (ngsEditOverlayUndo(m_mapId)) {
+        emit undoEditFinished();
     }
 }
 
-void MapModel::editHistoryRedo()
+void MapModel::redoEdit()
 {
     if (0 == m_mapId)
         return;
-    if (ngsLayerEditHistoryRedo(m_mapId)) {
-        emit editHistoryRedoMade();
+    if (ngsEditOverlayRedo(m_mapId)) {
+        emit redoEditFinished();
     }
 }
 
-bool MapModel::editCanHistoryUndo()
+bool MapModel::canUndoEdit()
 {
     if (0 == m_mapId)
         return false;
-    return ngsLayerEditCanHistoryUndo(m_mapId);
+    return ngsEditOverlayCanUndo(m_mapId);
 }
 
-bool MapModel::editCanHistoryRedo()
+bool MapModel::canRedoEdit()
 {
     if (0 == m_mapId)
         return false;
-    return ngsLayerEditCanHistoryRedo(m_mapId);
+    return ngsEditOverlayCanRedo(m_mapId);
 }
 
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
@@ -297,6 +306,75 @@ ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
     if (0 == m_mapId)
         return DS_NOTHING;
     return ngsMapTouch(m_mapId, x, y, type);
+}
+
+void MapModel::setSelectionStyle(const ngsRGBA& fillColor,
+                                 const ngsRGBA& borderColor, double width)
+{
+    if (0 == m_mapId)
+        return;
+    QString sColor;
+    sColor.sprintf("#%02x%02x%02x%02x", borderColor.R, borderColor.G,
+                   borderColor.B, borderColor.A);
+
+    JsonObjectH style = ngsMapGetSelectionStyle(m_mapId, ST_POINT);
+    ngsJsonObjectSetIntegerForKey(style, "type", 3);
+    ngsJsonObjectSetStringForKey(style, "color", sColor.toStdString().c_str());
+    ngsJsonObjectSetDoubleForKey(style, "size", width * 2.0);
+    ngsMapSetSelectionsStyle(m_mapId, ST_POINT, style);
+    ngsJsonObjectFree(style);
+
+    style = ngsMapGetSelectionStyle(m_mapId, ST_LINE);
+    ngsJsonObjectSetStringForKey(style, "color", sColor.toStdString().c_str());
+    ngsJsonObjectSetDoubleForKey(style, "line_width", width);
+    ngsMapSetSelectionsStyle(m_mapId, ST_LINE, style);
+     ngsJsonObjectFree(style);
+
+    style = ngsMapGetSelectionStyle(m_mapId, ST_FILL);
+    JsonObjectH lineStyle = ngsJsonObjectGetObject(style, "line");
+    ngsJsonObjectSetStringForKey(lineStyle, "color", sColor.toStdString().c_str());
+    ngsJsonObjectSetDoubleForKey(lineStyle, "line_width", width);
+
+    sColor.sprintf("#%02x%02x%02x%02x", fillColor.R, fillColor.G,
+                   fillColor.B, fillColor.A);
+    JsonObjectH fillStyle = ngsJsonObjectGetObject(style, "fill");
+    ngsJsonObjectSetStringForKey(fillStyle, "color", sColor.toStdString().c_str());
+
+    ngsMapSetSelectionsStyle(m_mapId, ST_FILL, style);
+    ngsJsonObjectFree(style);
+}
+
+QVector<Layer> MapModel::identify(double minX, double minY,
+                                                 double maxX, double maxY)
+{
+    QVector<Layer> out;
+    if(0 == m_mapId)
+        return out;
+    int count = ngsMapLayerCount(m_mapId);
+    for(int i = 0; i < count; ++i) {
+        LayerH layerH = ngsMapLayerGet(m_mapId, i);
+        CatalogObjectH ds = ngsLayerGetDataSource(layerH);
+        enum ngsCatalogObjectType type = ngsCatalogObjectType(ds);
+        if(isFeatureClass(type)) {
+            ngsFeatureClassSetSpatialFilter(ds, minX, minY, maxX, maxY);
+            FeatureH f;
+            Layer layer(layerH);
+            while((f = ngsFeatureClassNextFeature(ds)) != nullptr) {
+                layer.addFeatureToSet(FeaturePtr(new Feature(f)));
+            }
+            ngsFeatureClassSetFilter(ds, nullptr, nullptr);
+            if(!layer.featureSet().empty()) {
+                out.append(layer);
+            }
+        }
+    }
+
+    return out;
+}
+
+bool MapModel::isFeatureClass(enum ngsCatalogObjectType type) const
+{
+    return type >= CAT_FC_ANY && type <= CAT_FC_ALL;
 }
 
 QStringList MapModel::mimeTypes() const
@@ -363,4 +441,23 @@ void MapModel::setOverlayVisible(ngsMapOverlayType typeMask, char visible)
     if (0 == m_mapId)
         return;
     ngsOverlaySetVisible(m_mapId, typeMask, visible);
+}
+
+//------------------------------------------------------------------------------
+// Layer
+//------------------------------------------------------------------------------
+
+void Layer::setSelection(const QSet<long long> &ids)
+{
+    if(ids.empty()) {
+        ngsLayerSetSelectionIds(m_handle, nullptr, 0);
+        return;
+    }
+
+    long long idsp[ids.size()];
+    int counter = 0;
+    for(auto id : ids) {
+        idsp[counter++] = id;
+    }
+    ngsLayerSetSelectionIds(m_handle, idsp, ids.size());
 }
