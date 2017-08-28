@@ -120,6 +120,8 @@ public:
     void redoEdit();
     bool canUndoEdit();
     bool canRedoEdit();
+    void saveEdit();
+    void cancelEdit();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
     void setSelectionStyle(const ngsRGBA &fillColor, const ngsRGBA &borderColor,
                            double width);
@@ -133,6 +135,8 @@ signals:
     void geometryPartDeleted();
     void undoEditFinished();
     void redoEditFinished();
+    void editSaved();
+    void editCanceled();
 
 private:
     unsigned char m_mapId;

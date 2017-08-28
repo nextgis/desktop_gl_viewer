@@ -114,6 +114,10 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(undoEditFinished()));
         disconnect(m_mapModel, SIGNAL(redoEditFinished()),
                    this, SLOT(redoEditFinished()));
+        disconnect(m_mapModel, SIGNAL(editSaved()),
+                   this, SLOT(editSaved()));
+        disconnect(m_mapModel, SIGNAL(editCanceled()),
+                   this, SLOT(editCanceled()));
     }
 
 
@@ -147,6 +151,10 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(undoEditFinished()));
     connect(m_mapModel, SIGNAL(redoEditFinished()),
                this, SLOT(redoEditFinished()));
+    connect(m_mapModel, SIGNAL(editSaved()),
+               this, SLOT(editSaved()));
+    connect(m_mapModel, SIGNAL(editCanceled()),
+               this, SLOT(editCanceled()));
 
     draw(DS_REDRAW);
 }
@@ -228,6 +236,16 @@ void GlMapView::redoEditFinished()
     draw(DS_PRESERVED);
 }
 
+void GlMapView::editSaved()
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::editCanceled()
+{
+    draw(DS_PRESERVED);
+}
+
 void GlMapView::resizeGL(int w, int h)
 {
     if(nullptr == m_mapModel)
@@ -248,19 +266,19 @@ void GlMapView::paintGL()
                         static_cast<void*>(this));
 
     if(m_mode != M_PAN) {
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//    	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    QPainter painter(this);
-    painter.setPen(Qt::blue);
+	    QPainter painter(this);
+    	painter.setPen(Qt::blue);
 
-//    ngsCoordinate beg = m_mapModel->getCoordinate(m_mouseStartPoint.x(), m_mouseStartPoint.y());
-//    ngsCoordinate end = m_mapModel->getCoordinate(m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
+//        ngsCoordinate beg = m_mapModel->getCoordinate(m_mouseStartPoint.x(), m_mouseStartPoint.y());
+//    	  ngsCoordinate end = m_mapModel->getCoordinate(m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
 
-    QRectF rectangle;
-    rectangle.setCoords(m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+	    QRectF rectangle;
+	    rectangle.setCoords(m_mouseStartPoint.x(), m_mouseStartPoint.y(),
                      m_mouseCurrentPoint.x(), m_mouseCurrentPoint.y());
-//    rectangle.setCoords(beg.X, beg.Y, end.X, end.Y);
-    painter.drawRect(rectangle);
+//    	  rectangle.setCoords(beg.X, beg.Y, end.X, end.Y);
+    	painter.drawRect(rectangle);
     }
     m_drawState = DS_PRESERVED; // draw from cache on display update
 }
@@ -329,7 +347,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                 if(abs(mapOffset.x()) > MIN_OFF_PX ||
                    abs(mapOffset.y()) > MIN_OFF_PX) {
                     m_mouseStartPoint = event->pos();
-                    m_mapModel->mapTouch(m_mouseStartPoint.x(),
+	                drawState = m_mapModel->mapTouch(m_mouseStartPoint.x(),
                             m_mouseStartPoint.y(), MTT_ON_MOVE);
                 }
             }

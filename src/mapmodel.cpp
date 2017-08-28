@@ -55,7 +55,6 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
-    setOverlayVisible(MOT_EDIT, true); // FIXME: for test, remove it
     setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 4.0);
     endResetModel();
 
@@ -299,6 +298,24 @@ bool MapModel::canRedoEdit()
     if (0 == m_mapId)
         return false;
     return ngsEditOverlayCanRedo(m_mapId);
+}
+
+void MapModel::saveEdit()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlaySave(m_mapId)) {
+        emit editSaved();
+    }
+}
+
+void MapModel::cancelEdit()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayCancel(m_mapId)) {
+        emit editCanceled();
+    }
 }
 
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)

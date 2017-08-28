@@ -63,6 +63,8 @@ protected slots:
     virtual void geometryPartDeleted();
     virtual void undoEditFinished();
     virtual void redoEditFinished();
+    virtual void editSaved();
+    virtual void editCanceled();
 
     // QOpenGLWidget interface
 protected:

@@ -265,7 +265,7 @@ void MainWindow::createOverviews()
     }
 }
 
-void MainWindow::editCreateGeometry()
+void MainWindow::createNewGeometry()
 {
     QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
     for(const QModelIndex& index : selection) {
@@ -274,24 +274,34 @@ void MainWindow::editCreateGeometry()
     }
 }
 
-void MainWindow::editAddGeometry()
+void MainWindow::addGeometryPart()
 {
     m_mapModel->addGeometryPart();
 }
 
-void MainWindow::editDeleteGeometry()
+void MainWindow::deleteGeometryPart()
 {
     m_mapModel->deleteGeometryPart();
 }
 
-void MainWindow::editHistoryUndo()
+void MainWindow::undoEdit()
 {
     m_mapModel->undoEdit();
 }
 
-void MainWindow::editHistoryRedo()
+void MainWindow::redoEdit()
 {
     m_mapModel->redoEdit();
+}
+
+void MainWindow::saveEdit()
+{
+    m_mapModel->saveEdit();
+}
+
+void MainWindow::cancelEdit()
+{
+    m_mapModel->cancelEdit();
 }
 
 void MainWindow::addMapLayer()
@@ -372,25 +382,33 @@ void MainWindow::createActions()
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
     connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
 
-    m_editCreateGeometryAct = new QAction(tr("Create new geometry"), this);
-    m_editCreateGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
-    connect(m_editCreateGeometryAct, SIGNAL(triggered()), this, SLOT(editCreateGeometry()));
+    m_createNewGeometryAct = new QAction(tr("Create new geometry"), this);
+    m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
+    connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
 
-    m_editAddGeometryAct = new QAction(tr("Add geometry part"), this);
-    m_editAddGeometryAct->setStatusTip(tr("Add part to multi geometry"));
-    connect(m_editAddGeometryAct, SIGNAL(triggered()), this, SLOT(editAddGeometry()));
+    m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
+    m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
+    connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
 
-    m_editDeleteGeometryAct = new QAction(tr("Delete geometry part"), this);
-    m_editDeleteGeometryAct->setStatusTip(tr("Delete part from multi geometry"));
-    connect(m_editDeleteGeometryAct, SIGNAL(triggered()), this, SLOT(editDeleteGeometry()));
+    m_deleteGeometryPartAct = new QAction(tr("Delete geometry part"), this);
+    m_deleteGeometryPartAct->setStatusTip(tr("Delete part from multi geometry"));
+    connect(m_deleteGeometryPartAct, SIGNAL(triggered()), this, SLOT(deleteGeometryPart()));
 
-    m_editHistoryUndoAct = new QAction(tr("Undo editing"), this);
-    m_editHistoryUndoAct->setStatusTip(tr("Undo editing"));
-    connect(m_editHistoryUndoAct, SIGNAL(triggered()), this, SLOT(editHistoryUndo()));
+    m_undoEditAct = new QAction(tr("Undo editing"), this);
+    m_undoEditAct->setStatusTip(tr("Undo editing"));
+    connect(m_undoEditAct, SIGNAL(triggered()), this, SLOT(undoEdit()));
 
-    m_editHistoryRedoAct = new QAction(tr("Redo editing"), this);
-    m_editHistoryRedoAct->setStatusTip(tr("Redo editing"));
-    connect(m_editHistoryRedoAct, SIGNAL(triggered()), this, SLOT(editHistoryRedo()));
+    m_redoEditAct = new QAction(tr("Redo editing"), this);
+    m_redoEditAct->setStatusTip(tr("Redo editing"));
+    connect(m_redoEditAct, SIGNAL(triggered()), this, SLOT(redoEdit()));
+
+    m_saveEditAct = new QAction(tr("Save editing"), this);
+    m_saveEditAct->setStatusTip(tr("Save editing to layer"));
+    connect(m_saveEditAct, SIGNAL(triggered()), this, SLOT(saveEdit()));
+
+    m_cancelEditAct = new QAction(tr("Cancel editing"), this);
+    m_cancelEditAct->setStatusTip(tr("Cancel editing"));
+    connect(m_cancelEditAct, SIGNAL(triggered()), this, SLOT(cancelEdit()));
 
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
@@ -478,12 +496,16 @@ void MainWindow::createMenus()
     fileMenu->addAction(m_pExitAct);
 
     QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
-    editMenu->addAction(m_editCreateGeometryAct);
+    editMenu->addAction(m_undoEditAct);
+    editMenu->addAction(m_redoEditAct);
     editMenu->addSeparator();
-    editMenu->addAction(m_editAddGeometryAct);
-    editMenu->addAction(m_editDeleteGeometryAct);
-    editMenu->addAction(m_editHistoryUndoAct);
-    editMenu->addAction(m_editHistoryRedoAct);
+    editMenu->addAction(m_saveEditAct);
+    editMenu->addAction(m_cancelEditAct);
+    editMenu->addSeparator();
+    editMenu->addAction(m_createNewGeometryAct);
+    editMenu->addSeparator();
+    editMenu->addAction(m_addGeometryPartAct);
+    editMenu->addAction(m_deleteGeometryPartAct);
 
     QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
     viewMenu->addAction(m_statusBarAct);
