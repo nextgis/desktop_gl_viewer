@@ -265,25 +265,6 @@ void MainWindow::createOverviews()
     }
 }
 
-void MainWindow::createNewGeometry()
-{
-    QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
-    for(const QModelIndex& index : selection) {
-        m_mapModel->createNewGeometry(index);
-        break;
-    }
-}
-
-void MainWindow::addGeometryPart()
-{
-    m_mapModel->addGeometryPart();
-}
-
-void MainWindow::deleteGeometryPart()
-{
-    m_mapModel->deleteGeometryPart();
-}
-
 void MainWindow::undoEdit()
 {
     m_mapModel->undoEdit();
@@ -302,6 +283,25 @@ void MainWindow::saveEdit()
 void MainWindow::cancelEdit()
 {
     m_mapModel->cancelEdit();
+}
+
+void MainWindow::createNewGeometry()
+{
+    QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
+    for(const QModelIndex& index : selection) {
+        m_mapModel->createNewGeometry(index);
+        break;
+    }
+}
+
+void MainWindow::addGeometryPart()
+{
+    m_mapModel->addGeometryPart();
+}
+
+void MainWindow::deleteGeometryPart()
+{
+    m_mapModel->deleteGeometryPart();
 }
 
 void MainWindow::addMapLayer()
@@ -382,18 +382,6 @@ void MainWindow::createActions()
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
     connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
 
-    m_createNewGeometryAct = new QAction(tr("Create new geometry"), this);
-    m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
-    connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
-
-    m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
-    m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
-    connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
-
-    m_deleteGeometryPartAct = new QAction(tr("Delete geometry part"), this);
-    m_deleteGeometryPartAct->setStatusTip(tr("Delete part from multi geometry"));
-    connect(m_deleteGeometryPartAct, SIGNAL(triggered()), this, SLOT(deleteGeometryPart()));
-
     m_undoEditAct = new QAction(tr("Undo editing"), this);
     m_undoEditAct->setStatusTip(tr("Undo editing"));
     connect(m_undoEditAct, SIGNAL(triggered()), this, SLOT(undoEdit()));
@@ -409,6 +397,18 @@ void MainWindow::createActions()
     m_cancelEditAct = new QAction(tr("Cancel editing"), this);
     m_cancelEditAct->setStatusTip(tr("Cancel editing"));
     connect(m_cancelEditAct, SIGNAL(triggered()), this, SLOT(cancelEdit()));
+
+    m_createNewGeometryAct = new QAction(tr("Create new geometry"), this);
+    m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
+    connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
+
+    m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
+    m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
+    connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
+
+    m_deleteGeometryPartAct = new QAction(tr("Delete geometry part"), this);
+    m_deleteGeometryPartAct->setStatusTip(tr("Delete part from multi geometry"));
+    connect(m_deleteGeometryPartAct, SIGNAL(triggered()), this, SLOT(deleteGeometryPart()));
 
     m_pAddLayerAct = new QAction(tr("Add layer"), this);
     m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));

@@ -240,34 +240,6 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
-void MapModel::createNewGeometry(const QModelIndex& index)
-{
-    if (0 == m_mapId)
-        return;
-    LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
-        emit geometryCreated(index);
-    }
-}
-
-void MapModel::addGeometryPart()
-{
-    if (0 == m_mapId)
-        return;
-    if (ngsEditOverlayAddGeometryPart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartAdded();
-    }
-}
-
-void MapModel::deleteGeometryPart()
-{
-    if (0 == m_mapId)
-        return;
-    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartDeleted();
-    }
-}
-
 void MapModel::undoEdit()
 {
     if (0 == m_mapId)
@@ -315,6 +287,34 @@ void MapModel::cancelEdit()
         return;
     if (ngsEditOverlayCancel(m_mapId)) {
         emit editCanceled();
+    }
+}
+
+void MapModel::createNewGeometry(const QModelIndex& index)
+{
+    if (0 == m_mapId)
+        return;
+    LayerH layer = static_cast<LayerH>(index.internalPointer());
+    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+        emit geometryCreated(index);
+    }
+}
+
+void MapModel::addGeometryPart()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddGeometryPart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartAdded();
+    }
+}
+
+void MapModel::deleteGeometryPart()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartDeleted();
     }
 }
 

@@ -104,12 +104,6 @@ void GlMapView::setModel(MapModel *mapModel)
         disconnect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                    this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
         disconnect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-        disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
-                   this, SLOT(geometryCreated(QModelIndex)));
-        disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
-                   this, SLOT(geometryPartAdded()));
-        disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
-                   this, SLOT(geometryPartDeleted()));
         disconnect(m_mapModel, SIGNAL(undoEditFinished()),
                    this, SLOT(undoEditFinished()));
         disconnect(m_mapModel, SIGNAL(redoEditFinished()),
@@ -118,6 +112,12 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(editSaved()));
         disconnect(m_mapModel, SIGNAL(editCanceled()),
                    this, SLOT(editCanceled()));
+        disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
+                   this, SLOT(geometryCreated(QModelIndex)));
+        disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
+                   this, SLOT(geometryPartAdded()));
+        disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
+                   this, SLOT(geometryPartDeleted()));
     }
 
 
@@ -141,12 +141,6 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
-    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
-               this, SLOT(geometryCreated(QModelIndex)));
-    connect(m_mapModel, SIGNAL(geometryPartAdded()),
-               this, SLOT(geometryPartAdded()));
-    connect(m_mapModel, SIGNAL(geometryPartDeleted()),
-               this, SLOT(geometryPartDeleted()));
     connect(m_mapModel, SIGNAL(undoEditFinished()),
                this, SLOT(undoEditFinished()));
     connect(m_mapModel, SIGNAL(redoEditFinished()),
@@ -155,6 +149,12 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(editSaved()));
     connect(m_mapModel, SIGNAL(editCanceled()),
                this, SLOT(editCanceled()));
+    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
+               this, SLOT(geometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(geometryPartAdded()),
+               this, SLOT(geometryPartAdded()));
+    connect(m_mapModel, SIGNAL(geometryPartDeleted()),
+               this, SLOT(geometryPartDeleted()));
 
     draw(DS_REDRAW);
 }
@@ -211,21 +211,6 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
     draw(DS_REDRAW);
 }
 
-void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
-{
-    draw(DS_PRESERVED);
-}
-
-void GlMapView::geometryPartAdded()
-{
-    draw(DS_PRESERVED);
-}
-
-void GlMapView::geometryPartDeleted()
-{
-    draw(DS_PRESERVED);
-}
-
 void GlMapView::undoEditFinished()
 {
     draw(DS_PRESERVED);
@@ -242,6 +227,21 @@ void GlMapView::editSaved()
 }
 
 void GlMapView::editCanceled()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::geometryPartAdded()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::geometryPartDeleted()
 {
     draw(DS_PRESERVED);
 }
