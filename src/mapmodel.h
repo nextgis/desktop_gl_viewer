@@ -113,13 +113,15 @@ public:
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
     void setOverlayVisible(ngsMapOverlayType typeMask, char visible);
-    void createNewGeometry(const QModelIndex &index);
-    void addGeometryPart();
-    void deleteGeometryPart();
     void undoEdit();
     void redoEdit();
     bool canUndoEdit();
     bool canRedoEdit();
+    void saveEdit();
+    void cancelEdit();
+    void createNewGeometry(const QModelIndex &index);
+    void addGeometryPart();
+    void deleteGeometryPart();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
     void setSelectionStyle(const ngsRGBA &fillColor, const ngsRGBA &borderColor,
                            double width);
@@ -128,11 +130,13 @@ public:
     bool isFeatureClass(enum ngsCatalogObjectType type) const;
 
 signals:
+    void undoEditFinished();
+    void redoEditFinished();
+    void editSaved();
+    void editCanceled();
     void geometryCreated(const QModelIndex &index);
     void geometryPartAdded();
     void geometryPartDeleted();
-    void undoEditFinished();
-    void redoEditFinished();
 
 private:
     unsigned char m_mapId;

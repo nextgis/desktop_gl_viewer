@@ -241,34 +241,6 @@ void MapModel::deleteLayer(const QModelIndex &index)
     }
 }
 
-void MapModel::createNewGeometry(const QModelIndex& index)
-{
-    if (0 == m_mapId)
-        return;
-    LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
-        emit geometryCreated(index);
-    }
-}
-
-void MapModel::addGeometryPart()
-{
-    if (0 == m_mapId)
-        return;
-    if (ngsEditOverlayAddPart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartAdded();
-    }
-}
-
-void MapModel::deleteGeometryPart()
-{
-    if (0 == m_mapId)
-        return;
-    if (ngsEditOverlayDeletePart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartDeleted();
-    }
-}
-
 void MapModel::undoEdit()
 {
     if (0 == m_mapId)
@@ -299,6 +271,52 @@ bool MapModel::canRedoEdit()
     if (0 == m_mapId)
         return false;
     return ngsEditOverlayCanRedo(m_mapId);
+}
+
+void MapModel::saveEdit()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlaySave(m_mapId)) {
+        emit editSaved();
+    }
+}
+
+void MapModel::cancelEdit()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayCancel(m_mapId)) {
+        emit editCanceled();
+    }
+}
+
+void MapModel::createNewGeometry(const QModelIndex& index)
+{
+    if (0 == m_mapId)
+        return;
+    LayerH layer = static_cast<LayerH>(index.internalPointer());
+    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+        emit geometryCreated(index);
+    }
+}
+
+void MapModel::addGeometryPart()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddGeometryPart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartAdded();
+    }
+}
+
+void MapModel::deleteGeometryPart()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
+        emit geometryPartDeleted();
+    }
 }
 
 ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)

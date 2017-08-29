@@ -72,12 +72,15 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
     return pView->cancelDraw() ? 0 : 1;
 }
 
-
 GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     QOpenGLWidget(parent),
     m_locationStatus(status),
     m_drawState(DS_NORMAL),
-    m_mapModel(nullptr)
+    m_mode(M_PAN),
+    m_mapModel(nullptr),
+    m_startRotateX(0.0),
+    m_startRotateZ(0.0),
+    m_beginRotateAngle(0.0)
 {
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
@@ -106,16 +109,20 @@ void GlMapView::setModel(MapModel *mapModel)
         disconnect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                    this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
         disconnect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+        disconnect(m_mapModel, SIGNAL(undoEditFinished()),
+                   this, SLOT(undoEditFinished()));
+        disconnect(m_mapModel, SIGNAL(redoEditFinished()),
+                   this, SLOT(redoEditFinished()));
+        disconnect(m_mapModel, SIGNAL(editSaved()),
+                   this, SLOT(editSaved()));
+        disconnect(m_mapModel, SIGNAL(editCanceled()),
+                   this, SLOT(editCanceled()));
         disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
                    this, SLOT(geometryCreated(QModelIndex)));
         disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
                    this, SLOT(geometryPartAdded()));
         disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
                    this, SLOT(geometryPartDeleted()));
-        disconnect(m_mapModel, SIGNAL(undoEditFinished()),
-                   this, SLOT(undoEditFinished()));
-        disconnect(m_mapModel, SIGNAL(redoEditFinished()),
-                   this, SLOT(redoEditFinished()));
     }
 
 
@@ -139,16 +146,20 @@ void GlMapView::setModel(MapModel *mapModel)
     connect(m_mapModel, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
                this, SLOT(layersMoved(QModelIndex,int,int,QModelIndex,int)));
     connect(m_mapModel, SIGNAL(modelReset()), this, SLOT(modelReset()));
+    connect(m_mapModel, SIGNAL(undoEditFinished()),
+               this, SLOT(undoEditFinished()));
+    connect(m_mapModel, SIGNAL(redoEditFinished()),
+               this, SLOT(redoEditFinished()));
+    connect(m_mapModel, SIGNAL(editSaved()),
+               this, SLOT(editSaved()));
+    connect(m_mapModel, SIGNAL(editCanceled()),
+               this, SLOT(editCanceled()));
     connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
                this, SLOT(geometryCreated(QModelIndex)));
     connect(m_mapModel, SIGNAL(geometryPartAdded()),
                this, SLOT(geometryPartAdded()));
     connect(m_mapModel, SIGNAL(geometryPartDeleted()),
                this, SLOT(geometryPartDeleted()));
-    connect(m_mapModel, SIGNAL(undoEditFinished()),
-               this, SLOT(undoEditFinished()));
-    connect(m_mapModel, SIGNAL(redoEditFinished()),
-               this, SLOT(redoEditFinished()));
 
     draw(DS_REDRAW);
 }
@@ -205,6 +216,26 @@ void GlMapView::layersMoved(const QModelIndex &/*parent*/, int /*start*/, int /*
     draw(DS_REDRAW);
 }
 
+void GlMapView::undoEditFinished()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::redoEditFinished()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::editSaved()
+{
+    draw(DS_REDRAW);
+}
+
+void GlMapView::editCanceled()
+{
+    draw(DS_PRESERVED);
+}
+
 void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
 {
     draw(DS_PRESERVED);
@@ -216,16 +247,6 @@ void GlMapView::geometryPartAdded()
 }
 
 void GlMapView::geometryPartDeleted()
-{
-    draw(DS_PRESERVED);
-}
-
-void GlMapView::undoEditFinished()
-{
-    draw(DS_PRESERVED);
-}
-
-void GlMapView::redoEditFinished()
 {
     draw(DS_PRESERVED);
 }
@@ -332,7 +353,7 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                 if(abs(mapOffset.x()) > MIN_OFF_PX ||
                    abs(mapOffset.y()) > MIN_OFF_PX) {
                     m_mouseStartPoint = event->pos();
-                    m_mapModel->mapTouch(m_mouseStartPoint.x(),
+	                drawState = m_mapModel->mapTouch(m_mouseStartPoint.x(),
                             m_mouseStartPoint.y(), MTT_ON_MOVE);
                 }
             }
