@@ -228,7 +228,7 @@ void GlMapView::redoEditFinished()
 
 void GlMapView::editSaved()
 {
-    draw(DS_REDRAW);
+    draw(DS_NORMAL);
 }
 
 void GlMapView::editCanceled()
