@@ -112,7 +112,7 @@ public:
     bool setScale(double value);
     void createLayer(const char *name, const char* path);
     void deleteLayer(const QModelIndex &index);
-    void setOverlayVisible(ngsMapOverlayType typeMask, char visible);
+    void setOverlayVisible(int typeMask, char visible);
     void undoEdit();
     void redoEdit();
     bool canUndoEdit();
