@@ -55,7 +55,7 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
-    setOverlayVisible(MOT_EDIT | MOT_LOCATION, true); // FIXME: for test, remove it
+    setOverlayVisible(MOT_LOCATION, true); // FIXME: for test, remove it
     setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 2.5);
     ngsLocationOverlayUpdate(m_mapId, {4185733.6079, 7197616.5748, 0.0}, 45.0);
     endResetModel();
