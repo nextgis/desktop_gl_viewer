@@ -64,7 +64,7 @@ public slots:
     void zoomOutMode();
 
 protected:
-    void closeEvent(QCloseEvent *event);
+    virtual void closeEvent(QCloseEvent *event) override;
     void writeSettings();
     void readSettings();
     void createMenus();

@@ -473,6 +473,7 @@ void Layer::setSelection(const QSet<long long> &ids)
         return;
     }
 
+    // FIXME: -Wvla: ISO C++ forbids variable length array ‘idsp’
     long long idsp[ids.size()];
     int counter = 0;
     for(auto id : ids) {

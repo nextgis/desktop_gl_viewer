@@ -74,13 +74,13 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
 
 GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     QOpenGLWidget(parent),
+    m_startRotateZ(0.0),
+    m_startRotateX(0.0),
+    m_beginRotateAngle(0.0),
     m_locationStatus(status),
     m_drawState(DS_NORMAL),
-    m_mode(M_PAN),
     m_mapModel(nullptr),
-    m_startRotateX(0.0),
-    m_startRotateZ(0.0),
-    m_beginRotateAngle(0.0)
+    m_mode(M_PAN)
 {
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
