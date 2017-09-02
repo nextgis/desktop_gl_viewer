@@ -302,6 +302,15 @@ void MapModel::createNewGeometry(const QModelIndex& index)
     }
 }
 
+void MapModel::editSelectedGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayEditGeometry(m_mapId) == COD_SUCCESS) {
+        emit geometryEditStarted();
+    }
+}
+
 void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)

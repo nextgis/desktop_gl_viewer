@@ -119,6 +119,8 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(editCanceled()));
         disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
                    this, SLOT(geometryCreated(QModelIndex)));
+        disconnect(m_mapModel, SIGNAL(geometryEditStarted()),
+                   this, SLOT(geometryEditStarted()));
         disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
                    this, SLOT(geometryPartAdded()));
         disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
@@ -156,6 +158,8 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(editCanceled()));
     connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
                this, SLOT(geometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(geometryEditStarted()),
+               this, SLOT(geometryEditStarted()));
     connect(m_mapModel, SIGNAL(geometryPartAdded()),
                this, SLOT(geometryPartAdded()));
     connect(m_mapModel, SIGNAL(geometryPartDeleted()),
@@ -239,6 +243,11 @@ void GlMapView::editCanceled()
 void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
 {
     draw(DS_PRESERVED);
+}
+
+void GlMapView::geometryEditStarted()
+{
+    draw(DS_NORMAL);
 }
 
 void GlMapView::geometryPartAdded()
