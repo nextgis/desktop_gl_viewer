@@ -237,7 +237,7 @@ void GlMapView::editSaved()
 
 void GlMapView::editCanceled()
 {
-    draw(DS_PRESERVED);
+    draw(DS_NORMAL);
 }
 
 void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
