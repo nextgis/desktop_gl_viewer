@@ -54,13 +54,7 @@ std::string CatalogDialog::getCatalogPath()
     QModelIndex index = ui->treeView->currentIndex();
     CatalogItem *item = static_cast<CatalogItem*>(index.internalPointer());
     if(nullptr != item) {
-        if(m_type == Type::OPEN) {
-            return item->getPath();
-        }
-        else {
-            std::string fileName =  ui->lineEdit->text().toStdString();
-            return item->getPath() + "/" + fileName;
-        }
+        return item->getPath();
     }
     return "";
 }

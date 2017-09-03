@@ -62,6 +62,7 @@ public slots:
     void panMode();
     void zoomInMode();
     void zoomOutMode();
+    void createStore();
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
@@ -73,11 +74,12 @@ protected:
     bool createDatastore();
 
 private:
-    QAction* m_pNewAct;
-    QAction* m_pOpenAct;
-    QAction* m_pSaveAct;
-    QAction* m_pAboutAct;
-    QAction* m_pLoadAct;
+    QAction* m_newAct;
+    QAction* m_openAct;
+    QAction* m_saveAct;
+    QAction* m_aboutAct;
+    QAction* m_loadAct;
+    QAction* m_createStore;
     QAction* m_createOverviewsAct;
     QAction* m_undoEditAct;
     QAction* m_redoEditAct;
@@ -86,9 +88,9 @@ private:
     QAction* m_createNewGeometryAct;
     QAction* m_addGeometryPartAct;
     QAction* m_deleteGeometryPartAct;
-    QAction* m_pAboutQtAct;
-    QAction* m_pExitAct;
-    QAction* m_pAddLayerAct;
+    QAction* m_aboutQtAct;
+    QAction* m_exitAct;
+    QAction* m_addLayerAct;
     QAction* m_pDeleteLayerAct;
     QAction* m_statusBarAct;
     QAction* m_identify;
@@ -107,9 +109,6 @@ private:
     GlMapView *m_mapView;
     QListView* m_mapLayersView;
     MapModel *m_mapModel;
-
-private:
-    std::string m_storePath;
 };
 
 #endif // MAINWINDOW_H

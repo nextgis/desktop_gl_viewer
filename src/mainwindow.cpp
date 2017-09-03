@@ -187,7 +187,7 @@ void MainWindow::save()
     int result = dlg.exec();
 
     if(1 == result) {
-        std::string savePath = dlg.getCatalogPath();
+        std::string savePath = dlg.getCatalogPath() + "/" + dlg.getNewName();
 
         if(ngsMapSave(m_mapModel->mapId(), savePath.c_str()) != COD_SUCCESS) {
             QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
@@ -207,27 +207,43 @@ void MainWindow::load()
 
     if(1 == result) {
         std::string shapePath = dlg.getCatalogPath();
+        std::string name = dlg.getNewName();
 
-        // 2. Show progress dialog
-        m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
+        CatalogDialog dlgDst(CatalogDialog::OPEN, tr("Select destination"),
+                          ngsCatalogObjectType::CAT_CONTAINER_NGS, this);
 
-        const char *options[2] = {"FEATURES_SKIP=EMPTY_GEOMETRY", nullptr};
-        char** popt = const_cast<char**>(options);
-        ngsProgressFunc func = loadProgressFunction;
+        result = dlgDst.exec();
+        if(1 == result) {
+            std::string dstPath = dlgDst.getCatalogPath();
+
+            // 2. Show progress dialog
+            m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
+
+            char** options = nullptr;
+            options = ngsAddNameValue(options, "NEW_NAME", name.c_str());
+            options = ngsAddNameValue(options, "FEATURES_SKIP", "EMPTY_GEOMETRY");
+            options = ngsAddNameValue(options, "FORCE", "ON");
+            options = ngsAddNameValue(options, "CREATE_OVERVIEWS", "ON");
+            options = ngsAddNameValue(options, "ZOOM_LEVELS", "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18");
+
+            ngsProgressFunc func = loadProgressFunction;
 
 
-        CatalogObjectH shapeFile = ngsCatalogObjectGet(shapePath.c_str());
-        CatalogObjectH store = ngsCatalogObjectGet(m_storePath.c_str());
-        QFuture<int> future = QtConcurrent::run(ngsCatalogObjectLoad,
-                                                shapeFile,
-                                                store,
-                                                popt,
-                                                func,
-                                                static_cast<void*>(m_progressDlg));
+            CatalogObjectH shapeFile = ngsCatalogObjectGet(shapePath.c_str());
+            CatalogObjectH store = ngsCatalogObjectGet(dstPath.c_str());
+            QFuture<int> future = QtConcurrent::run(ngsCatalogObjectCopy,
+                                                    shapeFile,
+                                                    store,
+                                                    options,
+                                                    func,
+                                                    static_cast<void*>(m_progressDlg));
 
-        m_watcher.setFuture(future);
+            m_watcher.setFuture(future);
 
-        m_progressDlg->open();
+            m_progressDlg->open();
+
+            ngsListFree(options);
+        }
     }
 }
 
@@ -359,24 +375,28 @@ void MainWindow::about()
 
 void MainWindow::createActions()
 {
-    m_pNewAct = new QAction(QIcon(":/images/doc_new.svg"), tr("&New"), this);
-    m_pNewAct->setShortcuts(QKeySequence::New);
-    m_pNewAct->setStatusTip(tr("Create a new map document"));
-    connect(m_pNewAct, SIGNAL(triggered()), this, SLOT(newFile()));
+    m_newAct = new QAction(QIcon(":/images/doc_new.svg"), tr("&New"), this);
+    m_newAct->setShortcuts(QKeySequence::New);
+    m_newAct->setStatusTip(tr("Create a new map document"));
+    connect(m_newAct, SIGNAL(triggered()), this, SLOT(newFile()));
 
-    m_pOpenAct = new QAction(QIcon(":/images/doc_open.svg"), tr("&Open..."), this);
-    m_pOpenAct->setShortcuts(QKeySequence::Open);
-    m_pOpenAct->setStatusTip(tr("Open an existing map document"));
-    connect(m_pOpenAct, SIGNAL(triggered()), this, SLOT(open()));
+    m_openAct = new QAction(QIcon(":/images/doc_open.svg"), tr("&Open..."), this);
+    m_openAct->setShortcuts(QKeySequence::Open);
+    m_openAct->setStatusTip(tr("Open an existing map document"));
+    connect(m_openAct, SIGNAL(triggered()), this, SLOT(open()));
 
-    m_pSaveAct = new QAction(QIcon(":/images/doc_save.svg"), tr("&Save"), this);
-    m_pSaveAct->setShortcuts(QKeySequence::Save);
-    m_pSaveAct->setStatusTip(tr("Save the map document to disk"));
-    connect(m_pSaveAct, SIGNAL(triggered()), this, SLOT(save()));
+    m_saveAct = new QAction(QIcon(":/images/doc_save.svg"), tr("&Save"), this);
+    m_saveAct->setShortcuts(QKeySequence::Save);
+    m_saveAct->setStatusTip(tr("Save the map document to disk"));
+    connect(m_saveAct, SIGNAL(triggered()), this, SLOT(save()));
 
-    m_pLoadAct = new QAction(tr("&Load"), this);
-    m_pLoadAct->setStatusTip(tr("Load spatial data to internal storage"));
-    connect(m_pLoadAct, SIGNAL(triggered()), this, SLOT(load()));
+    m_createStore = new QAction(tr("&Create store"), this);
+    m_createStore->setStatusTip(tr("Create NextGIS storage"));
+    connect(m_createStore, SIGNAL(triggered()), this, SLOT(createStore()));
+
+    m_loadAct = new QAction(tr("&Load"), this);
+    m_loadAct->setStatusTip(tr("Load spatial data to internal storage"));
+    connect(m_loadAct, SIGNAL(triggered()), this, SLOT(load()));
 
     m_createOverviewsAct = new QAction(tr("Create vector overviews"), this);
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
@@ -410,24 +430,24 @@ void MainWindow::createActions()
     m_deleteGeometryPartAct->setStatusTip(tr("Delete part from multi geometry"));
     connect(m_deleteGeometryPartAct, SIGNAL(triggered()), this, SLOT(deleteGeometryPart()));
 
-    m_pAddLayerAct = new QAction(tr("Add layer"), this);
-    m_pAddLayerAct->setStatusTip(tr("Add new layer to map"));
-    connect(m_pAddLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
+    m_addLayerAct = new QAction(tr("Add layer"), this);
+    m_addLayerAct->setStatusTip(tr("Add new layer to map"));
+    connect(m_addLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
 
-    m_pExitAct = new QAction(tr("E&xit"), this);
-    m_pExitAct->setShortcuts(QKeySequence::Quit);
-    m_pExitAct->setStatusTip(tr("Exit the application"));
-    connect(m_pExitAct, SIGNAL(triggered()), this, SLOT(close()));
+    m_exitAct = new QAction(tr("E&xit"), this);
+    m_exitAct->setShortcuts(QKeySequence::Quit);
+    m_exitAct->setStatusTip(tr("Exit the application"));
+    connect(m_exitAct, SIGNAL(triggered()), this, SLOT(close()));
 
-    m_pAboutAct = new QAction(QIcon(":/images/main_logo.svg"), tr("&About"), this);
-    m_pAboutAct->setStatusTip(tr("Show the application's About box"));
-    m_pAboutAct->setMenuRole(QAction::AboutRole);
-    connect(m_pAboutAct, SIGNAL(triggered()), this, SLOT(about()));
+    m_aboutAct = new QAction(QIcon(":/images/main_logo.svg"), tr("&About"), this);
+    m_aboutAct->setStatusTip(tr("Show the application's About box"));
+    m_aboutAct->setMenuRole(QAction::AboutRole);
+    connect(m_aboutAct, SIGNAL(triggered()), this, SLOT(about()));
 
-    m_pAboutQtAct = new QAction(tr("About &Qt"), this);
-    m_pAboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
-    m_pAboutQtAct->setMenuRole(QAction::AboutQtRole);
-    connect(m_pAboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    m_aboutQtAct = new QAction(tr("About &Qt"), this);
+    m_aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
+    m_aboutQtAct->setMenuRole(QAction::AboutQtRole);
+    connect(m_aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
     m_statusBarAct = new QAction(tr("Status bar"), this);
     m_statusBarAct->setStatusTip(tr("Show/hide status bar"));
@@ -470,9 +490,9 @@ bool MainWindow::createDatastore()
     std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr);
     std::string catalogPath = ngsCatalogPathFromSystem(path.c_str());
     std::string storeName("main.ngst");
-    m_storePath = catalogPath + "/" + storeName;
+    std::string storePath = catalogPath + "/" + storeName;
 
-    if(ngsCatalogObjectGet(m_storePath.c_str()) == nullptr) {
+    if(ngsCatalogObjectGet(storePath.c_str()) == nullptr) {
         char** options = nullptr;
         options = ngsAddNameValue(
                     options, "TYPE", std::to_string(
@@ -489,11 +509,11 @@ bool MainWindow::createDatastore()
 void MainWindow::createMenus()
 {
     QMenu* fileMenu = menuBar()->addMenu(tr("&File"));
-    fileMenu->addAction(m_pNewAct);
-    fileMenu->addAction(m_pOpenAct);
-    fileMenu->addAction(m_pSaveAct);
+    fileMenu->addAction(m_newAct);
+    fileMenu->addAction(m_openAct);
+    fileMenu->addAction(m_saveAct);
     fileMenu->addSeparator();
-    fileMenu->addAction(m_pExitAct);
+    fileMenu->addAction(m_exitAct);
 
     QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
     editMenu->addAction(m_undoEditAct);
@@ -512,11 +532,12 @@ void MainWindow::createMenus()
 //  refresh
 
     QMenu* dataMenu = menuBar()->addMenu(tr("&Data"));
-    dataMenu->addAction(m_pLoadAct);
+    dataMenu->addAction(m_createStore);
+    dataMenu->addAction(m_loadAct);
     dataMenu->addAction(m_createOverviewsAct);
 
     QMenu* mapMenu = menuBar()->addMenu(tr("&Map"));
-    mapMenu->addAction(m_pAddLayerAct);
+    mapMenu->addAction(m_addLayerAct);
     mapMenu->addSeparator();
     mapMenu->addAction(m_identify);
     mapMenu->addAction(m_pan);
@@ -526,8 +547,8 @@ void MainWindow::createMenus()
     // next extent
 
     QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
-    helpMenu->addAction(m_pAboutAct);
-    helpMenu->addAction(m_pAboutQtAct);
+    helpMenu->addAction(m_aboutAct);
+    helpMenu->addAction(m_aboutQtAct);
 }
 
 void MainWindow::createDockWindows()
@@ -593,6 +614,26 @@ void MainWindow::zoomInMode()
 void MainWindow::zoomOutMode()
 {
     m_mapView->setMode(GlMapView::M_ZOOMOUT);
+}
+
+void MainWindow::createStore()
+{
+    CatalogDialog dlg(CatalogDialog::SAVE, tr("Select path and name"),
+                      ngsCatalogObjectType::CAT_CONTAINER_DIR, this);
+    int result = dlg.exec();
+
+    if(1 == result) {
+        std::string storePath = dlg.getCatalogPath();
+
+        CatalogObjectH storeDir = ngsCatalogObjectGet(storePath.c_str());
+        std::string newName = dlg.getNewName();
+
+        char** options = nullptr;
+        options = ngsAddNameValue(options, "TYPE", std::to_string(CAT_CONTAINER_NGS).c_str());
+        options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
+        ngsCatalogObjectCreate(storeDir, newName.c_str(), options);
+        ngsListFree(options);
+    }
 }
 
 
