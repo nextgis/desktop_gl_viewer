@@ -310,6 +310,11 @@ void MainWindow::createNewGeometry()
     }
 }
 
+void MainWindow::editSelectedGeometry()
+{
+    m_mapModel->editSelectedGeometry();
+}
+
 void MainWindow::addGeometryPart()
 {
     m_mapModel->addGeometryPart();
@@ -422,6 +427,10 @@ void MainWindow::createActions()
     m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
     connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
 
+    m_editSelectedGeometryAct = new QAction(tr("Edit selected geometry"), this);
+    m_editSelectedGeometryAct->setStatusTip(tr("Edit selected geometry"));
+    connect(m_editSelectedGeometryAct, SIGNAL(triggered()), this, SLOT(editSelectedGeometry()));
+
     m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
     m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
     connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
@@ -523,6 +532,7 @@ void MainWindow::createMenus()
     editMenu->addAction(m_cancelEditAct);
     editMenu->addSeparator();
     editMenu->addAction(m_createNewGeometryAct);
+    editMenu->addAction(m_editSelectedGeometryAct);
     editMenu->addSeparator();
     editMenu->addAction(m_addGeometryPartAct);
     editMenu->addAction(m_deleteGeometryPartAct);
