@@ -306,7 +306,7 @@ void MapModel::editSelectedGeometry()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayEditGeometry(m_mapId) == COD_SUCCESS) {
+    if (ngsEditOverlayEditGeometry(m_mapId, nullptr, -1) == COD_SUCCESS) {
         emit geometryEditStarted();
     }
 }
