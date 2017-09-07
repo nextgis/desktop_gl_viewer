@@ -326,6 +326,15 @@ void MapModel::editSelectedGeometry()
     }
 }
 
+void MapModel::deleteGeometry()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayDeleteGeometry(m_mapId) == COD_SUCCESS) {
+        emit geometryDeleted();
+    }
+}
+
 void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)
