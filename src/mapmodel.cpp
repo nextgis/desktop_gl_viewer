@@ -55,8 +55,24 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
-    setOverlayVisible(MOT_LOCATION, true); // FIXME: for test, remove it
+/*    setOverlayVisible(MOT_LOCATION, true); // for test
+
+    if(ngsMapIconSetExists(m_mapId, "iconset") != 1) {
+        std::string iconsetPath = std::string(ngsGetCurrentDirectory()) + "/iconset.png";
+        if(ngsMapIconSetAdd(m_mapId, "iconset", iconsetPath.c_str(), 1) == COD_SUCCESS) {
+            ngsLocationOverlaySetStyleName(m_mapId, "marker");
+            JsonObjectH styleH = ngsLocationOverlayGetStyle(m_mapId);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", 15.0);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 5);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", 32);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", 32);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", "iconset");
+            ngsLocationOverlaySetStyle(m_mapId, styleH);
+        }
+    }
+
     ngsLocationOverlayUpdate(m_mapId, {4185733.6079, 7197616.5748, 0.0}, 45.0);
+*/
     endResetModel();
 
     return isValid();
