@@ -121,6 +121,7 @@ public:
     void cancelEdit();
     void createNewGeometry(const QModelIndex &index);
     void editSelectedGeometry();
+    void deleteGeometry();
     void addGeometryPart();
     void deleteGeometryPart();
     ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
@@ -137,6 +138,7 @@ signals:
     void editCanceled();
     void geometryCreated(const QModelIndex &index);
     void geometryEditStarted();
+    void geometryDeleted();
     void geometryPartAdded();
     void geometryPartDeleted();
 
