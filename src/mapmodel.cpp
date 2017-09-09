@@ -23,6 +23,8 @@
 #include <QDataStream>
 #include <QMimeData>
 
+#include "ngstore/codes.h"
+
 constexpr const char* MIME = "application/vnd.map.layer";
 
 MapModel::MapModel(QObject *parent)
@@ -55,19 +57,53 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
-/*    setOverlayVisible(MOT_LOCATION, true); // for test
 
-    if(ngsMapIconSetExists(m_mapId, "iconset") != 1) {
-        std::string iconsetPath = std::string(ngsGetCurrentDirectory()) + "/iconset.png";
-        if(ngsMapIconSetAdd(m_mapId, "iconset", iconsetPath.c_str(), 1) == COD_SUCCESS) {
-            ngsLocationOverlaySetStyleName(m_mapId, "marker");
-            JsonObjectH styleH = ngsLocationOverlayGetStyle(m_mapId);
-            ngsJsonObjectSetDoubleForKey(styleH, "size", 15.0);
+/*  // for test
+    setOverlayVisible(MOT_LOCATION, true);
+
+    const char* iconsetName = "iconset";
+    if(ngsMapIconSetExists(m_mapId, iconsetName) != 1) {
+        std::string iconsetPath =
+                std::string(ngsGetCurrentDirectory()) + "/iconset.png";
+        if(ngsMapIconSetAdd(m_mapId, iconsetName, iconsetPath.c_str(), 1)
+                == COD_SUCCESS) {
+            JsonObjectH styleH;
+            const char* locationStyleName = "marker";
+            int iconWidth = 32;
+            int iconHeight = 32;
+            double size = 15.0;
+
+            ngsLocationOverlaySetStyleName(m_mapId, locationStyleName);
+            styleH = ngsLocationOverlayGetStyle(m_mapId);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 5);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", 32);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", 32);
-            ngsJsonObjectSetStringForKey(styleH, "iconset_name", "iconset");
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsLocationOverlaySetStyle(m_mapId, styleH);
+
+            const char* editStyleName = "marker";
+            enum ngsEditElementType type = EET_POINT;
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 2);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
+            type = EET_SELECTED_POINT;
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 0);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
         }
     }
 
