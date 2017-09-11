@@ -82,27 +82,20 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsLocationOverlaySetStyle(m_mapId, styleH);
 
-            const char* editStyleName = "marker";
-            enum ngsEditElementType type = EET_POINT;
+            const char* editStyleName = "markerEditPointStyle";
+            enum ngsEditStyleType type = EST_POINT;
 
             ngsEditOverlaySetStyleName(m_mapId, type, editStyleName);
             styleH = ngsEditOverlayGetStyle(m_mapId, type);
             ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 2);
             ngsJsonObjectSetDoubleForKey(styleH, "size", size);
-            ngsEditOverlaySetStyle(m_mapId, type, styleH);
-
-            type = EET_SELECTED_POINT;
-
-            ngsEditOverlaySetStyleName(m_mapId, type, editStyleName);
-            styleH = ngsEditOverlayGetStyle(m_mapId, type);
-            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 0);
-            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
+            ngsJsonObjectSetIntegerForKey(styleH, "point_index", 2);
+            ngsJsonObjectSetIntegerForKey(styleH, "selected_point_index", 0);
+            ngsJsonObjectSetIntegerForKey(styleH, "median_point_index", 3);
+            ngsJsonObjectSetIntegerForKey(
+                    styleH, "selected_median_point_index", 1);
             ngsEditOverlaySetStyle(m_mapId, type, styleH);
         }
     }
