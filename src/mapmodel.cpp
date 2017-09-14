@@ -82,10 +82,10 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsLocationOverlaySetStyle(m_mapId, styleH);
 
-            const char* editStyleName = "markerEditPointStyle";
+            const char* editPointStyleName = "markerEditPointStyle";
             enum ngsEditStyleType type = EST_POINT;
 
-            ngsEditOverlaySetStyleName(m_mapId, type, editStyleName);
+            ngsEditOverlaySetStyleName(m_mapId, type, editPointStyleName);
             styleH = ngsEditOverlayGetStyle(m_mapId, type);
             ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
@@ -96,6 +96,30 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetIntegerForKey(styleH, "median_point_index", 3);
             ngsJsonObjectSetIntegerForKey(
                     styleH, "selected_median_point_index", 1);
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
+            const char* editLineStyleName = "editLineStyle";
+            type = EST_LINE;
+            double line_width = 20.0;
+
+            ngsRGBA lineColor = {255, 128, 255, 255};
+            QString lineColorHex;
+            lineColorHex.sprintf("#%02x%02x%02x%02x", lineColor.R, lineColor.G,
+                    lineColor.B, lineColor.A);
+
+            ngsRGBA selectedLineColor = {64, 192, 255, 255};
+            QString selectedLineColorHex;
+            selectedLineColorHex.sprintf("#%02x%02x%02x%02x",
+                    selectedLineColor.R, selectedLineColor.G,
+                    selectedLineColor.B, selectedLineColor.A);
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editLineStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetDoubleForKey(styleH, "line_width", line_width);
+            ngsJsonObjectSetStringForKey(
+                    styleH, "line_color", lineColorHex.toStdString().c_str());
+            ngsJsonObjectSetStringForKey(styleH, "selected_line_color",
+                    selectedLineColorHex.toStdString().c_str());
             ngsEditOverlaySetStyle(m_mapId, type, styleH);
         }
     }
