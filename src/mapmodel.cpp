@@ -388,6 +388,24 @@ void MapModel::deleteGeometry()
     }
 }
 
+void MapModel::addPoint()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddPoint(m_mapId) == COD_SUCCESS) {
+        emit pointAdded();
+    }
+}
+
+void MapModel::deletePoint()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayDeletePoint(m_mapId) == COD_SUCCESS) {
+        emit pointDeleted();
+    }
+}
+
 void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)

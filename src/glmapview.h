@@ -65,6 +65,8 @@ protected slots:
     virtual void geometryCreated(const QModelIndex& parent);
     virtual void geometryEditStarted();
     virtual void geometryDeleted();
+    virtual void pointAdded();
+    virtual void pointDeleted();
     virtual void geometryPartAdded();
     virtual void geometryPartDeleted();
 

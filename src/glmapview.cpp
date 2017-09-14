@@ -123,6 +123,10 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(geometryEditStarted()));
         disconnect(m_mapModel, SIGNAL(geometryDeleted()),
                    this, SLOT(geometryDeleted()));
+        disconnect(m_mapModel, SIGNAL(pointAdded()),
+                   this, SLOT(pointAdded()));
+        disconnect(m_mapModel, SIGNAL(pointDeleted()),
+                   this, SLOT(pointDeleted()));
         disconnect(m_mapModel, SIGNAL(geometryPartAdded()),
                    this, SLOT(geometryPartAdded()));
         disconnect(m_mapModel, SIGNAL(geometryPartDeleted()),
@@ -164,6 +168,10 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(geometryEditStarted()));
     connect(m_mapModel, SIGNAL(geometryDeleted()),
                this, SLOT(geometryDeleted()));
+    connect(m_mapModel, SIGNAL(pointAdded()),
+               this, SLOT(pointAdded()));
+    connect(m_mapModel, SIGNAL(pointDeleted()),
+               this, SLOT(pointDeleted()));
     connect(m_mapModel, SIGNAL(geometryPartAdded()),
                this, SLOT(geometryPartAdded()));
     connect(m_mapModel, SIGNAL(geometryPartDeleted()),
@@ -255,6 +263,16 @@ void GlMapView::geometryEditStarted()
 }
 
 void GlMapView::geometryDeleted()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::pointAdded()
+{
+    draw(DS_PRESERVED);
+}
+
+void GlMapView::pointDeleted()
 {
     draw(DS_PRESERVED);
 }
