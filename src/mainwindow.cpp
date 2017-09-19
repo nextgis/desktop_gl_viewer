@@ -547,6 +547,7 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(m_addGeometryPartAct);
     editMenu->addAction(m_deleteGeometryPartAct);
+    editMenu->addAction(m_createOverviewsAct);
 
     QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
     viewMenu->addAction(m_statusBarAct);

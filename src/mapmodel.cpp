@@ -62,7 +62,7 @@ bool MapModel::open(const char *path)
         if(ngsMapIconSetAdd(m_mapId, "iconset", iconsetPath.c_str(), 1) == COD_SUCCESS) {
             ngsLocationOverlaySetStyleName(m_mapId, "marker");
             JsonObjectH styleH = ngsLocationOverlayGetStyle(m_mapId);
-            ngsJsonObjectSetDoubleForKey(styleH, "size", 15.0);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", 23.0);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 5);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_width", 32);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_height", 32);
@@ -71,7 +71,7 @@ bool MapModel::open(const char *path)
         }
     }
 
-    ngsLocationOverlayUpdate(m_mapId, {4185733.6079, 7197616.5748, 0.0}, 45.0);
+    ngsLocationOverlayUpdate(m_mapId, {4185733.6079, 7197616.5748, 0.0}, 0.0, 0.0);
 */
     endResetModel();
 
@@ -250,11 +250,11 @@ void MapModel::deleteLayer(const QModelIndex &index)
     if(0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
+    beginRemoveRows(index.parent(), index.row(), index.row());
     if(ngsMapLayerDelete(m_mapId, layer) == COD_SUCCESS) {
-        beginRemoveRows(index.parent(), index.row(), index.row());
         removeRow(index.row());
-        endRemoveRows();
     }
+    endRemoveRows();
 }
 
 void MapModel::undoEdit()

@@ -436,8 +436,9 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
                         ext = mergeExtent(ext, env);
                     }
                     layer.setSelection(ids);
+
                     m_mapModel->invalidate(ext);
-                    draw(DS_NORMAL);
+                    draw(DS_PRESERVED);
                 }
 
                 m_mouseCurrentPoint = m_mouseStartPoint;
