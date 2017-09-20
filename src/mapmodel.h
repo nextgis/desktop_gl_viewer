@@ -126,7 +126,7 @@ public:
     void deletePoint();
     void addGeometryPart();
     void deleteGeometryPart();
-    ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
+    ngsPointId editOverlayTouch(double x, double y, const ngsMapTouchType type);
     void setSelectionStyle(const ngsRGBA &fillColor, const ngsRGBA &borderColor,
                            double width);
     QVector<Layer> identify(double minX, double minY,

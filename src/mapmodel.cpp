@@ -424,11 +424,11 @@ void MapModel::deleteGeometryPart()
     }
 }
 
-ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
+ngsPointId MapModel::editOverlayTouch(double x, double y, const ngsMapTouchType type)
 {
     if (0 == m_mapId)
-        return DS_NOTHING;
-    return ngsMapTouch(m_mapId, x, y, type);
+        return {-1, 0};
+    return ngsEditOverlayTouch(m_mapId, x, y, type);
 }
 
 void MapModel::setSelectionStyle(const ngsRGBA& fillColor,
