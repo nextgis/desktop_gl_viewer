@@ -419,9 +419,8 @@ void MapModel::deleteGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartDeleted();
-    }
+    ngsEditOverlayDeleteGeometryPart(m_mapId);
+    emit geometryPartDeleted();
 }
 
 ngsPointId MapModel::editOverlayTouch(double x, double y, const ngsMapTouchType type)
