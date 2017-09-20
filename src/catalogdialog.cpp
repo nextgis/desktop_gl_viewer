@@ -43,6 +43,26 @@ CatalogDialog::CatalogDialog(Type type, const QString &title, int filter,
             SLOT(selectionChanged(const QItemSelection&,const QItemSelection&)));
 }
 
+CatalogDialog::CatalogDialog(CatalogDialog::Type type, const QString& title,
+                             const QVector<int>& filter, QWidget* parent) :
+    QDialog(parent),
+    ui(new Ui::CatalogDialog),
+    m_type(type)
+{
+    ui->setupUi(this);
+    setWindowTitle(title);
+
+    // set model
+    m_model = new CatalogModel(filter);
+    ui->treeView->setModel(m_model);
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+
+    connect(ui->treeView->selectionModel(),
+            SIGNAL(selectionChanged(const QItemSelection&,const QItemSelection&)),
+            this,
+            SLOT(selectionChanged(const QItemSelection&,const QItemSelection&)));
+}
+
 CatalogDialog::~CatalogDialog()
 {
     delete m_model;

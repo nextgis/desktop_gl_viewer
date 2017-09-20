@@ -83,6 +83,9 @@ public:
     CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
                 int filter = 0,
                 CatalogItem *parent = 0);
+    CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
+                const QVector<int>& filter = QVector<int>(),
+                CatalogItem *parent = 0);
     ~CatalogItem() { qDeleteAll(childItems); }
 
     void appendChild(CatalogItem *child) { childItems.append(child); }
@@ -104,7 +107,7 @@ private:
     CatalogItem *parentItem;
     std::string m_name;
     enum ngsCatalogObjectType m_type;
-    int m_filter;
+    QVector<int> m_filter;
 };
 
 class CatalogModel : public QAbstractItemModel
@@ -113,6 +116,8 @@ class CatalogModel : public QAbstractItemModel
 
 public:
     explicit CatalogModel(int filter = ngsCatalogObjectType::CAT_UNKNOWN,
+                          QObject *parent = 0);
+    explicit CatalogModel(const QVector<int>& filter = QVector<int>(),
                           QObject *parent = 0);
     ~CatalogModel() { delete m_rootItem; }
 

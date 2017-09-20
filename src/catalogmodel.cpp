@@ -26,13 +26,27 @@
 // CatalogItem
 //------------------------------------------------------------------------------
 
-CatalogItem::CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
-                         int filter, CatalogItem *parent) :
+CatalogItem::CatalogItem(const std::string& name,
+                         enum ngsCatalogObjectType type,
+                         int filter,
+                         CatalogItem *parent) :
+    parentItem(parent),
+    m_name(name),
+    m_type(type)
+{
+    m_filter.append(filter);
+}
+
+CatalogItem::CatalogItem(const std::string& name,
+                         enum ngsCatalogObjectType type,
+                         const QVector<int>& filter,
+                         CatalogItem* parent) :
     parentItem(parent),
     m_name(name),
     m_type(type),
     m_filter(filter)
 {
+
 }
 
 int CatalogItem::childCount()
@@ -47,11 +61,15 @@ int CatalogItem::childCount()
         ngsCatalogObjectInfo* pathInfo;
         if(nullptr == parentItem) {
             CatalogObjectH catalog = ngsCatalogObjectGet("ngc://");
-            pathInfo = ngsCatalogObjectQuery(catalog, m_filter);
+            pathInfo = ngsCatalogObjectQueryMultiFilter(catalog,
+                                                        m_filter.data(),
+                                                        m_filter.count());
         }
         else {
             CatalogObjectH directory = ngsCatalogObjectGet(getPath().c_str());
-            pathInfo = ngsCatalogObjectQuery(directory, m_filter);
+            pathInfo = ngsCatalogObjectQueryMultiFilter(directory,
+                                                        m_filter.data(),
+                                                        m_filter.count());
         }
         if(nullptr != pathInfo) {
             int count = 0;
@@ -206,8 +224,13 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
 // CatalogModel
 //------------------------------------------------------------------------------
 
-CatalogModel::CatalogModel(int filter, QObject *parent)
-    : QAbstractItemModel(parent)
+CatalogModel::CatalogModel(int filter, QObject *parent) :
+    QAbstractItemModel(parent)
+{
+    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
+}
+
+CatalogModel::CatalogModel(const QVector<int>& filter, QObject* parent)
 {
     m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
 }
