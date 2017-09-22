@@ -52,6 +52,8 @@ public slots:
     void createNewGeometry();
     void editSelectedGeometry();
     void deleteGeometry();
+    void addPoint();
+    void deletePoint();
     void addGeometryPart();
     void deleteGeometryPart();
     void addMapLayer();
@@ -90,6 +92,8 @@ private:
     QAction* m_createNewGeometryAct;
     QAction* m_editSelectedGeometryAct;
     QAction* m_deleteGeometryAct;
+    QAction* m_addPointAct;
+    QAction* m_deletePointAct;
     QAction* m_addGeometryPartAct;
     QAction* m_deleteGeometryPartAct;
     QAction* m_aboutQtAct;

@@ -23,6 +23,8 @@
 #include <QDataStream>
 #include <QMimeData>
 
+#include "ngstore/codes.h"
+
 constexpr const char* MIME = "application/vnd.map.layer";
 
 MapModel::MapModel(QObject *parent)
@@ -55,19 +57,70 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
-/*    setOverlayVisible(MOT_LOCATION, true); // for test
 
-    if(ngsMapIconSetExists(m_mapId, "iconset") != 1) {
-        std::string iconsetPath = std::string(ngsGetCurrentDirectory()) + "/iconset.png";
-        if(ngsMapIconSetAdd(m_mapId, "iconset", iconsetPath.c_str(), 1) == COD_SUCCESS) {
-            ngsLocationOverlaySetStyleName(m_mapId, "marker");
-            JsonObjectH styleH = ngsLocationOverlayGetStyle(m_mapId);
-            ngsJsonObjectSetDoubleForKey(styleH, "size", 23.0);
+/*  // for test
+    setOverlayVisible(MOT_LOCATION, true);
+
+    const char* iconsetName = "iconset";
+    if(ngsMapIconSetExists(m_mapId, iconsetName) != 1) {
+        std::string iconsetPath =
+                std::string(ngsGetCurrentDirectory()) + "/iconset.png";
+        if(ngsMapIconSetAdd(m_mapId, iconsetName, iconsetPath.c_str(), 1)
+                == COD_SUCCESS) {
+            JsonObjectH styleH;
+            const char* locationStyleName = "marker";
+            int iconWidth = 32;
+            int iconHeight = 32;
+            double size = 15.0;
+
+            ngsLocationOverlaySetStyleName(m_mapId, locationStyleName);
+            styleH = ngsLocationOverlayGetStyle(m_mapId);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
             ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 5);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", 32);
-            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", 32);
-            ngsJsonObjectSetStringForKey(styleH, "iconset_name", "iconset");
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsLocationOverlaySetStyle(m_mapId, styleH);
+
+            const char* editPointStyleName = "markerEditPointStyle";
+            enum ngsEditStyleType type = EST_POINT;
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editPointStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
+            ngsJsonObjectSetIntegerForKey(styleH, "point_index", 2);
+            ngsJsonObjectSetIntegerForKey(styleH, "selected_point_index", 0);
+            ngsJsonObjectSetIntegerForKey(styleH, "median_point_index", 3);
+            ngsJsonObjectSetIntegerForKey(
+                    styleH, "selected_median_point_index", 1);
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
+            const char* editLineStyleName = "editLineStyle";
+            type = EST_LINE;
+            double line_width = 20.0;
+
+            ngsRGBA lineColor = {255, 128, 255, 255};
+            QString lineColorHex;
+            lineColorHex.sprintf("#%02x%02x%02x%02x", lineColor.R, lineColor.G,
+                    lineColor.B, lineColor.A);
+
+            ngsRGBA selectedLineColor = {64, 192, 255, 255};
+            QString selectedLineColorHex;
+            selectedLineColorHex.sprintf("#%02x%02x%02x%02x",
+                    selectedLineColor.R, selectedLineColor.G,
+                    selectedLineColor.B, selectedLineColor.A);
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editLineStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetDoubleForKey(styleH, "line_width", line_width);
+            ngsJsonObjectSetStringForKey(
+                    styleH, "line_color", lineColorHex.toStdString().c_str());
+            ngsJsonObjectSetStringForKey(styleH, "selected_line_color",
+                    selectedLineColorHex.toStdString().c_str());
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
         }
     }
 
@@ -335,6 +388,24 @@ void MapModel::deleteGeometry()
     }
 }
 
+void MapModel::addPoint()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddPoint(m_mapId) == COD_SUCCESS) {
+        emit pointAdded();
+    }
+}
+
+void MapModel::deletePoint()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayDeletePoint(m_mapId) == COD_SUCCESS) {
+        emit pointDeleted();
+    }
+}
+
 void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)
@@ -348,16 +419,15 @@ void MapModel::deleteGeometryPart()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayDeleteGeometryPart(m_mapId) == COD_SUCCESS) {
-        emit geometryPartDeleted();
-    }
+    ngsEditOverlayDeleteGeometryPart(m_mapId);
+    emit geometryPartDeleted();
 }
 
-ngsDrawState MapModel::mapTouch(double x, double y, const ngsMapTouchType type)
+ngsPointId MapModel::editOverlayTouch(double x, double y, const ngsMapTouchType type)
 {
     if (0 == m_mapId)
-        return DS_NOTHING;
-    return ngsMapTouch(m_mapId, x, y, type);
+        return {-1, 0};
+    return ngsEditOverlayTouch(m_mapId, x, y, type);
 }
 
 void MapModel::setSelectionStyle(const ngsRGBA& fillColor,

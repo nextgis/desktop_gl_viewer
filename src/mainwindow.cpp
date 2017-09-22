@@ -320,6 +320,16 @@ void MainWindow::deleteGeometry()
     m_mapModel->deleteGeometry();
 }
 
+void MainWindow::addPoint()
+{
+    m_mapModel->addPoint();
+}
+
+void MainWindow::deletePoint()
+{
+    m_mapModel->deletePoint();
+}
+
 void MainWindow::addGeometryPart()
 {
     m_mapModel->addGeometryPart();
@@ -440,6 +450,14 @@ void MainWindow::createActions()
     m_deleteGeometryAct->setStatusTip(tr("Delete edited geometry with saving"));
     connect(m_deleteGeometryAct, SIGNAL(triggered()), this, SLOT(deleteGeometry()));
 
+    m_addPointAct = new QAction(tr("Add point"), this);
+    m_addPointAct->setStatusTip(tr("Add point to line"));
+    connect(m_addPointAct, SIGNAL(triggered()), this, SLOT(addPoint()));
+
+    m_deletePointAct = new QAction(tr("Delete point"), this);
+    m_deletePointAct->setStatusTip(tr("Delete point in line"));
+    connect(m_deletePointAct, SIGNAL(triggered()), this, SLOT(deletePoint()));
+
     m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
     m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
     connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
@@ -545,6 +563,8 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(m_deleteGeometryAct);
     editMenu->addSeparator();
+    editMenu->addAction(m_addPointAct);
+    editMenu->addAction(m_deletePointAct);
     editMenu->addAction(m_addGeometryPartAct);
     editMenu->addAction(m_deleteGeometryPartAct);
     editMenu->addAction(m_createOverviewsAct);

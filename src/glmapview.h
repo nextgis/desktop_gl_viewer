@@ -65,6 +65,8 @@ protected slots:
     virtual void geometryCreated(const QModelIndex& parent);
     virtual void geometryEditStarted();
     virtual void geometryDeleted();
+    virtual void pointAdded();
+    virtual void pointDeleted();
     virtual void geometryPartAdded();
     virtual void geometryPartDeleted();
 
@@ -84,6 +86,7 @@ protected:
     void draw(enum ngsDrawState state);
 
 protected:
+    ngsCoordinate m_mapCenter;
     QPoint m_mouseStartPoint;
     QPoint m_mouseCurrentPoint;
     QPoint m_center;
@@ -93,6 +96,7 @@ protected:
     QTimer* m_timer;
     MapModel* m_mapModel;
     enum ViewMode m_mode;
+    bool m_editMode;
 };
 
 #endif // GLMAPVIEW_H

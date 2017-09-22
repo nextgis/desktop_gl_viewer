@@ -122,9 +122,11 @@ public:
     void createNewGeometry(const QModelIndex &index);
     void editSelectedGeometry();
     void deleteGeometry();
+    void addPoint();
+    void deletePoint();
     void addGeometryPart();
     void deleteGeometryPart();
-    ngsDrawState mapTouch(double x, double y, const ngsMapTouchType type);
+    ngsPointId editOverlayTouch(double x, double y, const ngsMapTouchType type);
     void setSelectionStyle(const ngsRGBA &fillColor, const ngsRGBA &borderColor,
                            double width);
     QVector<Layer> identify(double minX, double minY,
@@ -139,6 +141,8 @@ signals:
     void geometryCreated(const QModelIndex &index);
     void geometryEditStarted();
     void geometryDeleted();
+    void pointAdded();
+    void pointDeleted();
     void geometryPartAdded();
     void geometryPartDeleted();
 
