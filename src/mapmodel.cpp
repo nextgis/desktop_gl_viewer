@@ -59,7 +59,7 @@ bool MapModel::open(const char *path)
     m_mapId = ngsMapOpen(path);
 
 /*  // for test
-    setOverlayVisible(MOT_LOCATION, true);
+    setOverlayVisible(MOT_EDIT | MOT_LOCATION, true);
 
     const char* iconsetName = "iconset";
     if(ngsMapIconSetExists(m_mapId, iconsetName) != 1) {
@@ -139,7 +139,6 @@ bool MapModel::open(const char *path)
                                       nullptr};
             char** popt = const_cast<char**>(options);
             ngsOverlaySetOptions(m_mapId, MOT_EDIT, popt);
-            setOverlayVisible(MOT_EDIT, true);
         }
     }
 
