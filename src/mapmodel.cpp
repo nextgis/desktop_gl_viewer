@@ -82,7 +82,7 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsLocationOverlaySetStyle(m_mapId, styleH);
 
-            const char* editPointStyleName = "markerEditPointStyle";
+            const char* editPointStyleName = "markerEditPoint";
             enum ngsEditStyleType type = EST_POINT;
 
             ngsEditOverlaySetStyleName(m_mapId, type, editPointStyleName);
@@ -98,7 +98,7 @@ bool MapModel::open(const char *path)
                     styleH, "selected_median_point_index", 1);
             ngsEditOverlaySetStyle(m_mapId, type, styleH);
 
-            const char* editLineStyleName = "editLineStyle";
+            const char* editLineStyleName = "editLine";
             type = EST_LINE;
             double line_width = 20.0;
 
@@ -121,6 +121,25 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetStringForKey(styleH, "selected_line_color",
                     selectedLineColorHex.toStdString().c_str());
             ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
+            const char* editCrossStyleName = "marker";
+            type = EST_CROSS;
+            size = 64;
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editCrossStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetStringForKey(styleH, "iconset_name", iconsetName);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_width", iconWidth);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_height", iconHeight);
+            ngsJsonObjectSetIntegerForKey(styleH, "icon_index", 6);
+            ngsJsonObjectSetDoubleForKey(styleH, "size", size);
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
+            const char *options[2] = {"CROSS=ON",
+                                      nullptr};
+            char** popt = const_cast<char**>(options);
+            ngsOverlaySetOptions(m_mapId, MOT_EDIT, popt);
+            setOverlayVisible(MOT_EDIT, true);
         }
     }
 
