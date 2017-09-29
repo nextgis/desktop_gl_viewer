@@ -89,6 +89,7 @@ protected:
     ngsCoordinate m_mapCenter;
     QPoint m_mouseStartPoint;
     QPoint m_mouseCurrentPoint;
+    bool m_isMouseMoved;
     QPoint m_center;
     double m_startRotateZ, m_startRotateX, m_beginRotateAngle;
     ILocationStatus *m_locationStatus;

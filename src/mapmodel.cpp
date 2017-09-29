@@ -419,9 +419,8 @@ void MapModel::deletePoint()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayDeletePoint(m_mapId) == COD_SUCCESS) {
-        emit pointDeleted();
-    }
+    ngsEditOverlayDeletePoint(m_mapId);
+    emit pointDeleted();
 }
 
 void MapModel::addGeometryPart()

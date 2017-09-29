@@ -74,6 +74,7 @@ int ngsQtDrawingProgressFunc(enum ngsCode status,
 
 GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     QOpenGLWidget(parent),
+    m_isMouseMoved(false),
     m_startRotateZ(0.0),
     m_startRotateX(0.0),
     m_beginRotateAngle(0.0),
@@ -337,6 +338,8 @@ void GlMapView::mousePressEvent(QMouseEvent *event)
     if(nullptr == m_mapModel)
         return;
 
+    m_isMouseMoved = false;
+
     // For mouse press event this includes the button that caused the event.
     if (event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers().testFlag(Qt::ControlModifier) == true){
@@ -369,6 +372,8 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
     if(nullptr == m_mapModel) {
         return;
     }
+
+    m_isMouseMoved = true;
 
     // For mouse move events, this is all buttons that are pressed down.
     if (event->buttons() & Qt::LeftButton) {
@@ -490,9 +495,9 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
             m_mapCenter = m_mapModel->getCenter();
 
             if(m_editMode) {
-                ngsPointId ptId =
-                        m_mapModel->editOverlayTouch(m_mouseStartPoint.x(),
-                                m_mouseStartPoint.y(), MTT_ON_UP);
+                ngsPointId ptId = m_mapModel->editOverlayTouch(
+                        m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+                        (m_isMouseMoved) ? MTT_ON_UP : MTT_SINGLE);
                 if(ptId.pointId >= 0) {
                     draw(DS_PRESERVED);
                 }
