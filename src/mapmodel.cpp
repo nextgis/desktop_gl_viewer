@@ -423,6 +423,23 @@ void MapModel::deletePoint()
     emit pointDeleted();
 }
 
+void MapModel::addHole()
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddHole(m_mapId) == COD_SUCCESS) {
+        emit holeAdded();
+    }
+}
+
+void MapModel::deleteHole()
+{
+    if (0 == m_mapId)
+        return;
+    ngsEditOverlayDeleteHole(m_mapId);
+    emit holeDeleted();
+}
+
 void MapModel::addGeometryPart()
 {
     if (0 == m_mapId)

@@ -54,6 +54,8 @@ public slots:
     void deleteGeometry();
     void addPoint();
     void deletePoint();
+    void addHole();
+    void deleteHole();
     void addGeometryPart();
     void deleteGeometryPart();
     void addMapLayer();
@@ -94,6 +96,8 @@ private:
     QAction* m_deleteGeometryAct;
     QAction* m_addPointAct;
     QAction* m_deletePointAct;
+    QAction* m_addHoleAct;
+    QAction* m_deleteHoleAct;
     QAction* m_addGeometryPartAct;
     QAction* m_deleteGeometryPartAct;
     QAction* m_aboutQtAct;

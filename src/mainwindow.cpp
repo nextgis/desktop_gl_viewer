@@ -330,6 +330,16 @@ void MainWindow::deletePoint()
     m_mapModel->deletePoint();
 }
 
+void MainWindow::addHole()
+{
+    m_mapModel->addHole();
+}
+
+void MainWindow::deleteHole()
+{
+    m_mapModel->deleteHole();
+}
+
 void MainWindow::addGeometryPart()
 {
     m_mapModel->addGeometryPart();
@@ -458,6 +468,14 @@ void MainWindow::createActions()
     m_deletePointAct->setStatusTip(tr("Delete point in line"));
     connect(m_deletePointAct, SIGNAL(triggered()), this, SLOT(deletePoint()));
 
+    m_addHoleAct = new QAction(tr("Add hole"), this);
+    m_addHoleAct->setStatusTip(tr("Add hole to polygon"));
+    connect(m_addHoleAct, SIGNAL(triggered()), this, SLOT(addHole()));
+
+    m_deleteHoleAct = new QAction(tr("Delete hole"), this);
+    m_deleteHoleAct->setStatusTip(tr("Delete hole in polygon"));
+    connect(m_deleteHoleAct, SIGNAL(triggered()), this, SLOT(deleteHole()));
+
     m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
     m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
     connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
@@ -565,8 +583,11 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(m_addPointAct);
     editMenu->addAction(m_deletePointAct);
+    editMenu->addAction(m_addHoleAct);
+    editMenu->addAction(m_deleteHoleAct);
     editMenu->addAction(m_addGeometryPartAct);
     editMenu->addAction(m_deleteGeometryPartAct);
+    editMenu->addSeparator();
     editMenu->addAction(m_createOverviewsAct);
 
     QMenu* viewMenu = menuBar()->addMenu(tr("&View"));

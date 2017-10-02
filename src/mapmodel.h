@@ -124,6 +124,8 @@ public:
     void deleteGeometry();
     void addPoint();
     void deletePoint();
+    void addHole();
+    void deleteHole();
     void addGeometryPart();
     void deleteGeometryPart();
     ngsPointId editOverlayTouch(double x, double y, const ngsMapTouchType type);
@@ -143,6 +145,8 @@ signals:
     void geometryDeleted();
     void pointAdded();
     void pointDeleted();
+    void holeAdded();
+    void holeDeleted();
     void geometryPartAdded();
     void geometryPartDeleted();
 

@@ -67,6 +67,8 @@ protected slots:
     virtual void geometryDeleted();
     virtual void pointAdded();
     virtual void pointDeleted();
+    virtual void holeAdded();
+    virtual void holeDeleted();
     virtual void geometryPartAdded();
     virtual void geometryPartDeleted();
 
