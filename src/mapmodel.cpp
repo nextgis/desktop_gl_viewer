@@ -364,9 +364,8 @@ void MapModel::saveEdit()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlaySave(m_mapId)) {
-        emit editSaved();
-    }
+    ngsEditOverlaySave(m_mapId);
+    emit editSaved();
 }
 
 void MapModel::cancelEdit()
@@ -401,9 +400,8 @@ void MapModel::deleteGeometry()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayDeleteGeometry(m_mapId) == COD_SUCCESS) {
-        emit geometryDeleted();
-    }
+    ngsEditOverlayDeleteGeometry(m_mapId);
+    emit geometryDeleted();
 }
 
 void MapModel::addPoint()
