@@ -383,7 +383,7 @@ void MapModel::createNewGeometry(const QModelIndex& index)
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsEditOverlayCreateGeometry(m_mapId, layer) == COD_SUCCESS) {
+    if (ngsEditOverlayCreateGeometryInLayer(m_mapId, layer) == COD_SUCCESS) {
         emit geometryCreated(index);
     }
 }
