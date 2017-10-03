@@ -122,6 +122,28 @@ bool MapModel::open(const char *path)
                     selectedLineColorHex.toStdString().c_str());
             ngsEditOverlaySetStyle(m_mapId, type, styleH);
 
+            const char* editFillStyleName = "editFill";
+            type = EST_FILL;
+
+            ngsRGBA fillColor = {128, 92, 50, 255};
+            QString fillColorHex;
+            fillColorHex.sprintf("#%02x%02x%02x%02x", fillColor.R, fillColor.G,
+                    fillColor.B, fillColor.A);
+
+            ngsRGBA selectedFillColor = {100, 215, 40, 255};
+            QString selectedFillColorHex;
+            selectedFillColorHex.sprintf("#%02x%02x%02x%02x",
+                    selectedFillColor.R, selectedFillColor.G,
+                    selectedFillColor.B, selectedFillColor.A);
+
+            ngsEditOverlaySetStyleName(m_mapId, type, editFillStyleName);
+            styleH = ngsEditOverlayGetStyle(m_mapId, type);
+            ngsJsonObjectSetStringForKey(
+                    styleH, "fill_color", fillColorHex.toStdString().c_str());
+            ngsJsonObjectSetStringForKey(styleH, "selected_fill_color",
+                    selectedFillColorHex.toStdString().c_str());
+            ngsEditOverlaySetStyle(m_mapId, type, styleH);
+
             const char* editCrossStyleName = "marker";
             type = EST_CROSS;
             size = 64;
