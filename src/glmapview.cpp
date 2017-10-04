@@ -427,13 +427,11 @@ void GlMapView::mouseMoveEvent(QMouseEvent *event)
                    abs(mapOffset.y()) > MIN_OFF_PX) {
                     m_mouseStartPoint = event->pos();
                     bool moveMap = true;
-                    if(m_editMode) {
-                        if(!m_walkMode) {
-                            ngsPointId ptId = m_mapModel->editOverlayTouch(
-                                    m_mouseStartPoint.x(),
-                                    m_mouseStartPoint.y(), MTT_ON_MOVE);
-                            moveMap = (ptId.pointId < 0);
-                        }
+                    if(m_editMode && !m_walkMode) {
+                        ngsPointId ptId = m_mapModel->editOverlayTouch(
+                                m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+                                MTT_ON_MOVE);
+                        moveMap = (ptId.pointId < 0);
                     }
                     if(moveMap) {
                         ngsCoordinate offset =
