@@ -310,6 +310,15 @@ void MainWindow::createNewGeometry()
     }
 }
 
+void MainWindow::createNewGeometryByWalk()
+{
+    QModelIndexList selection = m_mapLayersView->selectionModel()->selectedRows();
+    for(const QModelIndex& index : selection) {
+        m_mapModel->createNewGeometry(index, true);
+        break;
+    }
+}
+
 void MainWindow::editSelectedGeometry()
 {
     m_mapModel->editSelectedGeometry();
@@ -452,6 +461,10 @@ void MainWindow::createActions()
     m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
     connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
 
+    m_createNewGeometryByWalkAct = new QAction(tr("Create new geometry by walk"), this);
+    m_createNewGeometryByWalkAct->setStatusTip(tr("Create new geometry by walk in selected layer"));
+    connect(m_createNewGeometryByWalkAct, SIGNAL(triggered()), this, SLOT(createNewGeometryByWalk()));
+
     m_editSelectedGeometryAct = new QAction(tr("Edit selected geometry"), this);
     m_editSelectedGeometryAct->setStatusTip(tr("Edit selected geometry"));
     connect(m_editSelectedGeometryAct, SIGNAL(triggered()), this, SLOT(editSelectedGeometry()));
@@ -577,6 +590,7 @@ void MainWindow::createMenus()
     editMenu->addAction(m_cancelEditAct);
     editMenu->addSeparator();
     editMenu->addAction(m_createNewGeometryAct);
+    editMenu->addAction(m_createNewGeometryByWalkAct);
     editMenu->addAction(m_editSelectedGeometryAct);
     editMenu->addSeparator();
     editMenu->addAction(m_deleteGeometryAct);

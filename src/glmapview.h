@@ -62,7 +62,7 @@ protected slots:
     virtual void redoEditFinished();
     virtual void editSaved();
     virtual void editCanceled();
-    virtual void geometryCreated(const QModelIndex& parent);
+    virtual void geometryCreated(const QModelIndex& parent, bool walk);
     virtual void geometryEditStarted();
     virtual void geometryDeleted();
     virtual void pointAdded();
@@ -100,6 +100,7 @@ protected:
     MapModel* m_mapModel;
     enum ViewMode m_mode;
     bool m_editMode;
+    bool m_walkMode;
 };
 
 #endif // GLMAPVIEW_H

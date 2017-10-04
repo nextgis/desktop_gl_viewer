@@ -82,7 +82,8 @@ GlMapView::GlMapView(ILocationStatus *status, QWidget *parent) :
     m_drawState(DS_NORMAL),
     m_mapModel(nullptr),
     m_mode(M_PAN),
-    m_editMode(false)
+    m_editMode(false),
+    m_walkMode(false)
 {
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
@@ -119,8 +120,8 @@ void GlMapView::setModel(MapModel *mapModel)
                    this, SLOT(editSaved()));
         disconnect(m_mapModel, SIGNAL(editCanceled()),
                    this, SLOT(editCanceled()));
-        disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
-                   this, SLOT(geometryCreated(QModelIndex)));
+        disconnect(m_mapModel, SIGNAL(geometryCreated(QModelIndex, bool)),
+                   this, SLOT(geometryCreated(QModelIndex, bool)));
         disconnect(m_mapModel, SIGNAL(geometryEditStarted()),
                    this, SLOT(geometryEditStarted()));
         disconnect(m_mapModel, SIGNAL(geometryDeleted()),
@@ -169,8 +170,8 @@ void GlMapView::setModel(MapModel *mapModel)
                this, SLOT(editSaved()));
     connect(m_mapModel, SIGNAL(editCanceled()),
                this, SLOT(editCanceled()));
-    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex)),
-               this, SLOT(geometryCreated(QModelIndex)));
+    connect(m_mapModel, SIGNAL(geometryCreated(QModelIndex, bool)),
+               this, SLOT(geometryCreated(QModelIndex, bool)));
     connect(m_mapModel, SIGNAL(geometryEditStarted()),
                this, SLOT(geometryEditStarted()));
     connect(m_mapModel, SIGNAL(geometryDeleted()),
@@ -258,17 +259,20 @@ void GlMapView::editSaved()
 {
     draw(DS_NORMAL);
     m_editMode = false;
+    m_walkMode = false;
 }
 
 void GlMapView::editCanceled()
 {
     draw(DS_NORMAL);
     m_editMode = false;
+    m_walkMode = false;
 }
 
-void GlMapView::geometryCreated(const QModelIndex& /*parent*/)
+void GlMapView::geometryCreated(const QModelIndex& /*parent*/, bool walk)
 {
     m_editMode = true;
+    m_walkMode = walk;
     draw(DS_PRESERVED);
 }
 
@@ -513,11 +517,27 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
             m_mapCenter = m_mapModel->getCenter();
 
             if(m_editMode) {
-                ngsPointId ptId = m_mapModel->editOverlayTouch(
-                        m_mouseStartPoint.x(), m_mouseStartPoint.y(),
-                        (m_isMouseMoved) ? MTT_ON_UP : MTT_SINGLE);
-                if(ptId.pointId >= 0) {
-                    draw(DS_PRESERVED);
+                if(m_isMouseMoved) {
+                    ngsPointId ptId =
+                            m_mapModel->editOverlayTouch(m_mouseStartPoint.x(),
+                                    m_mouseStartPoint.y(), MTT_ON_UP);
+                    if(ptId.pointId >= 0) {
+                        draw(DS_PRESERVED);
+                    }
+
+                } else {
+                    if(m_walkMode) {
+                        ngsCoordinate coord = m_mapModel->getCoordinate(
+                                m_mouseStartPoint.x(), m_mouseStartPoint.y());
+                        m_mapModel->addPoint(&coord);
+                    } else {
+                        ngsPointId ptId = m_mapModel->editOverlayTouch(
+                                m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+                                MTT_SINGLE);
+                        if(ptId.pointId >= 0) {
+                            draw(DS_PRESERVED);
+                        }
+                    }
                 }
             }
         }

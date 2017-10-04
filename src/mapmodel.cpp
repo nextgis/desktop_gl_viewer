@@ -399,13 +399,14 @@ void MapModel::cancelEdit()
     }
 }
 
-void MapModel::createNewGeometry(const QModelIndex& index)
+void MapModel::createNewGeometry(const QModelIndex& index, bool walk)
 {
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if (ngsEditOverlayCreateGeometryInLayer(m_mapId, layer) == COD_SUCCESS) {
-        emit geometryCreated(index);
+    if(ngsEditOverlayCreateGeometryInLayer(m_mapId, layer, walk) ==
+            COD_SUCCESS) {
+        emit geometryCreated(index, walk);
     }
 }
 
@@ -426,11 +427,11 @@ void MapModel::deleteGeometry()
     emit geometryDeleted();
 }
 
-void MapModel::addPoint()
+void MapModel::addPoint(ngsCoordinate* coordinates)
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayAddPoint(m_mapId) == COD_SUCCESS) {
+    if (ngsEditOverlayAddPoint(m_mapId, coordinates) == COD_SUCCESS) {
         emit pointAdded();
     }
 }

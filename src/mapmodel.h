@@ -119,10 +119,10 @@ public:
     bool canRedoEdit();
     void saveEdit();
     void cancelEdit();
-    void createNewGeometry(const QModelIndex &index);
+    void createNewGeometry(const QModelIndex &index, bool walk = false);
     void editSelectedGeometry();
     void deleteGeometry();
-    void addPoint();
+    void addPoint(ngsCoordinate* coordinates = nullptr);
     void deletePoint();
     void addHole();
     void deleteHole();
@@ -140,7 +140,7 @@ signals:
     void redoEditFinished();
     void editSaved();
     void editCanceled();
-    void geometryCreated(const QModelIndex &index);
+    void geometryCreated(const QModelIndex &index, bool walk);
     void geometryEditStarted();
     void geometryDeleted();
     void pointAdded();
