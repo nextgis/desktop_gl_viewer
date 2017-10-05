@@ -427,11 +427,20 @@ void MapModel::deleteGeometry()
     emit geometryDeleted();
 }
 
-void MapModel::addPoint(ngsCoordinate* coordinates)
+void MapModel::addPoint()
 {
     if (0 == m_mapId)
         return;
-    if (ngsEditOverlayAddPoint(m_mapId, coordinates) == COD_SUCCESS) {
+    if (ngsEditOverlayAddPoint(m_mapId) == COD_SUCCESS) {
+        emit pointAdded();
+    }
+}
+
+void MapModel::addVertex(const ngsCoordinate& coordinates)
+{
+    if (0 == m_mapId)
+        return;
+    if (ngsEditOverlayAddVertex(m_mapId, coordinates) == COD_SUCCESS) {
         emit pointAdded();
     }
 }

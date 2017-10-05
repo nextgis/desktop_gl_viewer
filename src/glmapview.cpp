@@ -518,9 +518,9 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
 
             if(m_editMode) {
                 if(m_isMouseMoved) {
-                    ngsPointId ptId =
-                            m_mapModel->editOverlayTouch(m_mouseStartPoint.x(),
-                                    m_mouseStartPoint.y(), MTT_ON_UP);
+                    ngsPointId ptId = m_mapModel->editOverlayTouch(
+                                m_mouseStartPoint.x(),
+                                m_mouseStartPoint.y(), MTT_ON_UP);
                     if(ptId.pointId >= 0) {
                         draw(DS_PRESERVED);
                     }
@@ -528,12 +528,12 @@ void GlMapView::mouseReleaseEvent(QMouseEvent *event)
                 } else {
                     if(m_walkMode) {
                         ngsCoordinate coord = m_mapModel->getCoordinate(
-                                m_mouseStartPoint.x(), m_mouseStartPoint.y());
-                        m_mapModel->addPoint(&coord);
+                                    m_mouseStartPoint.x(), m_mouseStartPoint.y());
+                        m_mapModel->addVertex(coord);
                     } else {
                         ngsPointId ptId = m_mapModel->editOverlayTouch(
-                                m_mouseStartPoint.x(), m_mouseStartPoint.y(),
-                                MTT_SINGLE);
+                                    m_mouseStartPoint.x(), m_mouseStartPoint.y(),
+                                    MTT_SINGLE);
                         if(ptId.pointId >= 0) {
                             draw(DS_PRESERVED);
                         }

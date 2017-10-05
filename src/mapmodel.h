@@ -122,7 +122,8 @@ public:
     void createNewGeometry(const QModelIndex &index, bool walk = false);
     void editSelectedGeometry();
     void deleteGeometry();
-    void addPoint(ngsCoordinate* coordinates = nullptr);
+    void addPoint();
+    void addVertex(const ngsCoordinate& coordinates);
     void deletePoint();
     void addHole();
     void deleteHole();
