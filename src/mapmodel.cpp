@@ -93,6 +93,7 @@ bool MapModel::open(const char *path)
             ngsJsonObjectSetDoubleForKey(styleH, "size", size);
             ngsJsonObjectSetIntegerForKey(styleH, "point_index", 2);
             ngsJsonObjectSetIntegerForKey(styleH, "selected_point_index", 0);
+            ngsJsonObjectSetIntegerForKey(styleH, "walk_point_index", 3);
             ngsJsonObjectSetIntegerForKey(styleH, "median_point_index", 3);
             ngsJsonObjectSetIntegerForKey(
                     styleH, "selected_median_point_index", 1);
@@ -399,14 +400,14 @@ void MapModel::cancelEdit()
     }
 }
 
-void MapModel::createNewGeometry(const QModelIndex& index, bool walk)
+void MapModel::createNewGeometry(const QModelIndex& index, bool walkMode)
 {
     if (0 == m_mapId)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
-    if(ngsEditOverlayCreateGeometryInLayer(m_mapId, layer, walk) ==
+    if(ngsEditOverlayCreateGeometryInLayer(m_mapId, layer, walkMode) ==
             COD_SUCCESS) {
-        emit geometryCreated(index, walk);
+        emit geometryCreated(index, walkMode);
     }
 }
 

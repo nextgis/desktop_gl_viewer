@@ -269,10 +269,10 @@ void GlMapView::editCanceled()
     m_walkMode = false;
 }
 
-void GlMapView::geometryCreated(const QModelIndex& /*parent*/, bool walk)
+void GlMapView::geometryCreated(const QModelIndex& /*parent*/, bool walkMode)
 {
     m_editMode = true;
-    m_walkMode = walk;
+    m_walkMode = walkMode;
     draw(DS_PRESERVED);
 }
 
