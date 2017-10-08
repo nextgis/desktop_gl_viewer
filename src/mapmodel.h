@@ -119,7 +119,7 @@ public:
     bool canRedoEdit();
     void saveEdit();
     void cancelEdit();
-    void createNewGeometry(const QModelIndex &index, bool walk = false);
+    void createNewGeometry(const QModelIndex &index, bool walkMode = false);
     void editSelectedGeometry();
     void deleteGeometry();
     void addPoint();
@@ -141,7 +141,7 @@ signals:
     void redoEditFinished();
     void editSaved();
     void editCanceled();
-    void geometryCreated(const QModelIndex &index, bool walk);
+    void geometryCreated(const QModelIndex &index, bool walkMode);
     void geometryEditStarted();
     void geometryDeleted();
     void pointAdded();
