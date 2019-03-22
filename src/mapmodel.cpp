@@ -28,7 +28,7 @@
 constexpr const char* MIME = "application/vnd.map.layer";
 
 MapModel::MapModel(QObject *parent)
-    : QAbstractItemModel(parent), m_mapId(0)
+    : QAbstractItemModel(parent), m_mapId(-1)
 {
 }
 
@@ -45,7 +45,14 @@ bool MapModel::create(const char *name, const char *description,
     beginResetModel();
     if(isValid())
         ngsMapClose(m_mapId);
-    m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);    
+    m_mapId = ngsMapCreate(name, description, epsg, minX, minY, maxX, maxY);
+//    const char *options[3] = {"VIEWPORT_REDUCE_FACTOR=1.1",
+//                              "ZOOM_INCREMENT=0",
+//                              nullptr};
+//    char** popt = const_cast<char**>(options);
+
+//    ngsMapSetOptions(m_mapId, popt);
+
     setSelectionStyle({230, 120, 36, 128}, {230, 120, 36, 255}, 2.5);
     endResetModel();
     return isValid();
@@ -57,6 +64,13 @@ bool MapModel::open(const char *path)
     if(isValid())
         ngsMapClose(m_mapId);
     m_mapId = ngsMapOpen(path);
+
+    const char *options[3] = {"VIEWPORT_REDUCE_FACTOR=1.0",
+                              "ZOOM_INCREMENT=-1",
+                              nullptr};
+    char **popt = const_cast<char**>(options);
+
+    ngsMapSetOptions(m_mapId, popt);
 
 /*  // for test
     setOverlayVisible(MOT_EDIT | MOT_LOCATION, true);
@@ -235,14 +249,14 @@ Qt::ItemFlags MapModel::flags(const QModelIndex &index) const
         return Qt::ItemIsDropEnabled | defaultFlags;
 }
 
-unsigned char MapModel::mapId() const
+char MapModel::mapId() const
 {
     return m_mapId;
 }
 
 void MapModel::setSize(int w, int h, bool YAxisInverted)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsMapSetSize(m_mapId, w, h, YAxisInverted ? 1 : 0);
     ngsMapSetExtentLimits(m_mapId, -20037508.34, -20037508.34, 20037508.34, 20037508.34);
@@ -251,42 +265,42 @@ void MapModel::setSize(int w, int h, bool YAxisInverted)
 void MapModel::draw(ngsDrawState state, ngsProgressFunc callback,
                        void *callbackData)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsMapDraw(m_mapId, state, callback, callbackData);
 }
 
 void MapModel::invalidate(const ngsExtent& bounds)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsMapInvalidate(m_mapId, bounds);
 }
 
 void MapModel::setBackground(const ngsRGBA &color)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsMapSetBackgroundColor(m_mapId, color);
 }
 
 ngsCoordinate MapModel::getCenter() const
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return {0, 0, 0};
     return ngsMapGetCenter(m_mapId);
 }
 
 bool MapModel::setCenter(const ngsCoordinate &newCenter)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return false;
     return ngsMapSetCenter(m_mapId, newCenter.X, newCenter.Y);
 }
 
 ngsCoordinate MapModel::getCoordinate(int x, int y) const
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return {0, 0, 0};
     return ngsMapGetCoordinate(m_mapId, static_cast<double>(x),
                                static_cast<double>(y));
@@ -294,42 +308,42 @@ ngsCoordinate MapModel::getCoordinate(int x, int y) const
 
 ngsCoordinate MapModel::getDistance(const QPoint &pt) const
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return {0, 0, 0};
     return ngsMapGetDistance(m_mapId, pt.x(), pt.y());
 }
 
 double MapModel::getRotate(ngsDirection dir) const
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return 0.0;
     return ngsMapGetRotate(m_mapId, dir);
 }
 
 bool MapModel::setRotate(ngsDirection dir, double value)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return false;
     return ngsMapSetRotate(m_mapId, dir, value) == COD_SUCCESS;
 }
 
 double MapModel::getScale() const
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return 1.0;
     return ngsMapGetScale(m_mapId);
 }
 
 bool MapModel::setScale(double value)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return false;
     return ngsMapSetScale(m_mapId, value);
 }
 
 void MapModel::createLayer(const char *name, const char *path)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     int result = ngsMapCreateLayer(m_mapId, name, path);
     if(-1 != result) {
@@ -341,7 +355,7 @@ void MapModel::createLayer(const char *name, const char *path)
 
 void MapModel::deleteLayer(const QModelIndex &index)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
     beginRemoveRows(index.parent(), index.row(), index.row());
@@ -353,7 +367,7 @@ void MapModel::deleteLayer(const QModelIndex &index)
 
 void MapModel::undoEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayUndo(m_mapId)) {
         emit undoEditFinished();
@@ -362,7 +376,7 @@ void MapModel::undoEdit()
 
 void MapModel::redoEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayRedo(m_mapId)) {
         emit redoEditFinished();
@@ -371,21 +385,21 @@ void MapModel::redoEdit()
 
 bool MapModel::canUndoEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return false;
     return ngsEditOverlayCanUndo(m_mapId);
 }
 
 bool MapModel::canRedoEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return false;
     return ngsEditOverlayCanRedo(m_mapId);
 }
 
 void MapModel::saveEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsEditOverlaySave(m_mapId);
     emit editSaved();
@@ -393,7 +407,7 @@ void MapModel::saveEdit()
 
 void MapModel::cancelEdit()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayCancel(m_mapId)) {
         emit editCanceled();
@@ -402,7 +416,7 @@ void MapModel::cancelEdit()
 
 void MapModel::createNewGeometry(const QModelIndex& index, bool walkMode)
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     LayerH layer = static_cast<LayerH>(index.internalPointer());
     if(ngsEditOverlayCreateGeometryInLayer(m_mapId, layer, walkMode) ==
@@ -413,7 +427,7 @@ void MapModel::createNewGeometry(const QModelIndex& index, bool walkMode)
 
 void MapModel::editSelectedGeometry()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayEditGeometry(m_mapId, nullptr, -1) == COD_SUCCESS) {
         emit geometryEditStarted();
@@ -422,7 +436,7 @@ void MapModel::editSelectedGeometry()
 
 void MapModel::deleteGeometry()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsEditOverlayDeleteGeometry(m_mapId);
     emit geometryDeleted();
@@ -430,7 +444,7 @@ void MapModel::deleteGeometry()
 
 void MapModel::addPoint()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayAddPoint(m_mapId) == COD_SUCCESS) {
         emit pointAdded();
@@ -439,7 +453,7 @@ void MapModel::addPoint()
 
 void MapModel::addVertex(const ngsCoordinate& coordinates)
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayAddVertex(m_mapId, coordinates) == COD_SUCCESS) {
         emit pointAdded();
@@ -448,7 +462,7 @@ void MapModel::addVertex(const ngsCoordinate& coordinates)
 
 void MapModel::deletePoint()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsEditOverlayDeletePoint(m_mapId);
     emit pointDeleted();
@@ -456,7 +470,7 @@ void MapModel::deletePoint()
 
 void MapModel::addHole()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayAddHole(m_mapId) == COD_SUCCESS) {
         emit holeAdded();
@@ -465,7 +479,7 @@ void MapModel::addHole()
 
 void MapModel::deleteHole()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsEditOverlayDeleteHole(m_mapId);
     emit holeDeleted();
@@ -473,7 +487,7 @@ void MapModel::deleteHole()
 
 void MapModel::addGeometryPart()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     if (ngsEditOverlayAddGeometryPart(m_mapId) == COD_SUCCESS) {
         emit geometryPartAdded();
@@ -482,7 +496,7 @@ void MapModel::addGeometryPart()
 
 void MapModel::deleteGeometryPart()
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsEditOverlayDeleteGeometryPart(m_mapId);
     emit geometryPartDeleted();
@@ -490,7 +504,7 @@ void MapModel::deleteGeometryPart()
 
 ngsPointId MapModel::editOverlayTouch(double x, double y, const ngsMapTouchType type)
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return {-1, 0};
     return ngsEditOverlayTouch(m_mapId, x, y, type);
 }
@@ -498,7 +512,7 @@ ngsPointId MapModel::editOverlayTouch(double x, double y, const ngsMapTouchType 
 void MapModel::setSelectionStyle(const ngsRGBA& fillColor,
                                  const ngsRGBA& borderColor, double width)
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     QString sColor;
     sColor.sprintf("#%02x%02x%02x%02x", borderColor.R, borderColor.G,
@@ -535,7 +549,7 @@ QVector<Layer> MapModel::identify(double minX, double minY,
                                                  double maxX, double maxY)
 {
     QVector<Layer> out;
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return out;
     int count = ngsMapLayerCount(m_mapId);
     for(int i = 0; i < count; ++i) {
@@ -574,7 +588,7 @@ QStringList MapModel::mimeTypes() const
 bool MapModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
                             int row, int /*column*/, const QModelIndex &parent)
 {
-    if(0 == m_mapId)
+    if(m_mapId < 0)
         return false;
 
     if (action == Qt::IgnoreAction)
@@ -625,7 +639,7 @@ QMimeData *MapModel::mimeData(const QModelIndexList &indexes) const
 
 void MapModel::setOverlayVisible(int typeMask, char visible)
 {
-    if (0 == m_mapId)
+    if(m_mapId < 0)
         return;
     ngsOverlaySetVisible(m_mapId, typeMask, visible);
 }
@@ -641,7 +655,6 @@ void Layer::setSelection(const QSet<long long> &ids)
         return;
     }
 
-    // FIXME: -Wvla: ISO C++ forbids variable length array ‘idsp’
     long long idsp[ids.size()];
     int counter = 0;
     for(auto id : ids) {

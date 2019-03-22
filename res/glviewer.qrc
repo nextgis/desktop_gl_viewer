@@ -8,5 +8,10 @@
         <file alias="event_error.svg">art/event_error.svg</file>
         <file alias="event_msg.svg">art/event_msg.svg</file>
         <file alias="event_warn.svg">art/event_warn.svg</file>
+        <file alias="raster.svg">art/raster.svg</file>
+        <file alias="refresh.svg">art/view-refresh.svg</file>
+    </qresource>
+    <qresource prefix="/animation">
+        <file alias="loader.gif">art/loader.gif</file>
     </qresource>
 </RCC>

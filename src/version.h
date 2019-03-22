@@ -24,9 +24,11 @@
 
 #define APP_NAME "NG GL Viewer"
 #define APP_COMMENT "Application for view geospatial data"
+#define VENDOR "NextGIS"
+#define VENDOR_DOMAIN "nextgis.com"
 
 #define NGGLV_MAJOR_VERSION     0
-#define NGGLV_MINOR_VERSION     3
+#define NGGLV_MINOR_VERSION     5
 #define NGGLV_PATCH_NUMBER      0
 
 #define NGGLV_VERSION_NUMBER ( NGGLV_MAJOR_VERSION * 1000) + ( NGGLV_MINOR_VERSION \
@@ -47,4 +49,3 @@
       NGGLV_PATCH_NUMBER >= (patch)))
 
 #endif // VERSION_H
-

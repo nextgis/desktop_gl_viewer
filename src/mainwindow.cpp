@@ -31,15 +31,19 @@
 #include "ngstore/version.h"
 
 #include "catalogdialog.h"
+#include "createtmsrasterwizard.h"
+#include "loginmynextgiscomdialog.h"
 #include "version.h"
+
+constexpr unsigned char maxRecentFiles = 5;
 
 // progress function
 int loadProgressFunction(enum ngsCode /*status*/,
                           double complete,
-                          const char* /*message*/,
-                          void* progressArguments)
+                          const char * /*message*/,
+                          void *progressArguments)
 {
-    ProgressDialog* dlg = static_cast<ProgressDialog*>(progressArguments);
+    ProgressDialog *dlg = static_cast<ProgressDialog*>(progressArguments);
     if(nullptr != dlg) {
         dlg->setProgress(static_cast<int>(complete * 100));
         if(dlg->isCancel()) {
@@ -51,24 +55,42 @@ int loadProgressFunction(enum ngsCode /*status*/,
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    m_progressDlg(nullptr)
+    m_progressDlg(nullptr),
+    m_recentSeparator(nullptr)
 {
     setWindowIcon(QIcon(":/images/main_logo.svg"));
 
-    char** options = nullptr;
-    options = ngsAddNameValue(options, "DEBUG_MODE", "ON");
-    options = ngsAddNameValue(options, "SETTINGS_DIR",
-                              ngsFormFileName(ngsGetCurrentDirectory(), "tmp",
-                                              nullptr));
-    options = ngsAddNameValue(options, "GDAL_DATA",
+    QString config, cache;
+#ifdef Q_OS_MACOS
+    config = QLatin1String("Library/Application Support");
+    cache = QLatin1String("Library/Caches");
+#else
+    config = QLatin1String(".config");
+    cache = QLatin1String(".cache");
+#endif
+
+    QString configDir = QString( "%1%2glviewer" )
+                .arg( QDir::homePath() + QDir::separator() + config + QDir::separator())
+                .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() );
+    QString cacheDir = QString( "%1%2ngstd" )
+                .arg( QDir::homePath() + QDir::separator() + cache + QDir::separator())
+                .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() );
+
+    char **options = nullptr;
+    options = ngsListAddNameValue(options, "DEBUG_MODE", "ON");
+    options = ngsListAddNameValue(options, "SETTINGS_DIR", configDir.toLatin1().data());
+    options = ngsListAddNameValue(options, "CACHE_DIR", cacheDir.toLatin1().data());
+    options = ngsListAddNameValue(options, "GDAL_DATA",
                               qgetenv("GDAL_DATA").constData());
-    options = ngsAddNameValue(options, "NUM_THREADS", "7");
-    options = ngsAddNameValue(options, "GL_MULTISAMPLE", "ON");
+    options = ngsListAddNameValue(options, "NUM_THREADS", "ALL_CPUS");
+    options = ngsListAddNameValue(options, "GL_MULTISAMPLE", "OFF");
+//    const char *key = ngsGeneratePrivateKey();
+    options = ngsListAddNameValue(options, "CRYPT_KEY", "2904dc49c0957fff9236f043c5f1c74688d64f2b5007babe9d3c0aed391b9df7");
     int result = ngsInit(options);
 
     ngsListFree(options);
 
-    if(result == COD_SUCCESS && createDatastore()) {
+    if(result == COD_SUCCESS) {
         m_mapModel = new MapModel();
         // create empty map
         m_mapModel->create();
@@ -82,10 +104,23 @@ MainWindow::MainWindow(QWidget *parent) :
         statusBar()->addPermanentWidget(m_eventsStatus);
         statusBar()->setStyleSheet("QStatusBar::item { border: none }"); // disable borders
 
-        createActions ();
+        createActions();
         createMenus();
         createDockWindows();
         readSettings();
+
+        // Add recent menus
+        foreach (QAction *action, menuBar()->actions()) {
+            if(action->menu() && action->text() == tr("&File")) {
+                QMenu *fileMenu = action->menu();
+                QList<QAction*> actions = fileMenu->actions();
+                QAction *lastItem = actions.last();
+                fileMenu->insertActions(lastItem, recentFileActs);
+                m_recentSeparator = fileMenu->insertSeparator(lastItem);
+                m_recentSeparator->setVisible(false);
+                break;
+            }
+        }
 
         /*m_eventsStatus->addMessage ();
         m_eventsStatus->addWarning ();
@@ -96,8 +131,49 @@ MainWindow::MainWindow(QWidget *parent) :
 
     }
     else {
-        QMessageBox::critical(this, tr("Error"), tr("Storage initialize failed"));
+        QMessageBox::critical(this, tr("Error"), tr("Library initialize failed"));
     }
+}
+
+void MainWindow::updateRecentFileActions()
+{
+    QSettings settings;
+    settings.beginGroup(QLatin1String("MainWindow"));
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), static_cast<int>(maxRecentFiles));
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        QFileInfo info(files[i]);
+        QString text = tr("&%1 %2").arg(i + 1).arg(info.fileName());
+        recentFileActs[i]->setText(text);
+        recentFileActs[i]->setData(files[i]);
+        recentFileActs[i]->setVisible(true);
+    }
+
+    for (int j = numRecentFiles; j < maxRecentFiles; ++j) {
+        recentFileActs[j]->setVisible(false);
+    }
+
+    if(m_recentSeparator)
+        m_recentSeparator->setVisible(numRecentFiles > 0);
+}
+
+void MainWindow::addRecentFile(const QString &fileName)
+{
+    QSettings settings;
+    settings.beginGroup(QLatin1String("MainWindow"));
+    QStringList files = settings.value("recentFileList").toStringList();
+    files.removeAll(fileName);
+    files.prepend(fileName);
+    while (files.size() > maxRecentFiles) {
+        files.removeLast();
+    }
+
+    settings.setValue("recentFileList", files);
+    settings.endGroup();
+
+    updateRecentFileActions();
 }
 
 void MainWindow::setStatusText(const QString &text, int timeout)
@@ -114,8 +190,9 @@ void MainWindow::statusBarShowHide()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
-    if(m_mapModel)
+    if(m_mapModel) {
         delete m_mapModel;
+    }
     m_mapModel = nullptr;
     ngsUnInit();
     event->accept();
@@ -126,10 +203,10 @@ void MainWindow::writeSettings()
     QSettings settings;
 
     settings.beginGroup("MainWindow");
-    if(isMaximized()){
+    if(isMaximized()) {
         settings.setValue("frame_maximized", true);
     }
-    else{
+    else {
         settings.setValue("frame_size", size());
         settings.setValue("frame_pos", pos());
     }
@@ -144,10 +221,10 @@ void MainWindow::readSettings()
     QSettings settings;
 
     settings.beginGroup("MainWindow");
-    if(settings.value("frame_maximized", false).toBool()){
+    if(settings.value("frame_maximized", false).toBool()) {
         showMaximized();
     }
-    else{
+    else {
         resize(settings.value("frame_size", QSize(400, 400)).toSize());
         move(settings.value("frame_pos", QPoint(200, 200)).toPoint());
     }
@@ -156,6 +233,8 @@ void MainWindow::readSettings()
     m_statusBarAct->setChecked(statusBar()->isVisible());
     m_splitter->restoreState(settings.value("splitter_sizes").toByteArray());
     settings.endGroup();
+
+    updateRecentFileActions();
 }
 
 void MainWindow::newFile()
@@ -176,6 +255,8 @@ void MainWindow::open()
         }
         else {
             statusBar()->showMessage(tr("Map opened"), 10000); // time limit 10 sec.
+
+            addRecentFile(openPath.c_str());
         }
     }
 }
@@ -193,7 +274,7 @@ void MainWindow::save()
             QMessageBox::critical (this, tr("Error"), tr("Map save failed"));
         }
         else {
-            statusBar ()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
+            statusBar()->showMessage(tr("Map saved"), 10000); // time limit 10 sec.
         }
     }
 }
@@ -219,12 +300,12 @@ void MainWindow::load()
             // 2. Show progress dialog
             m_progressDlg = new ProgressDialog(tr("Loading ..."), this);
 
-            char** options = nullptr;
-            options = ngsAddNameValue(options, "NEW_NAME", name.c_str());
-            options = ngsAddNameValue(options, "FEATURES_SKIP", "EMPTY_GEOMETRY");
-            options = ngsAddNameValue(options, "FORCE", "ON");
-            options = ngsAddNameValue(options, "CREATE_OVERVIEWS", "ON");
-            options = ngsAddNameValue(options, "ZOOM_LEVELS", "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18");
+            char **options = nullptr;
+            options = ngsListAddNameValue(options, "NEW_NAME", name.c_str());
+            options = ngsListAddNameValue(options, "FEATURES_SKIP", "EMPTY_GEOMETRY");
+            options = ngsListAddNameValue(options, "FORCE", "ON");
+            options = ngsListAddNameValue(options, "CREATE_OVERVIEWS", "ON");
+            options = ngsListAddNameValue(options, "ZOOM_LEVELS", "1,2,3,4,5,6,7,8,9,10,11,12,13,14"); // ,15,16,17,18
 
             ngsProgressFunc func = loadProgressFunction;
 
@@ -261,9 +342,9 @@ void MainWindow::createOverviews()
         m_progressDlg = new ProgressDialog(tr("Proceeding ..."), this);
 
         const char *options[3] = {"FORCE=ON",
-                                  "ZOOM_LEVELS=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                                  "ZOOM_LEVELS=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14", // ,15,16,17,18
                                   nullptr};
-        char** popt = const_cast<char**>(options);
+        char **popt = const_cast<char**>(options);
         ngsProgressFunc func = loadProgressFunction;
 
 
@@ -417,131 +498,142 @@ void MainWindow::createActions()
     m_newAct = new QAction(QIcon(":/images/doc_new.svg"), tr("&New"), this);
     m_newAct->setShortcuts(QKeySequence::New);
     m_newAct->setStatusTip(tr("Create a new map document"));
-    connect(m_newAct, SIGNAL(triggered()), this, SLOT(newFile()));
+    connect(m_newAct, &QAction::triggered, this, &MainWindow::newFile);
 
     m_openAct = new QAction(QIcon(":/images/doc_open.svg"), tr("&Open..."), this);
     m_openAct->setShortcuts(QKeySequence::Open);
     m_openAct->setStatusTip(tr("Open an existing map document"));
-    connect(m_openAct, SIGNAL(triggered()), this, SLOT(open()));
+    connect(m_openAct, &QAction::triggered, this, &MainWindow::open);
 
     m_saveAct = new QAction(QIcon(":/images/doc_save.svg"), tr("&Save"), this);
     m_saveAct->setShortcuts(QKeySequence::Save);
     m_saveAct->setStatusTip(tr("Save the map document to disk"));
-    connect(m_saveAct, SIGNAL(triggered()), this, SLOT(save()));
+    connect(m_saveAct, &QAction::triggered, this, &MainWindow::save);
 
     m_createStore = new QAction(tr("&Create store"), this);
     m_createStore->setStatusTip(tr("Create NextGIS storage"));
-    connect(m_createStore, SIGNAL(triggered()), this, SLOT(createStore()));
+    connect(m_createStore, &QAction::triggered, this, &MainWindow::createStore);
+
+    m_createTMS = new QAction(tr("&Create TMS"), this);
+    m_createTMS->setStatusTip(tr("Create TMS raster"));
+    connect(m_createTMS, &QAction::triggered, this, &MainWindow::createTMS);
 
     m_loadAct = new QAction(tr("&Load"), this);
     m_loadAct->setStatusTip(tr("Load spatial data to internal storage"));
-    connect(m_loadAct, SIGNAL(triggered()), this, SLOT(load()));
+    connect(m_loadAct, &QAction::triggered, this, &MainWindow::load);
 
     m_createOverviewsAct = new QAction(tr("Create vector overviews"), this);
     m_createOverviewsAct->setStatusTip(tr("Create vector layer overviews"));
-    connect(m_createOverviewsAct, SIGNAL(triggered()), this, SLOT(createOverviews()));
+    connect(m_createOverviewsAct, &QAction::triggered, this, &MainWindow::createOverviews);
 
     m_undoEditAct = new QAction(tr("Undo editing"), this);
     m_undoEditAct->setStatusTip(tr("Undo editing"));
-    connect(m_undoEditAct, SIGNAL(triggered()), this, SLOT(undoEdit()));
+    connect(m_undoEditAct, &QAction::triggered, this, &MainWindow::undoEdit);
 
     m_redoEditAct = new QAction(tr("Redo editing"), this);
     m_redoEditAct->setStatusTip(tr("Redo editing"));
-    connect(m_redoEditAct, SIGNAL(triggered()), this, SLOT(redoEdit()));
+    connect(m_redoEditAct, &QAction::triggered, this, &MainWindow::redoEdit);
 
     m_saveEditAct = new QAction(tr("Save editing"), this);
     m_saveEditAct->setStatusTip(tr("Save editing to layer"));
-    connect(m_saveEditAct, SIGNAL(triggered()), this, SLOT(saveEdit()));
+    connect(m_saveEditAct, &QAction::triggered, this, &MainWindow::saveEdit);
 
     m_cancelEditAct = new QAction(tr("Cancel editing"), this);
     m_cancelEditAct->setStatusTip(tr("Cancel editing"));
-    connect(m_cancelEditAct, SIGNAL(triggered()), this, SLOT(cancelEdit()));
+    connect(m_cancelEditAct, &QAction::triggered, this, &MainWindow::cancelEdit);
 
     m_createNewGeometryAct = new QAction(tr("Create new geometry"), this);
     m_createNewGeometryAct->setStatusTip(tr("Create new geometry in selected layer"));
-    connect(m_createNewGeometryAct, SIGNAL(triggered()), this, SLOT(createNewGeometry()));
+    connect(m_createNewGeometryAct, &QAction::triggered, this, &MainWindow::createNewGeometry);
 
     m_createNewGeometryByWalkAct = new QAction(tr("Create new geometry by walk"), this);
     m_createNewGeometryByWalkAct->setStatusTip(tr("Create new geometry by walk in selected layer"));
-    connect(m_createNewGeometryByWalkAct, SIGNAL(triggered()), this, SLOT(createNewGeometryByWalk()));
+    connect(m_createNewGeometryByWalkAct, &QAction::triggered, this, &MainWindow::createNewGeometryByWalk);
 
     m_editSelectedGeometryAct = new QAction(tr("Edit selected geometry"), this);
     m_editSelectedGeometryAct->setStatusTip(tr("Edit selected geometry"));
-    connect(m_editSelectedGeometryAct, SIGNAL(triggered()), this, SLOT(editSelectedGeometry()));
+    connect(m_editSelectedGeometryAct, &QAction::triggered, this, &MainWindow::editSelectedGeometry);
 
     m_deleteGeometryAct = new QAction(tr("Delete edited geometry"), this);
     m_deleteGeometryAct->setStatusTip(tr("Delete edited geometry with saving"));
-    connect(m_deleteGeometryAct, SIGNAL(triggered()), this, SLOT(deleteGeometry()));
+    connect(m_deleteGeometryAct, &QAction::triggered, this, &MainWindow::deleteGeometry);
 
     m_addPointAct = new QAction(tr("Add point"), this);
     m_addPointAct->setStatusTip(tr("Add point to line"));
-    connect(m_addPointAct, SIGNAL(triggered()), this, SLOT(addPoint()));
+    connect(m_addPointAct, &QAction::triggered, this, &MainWindow::addPoint);
 
     m_deletePointAct = new QAction(tr("Delete point"), this);
     m_deletePointAct->setStatusTip(tr("Delete point in line"));
-    connect(m_deletePointAct, SIGNAL(triggered()), this, SLOT(deletePoint()));
+    connect(m_deletePointAct, &QAction::triggered, this, &MainWindow::deletePoint);
 
     m_addHoleAct = new QAction(tr("Add hole"), this);
     m_addHoleAct->setStatusTip(tr("Add hole to polygon"));
-    connect(m_addHoleAct, SIGNAL(triggered()), this, SLOT(addHole()));
+    connect(m_addHoleAct, &QAction::triggered, this, &MainWindow::addHole);
 
     m_deleteHoleAct = new QAction(tr("Delete hole"), this);
     m_deleteHoleAct->setStatusTip(tr("Delete hole in polygon"));
-    connect(m_deleteHoleAct, SIGNAL(triggered()), this, SLOT(deleteHole()));
+    connect(m_deleteHoleAct, &QAction::triggered, this, &MainWindow::deleteHole);
 
     m_addGeometryPartAct = new QAction(tr("Add geometry part"), this);
     m_addGeometryPartAct->setStatusTip(tr("Add part to multi geometry"));
-    connect(m_addGeometryPartAct, SIGNAL(triggered()), this, SLOT(addGeometryPart()));
+    connect(m_addGeometryPartAct, &QAction::triggered, this, &MainWindow::addGeometryPart);
 
     m_deleteGeometryPartAct = new QAction(tr("Delete geometry part"), this);
     m_deleteGeometryPartAct->setStatusTip(tr("Delete part from multi geometry"));
-    connect(m_deleteGeometryPartAct, SIGNAL(triggered()), this, SLOT(deleteGeometryPart()));
+    connect(m_deleteGeometryPartAct, &QAction::triggered, this, &MainWindow::deleteGeometryPart);
 
     m_addLayerAct = new QAction(tr("Add layer"), this);
     m_addLayerAct->setStatusTip(tr("Add new layer to map"));
-    connect(m_addLayerAct, SIGNAL(triggered()), this, SLOT(addMapLayer()));
+    connect(m_addLayerAct, &QAction::triggered, this, &MainWindow::addMapLayer);
 
     m_exitAct = new QAction(tr("E&xit"), this);
     m_exitAct->setShortcuts(QKeySequence::Quit);
     m_exitAct->setStatusTip(tr("Exit the application"));
-    connect(m_exitAct, SIGNAL(triggered()), this, SLOT(close()));
+    connect(m_exitAct, &QAction::triggered, this, &MainWindow::close);
 
     m_aboutAct = new QAction(QIcon(":/images/main_logo.svg"), tr("&About"), this);
     m_aboutAct->setStatusTip(tr("Show the application's About box"));
     m_aboutAct->setMenuRole(QAction::AboutRole);
-    connect(m_aboutAct, SIGNAL(triggered()), this, SLOT(about()));
+    connect(m_aboutAct, &QAction::triggered, this, &MainWindow::about);
 
     m_aboutQtAct = new QAction(tr("About &Qt"), this);
     m_aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
     m_aboutQtAct->setMenuRole(QAction::AboutQtRole);
-    connect(m_aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    connect(m_aboutQtAct, &QAction::triggered, qApp, &QApplication::aboutQt);
 
     m_statusBarAct = new QAction(tr("Status bar"), this);
     m_statusBarAct->setStatusTip(tr("Show/hide status bar"));
     m_statusBarAct->setCheckable(true);
     m_statusBarAct->setChecked(statusBar()->isVisible());
-    connect(m_statusBarAct, SIGNAL(triggered()), this, SLOT(statusBarShowHide()));
+    connect(m_statusBarAct, &QAction::triggered, this, &MainWindow::statusBarShowHide);
 
     m_identify = new QAction(tr("Identify"), this);
     m_identify->setStatusTip(tr("Identify features"));
     m_identify->setCheckable(true);
-    connect(m_identify, SIGNAL(triggered()), this, SLOT(identifyMode()));
+    connect(m_identify, &QAction::triggered, this, &MainWindow::identifyMode);
 
     m_pan = new QAction(tr("Pan"), this);
     m_pan->setStatusTip(tr("Pan map"));
     m_pan->setCheckable(true);
-    connect(m_pan, SIGNAL(triggered()), this, SLOT(panMode()));
+    connect(m_pan, &QAction::triggered, this, &MainWindow::panMode);
 
     m_zoomIn = new QAction(tr("Zoom in"), this);
     m_zoomIn->setStatusTip(tr("Zoom in map"));
     m_zoomIn->setCheckable(true);
-    connect(m_zoomIn, SIGNAL(triggered()), this, SLOT(zoomInMode()));
+    connect(m_zoomIn, &QAction::triggered, this, &MainWindow::zoomInMode);
 
     m_zoomOut = new QAction(tr("Zoom out"), this);
     m_zoomOut->setStatusTip(tr("Zoom out map"));
     m_zoomOut->setCheckable(true);
-    connect(m_zoomOut, SIGNAL(triggered()), this, SLOT(zoomOutMode()));
+    connect(m_zoomOut, &QAction::triggered, this, &MainWindow::zoomOutMode);
 
+    m_loginMyNextGISCom = new QAction(tr("Login to my.nextgis.com"), this);
+    m_loginMyNextGISCom->setStatusTip(tr("Login to my.nextgis.com"));
+    connect(m_loginMyNextGISCom, &QAction::triggered, this, &MainWindow::loginMyNextGISCom);
+
+    m_createTracker = new QAction(tr("Create new tracker"), this);
+    m_createTracker->setStatusTip(tr("Create new tracker in web GIS"));
+    connect(m_createTracker, &QAction::triggered, this, &MainWindow::createTracker);
 
     m_mapGroup = new QActionGroup(this);
     m_mapGroup->addAction(m_pan);
@@ -549,6 +641,14 @@ void MainWindow::createActions()
     m_mapGroup->addAction(m_zoomIn);
     m_mapGroup->addAction(m_zoomOut);
     m_pan->setChecked(true);
+
+    for (int i = 0; i < maxRecentFiles; ++i) {
+        QAction *recentAction = new QAction(this);
+        recentAction->setVisible(false);
+        connect(recentAction, &QAction::triggered,
+                this, &MainWindow::onOpenRecentFile);
+        recentFileActs << recentAction;
+    }
 }
 
 bool MainWindow::createDatastore()
@@ -560,11 +660,11 @@ bool MainWindow::createDatastore()
     std::string storePath = catalogPath + "/" + storeName;
 
     if(ngsCatalogObjectGet(storePath.c_str()) == nullptr) {
-        char** options = nullptr;
-        options = ngsAddNameValue(
+        char **options = nullptr;
+        options = ngsListAddNameValue(
                     options, "TYPE", std::to_string(
                         ngsCatalogObjectType::CAT_CONTAINER_NGS).c_str());
-        options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
+        options = ngsListAddNameValue(options, "CREATE_UNIQUE", "ON");
 
         CatalogObjectH storeDir = ngsCatalogObjectGet(catalogPath.c_str());
         return ngsCatalogObjectCreate(storeDir, storeName.c_str(),
@@ -575,14 +675,14 @@ bool MainWindow::createDatastore()
 
 void MainWindow::createMenus()
 {
-    QMenu* fileMenu = menuBar()->addMenu(tr("&File"));
+    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
     fileMenu->addAction(m_newAct);
     fileMenu->addAction(m_openAct);
     fileMenu->addAction(m_saveAct);
     fileMenu->addSeparator();
     fileMenu->addAction(m_exitAct);
 
-    QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
+    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
     editMenu->addAction(m_undoEditAct);
     editMenu->addAction(m_redoEditAct);
     editMenu->addSeparator();
@@ -604,16 +704,19 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(m_createOverviewsAct);
 
-    QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
+    QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
     viewMenu->addAction(m_statusBarAct);
 //  refresh
 
-    QMenu* dataMenu = menuBar()->addMenu(tr("&Data"));
+    QMenu *dataMenu = menuBar()->addMenu(tr("&Data"));
+    dataMenu->addAction(m_createTMS);
     dataMenu->addAction(m_createStore);
     dataMenu->addAction(m_loadAct);
     dataMenu->addAction(m_createOverviewsAct);
+    dataMenu->addSeparator();
+    dataMenu->addAction(m_createTracker);
 
-    QMenu* mapMenu = menuBar()->addMenu(tr("&Map"));
+    QMenu *mapMenu = menuBar()->addMenu(tr("&Map"));
     mapMenu->addAction(m_addLayerAct);
     mapMenu->addSeparator();
     mapMenu->addAction(m_identify);
@@ -623,9 +726,10 @@ void MainWindow::createMenus()
     // prev extent
     // next extent
 
-    QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
+    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(m_aboutAct);
     helpMenu->addAction(m_aboutQtAct);
+    helpMenu->addAction(m_loginMyNextGISCom);
 }
 
 void MainWindow::createDockWindows()
@@ -667,7 +771,7 @@ void MainWindow::showContextMenu(const QPoint &pos)
 
     // Create menu and insert some actions
     QMenu myMenu;
-    myMenu.addAction("Remove", this, SLOT(removeMapLayer()));
+    myMenu.addAction("Remove", this, &MainWindow::removeMapLayer);
 
     // Show context menu at handling position
     myMenu.exec(globalPos);
@@ -699,18 +803,107 @@ void MainWindow::createStore()
                       ngsCatalogObjectType::CAT_CONTAINER_DIR, this);
     int result = dlg.exec();
 
-    if(1 == result) {
+    if(QDialog::Accepted == result) {
         std::string storePath = dlg.getCatalogPath();
 
         CatalogObjectH storeDir = ngsCatalogObjectGet(storePath.c_str());
         std::string newName = dlg.getNewName();
 
-        char** options = nullptr;
-        options = ngsAddNameValue(options, "TYPE", std::to_string(CAT_CONTAINER_NGS).c_str());
-        options = ngsAddNameValue(options, "CREATE_UNIQUE", "ON");
+        char **options = nullptr;
+        options = ngsListAddNameValue(options, "TYPE", std::to_string(CAT_CONTAINER_NGS).c_str());
+        options = ngsListAddNameValue(options, "CREATE_UNIQUE", "ON");
         ngsCatalogObjectCreate(storeDir, newName.c_str(), options);
         ngsListFree(options);
     }
 }
 
+void MainWindow::createTMS()
+{
+    CreateTMSRasterWizard wizard(this);
+    if(wizard.exec() == QDialog::Accepted) {
+        QString name = wizard.name();
+        if(!name.endsWith(".wconn")) {
+            name.append(".wconn");
+        }
+        QString path = wizard.path();
+        QString url = wizard.url();
+        int epsg = wizard.epsg();
+        int z_min = wizard.z_min();
+        int z_max = wizard.z_max();
 
+        CatalogObjectH catalog = ngsCatalogObjectGet(path.toStdString().c_str());
+
+        char **options = nullptr;
+        options = ngsListAddNameValue(options, "TYPE",
+                                      std::to_string(ngsCatalogObjectType::CAT_RASTER_TMS).c_str());
+        options = ngsListAddNameValue(options, "CREATE_UNIQUE", "ON");
+        options = ngsListAddNameValue(options, "url", url.toStdString().c_str());
+        options = ngsListAddNameValue(options, "epsg", std::to_string(epsg).c_str());
+        options = ngsListAddNameValue(options, "z_min", std::to_string(z_min).c_str());
+        options = ngsListAddNameValue(options, "z_max", std::to_string(z_max).c_str());
+        options = ngsListAddNameValue(options, "cache_expires", "1209600");
+
+        if(ngsCatalogObjectCreate(catalog, name.toStdString().c_str(),
+                                  options) != COD_SUCCESS) {
+            QMessageBox::critical(this, tr("Error"), tr("Failed to create TMS") +
+                                  ": " + ngsGetLastErrorMessage());
+        }
+    }
+}
+
+void MainWindow::onOpenRecentFile()
+{
+    QAction *action = qobject_cast<QAction*>(sender());
+    if (action) {
+        if(!m_mapModel->open(action->data().toString().toStdString().c_str())) {
+            QMessageBox::critical(this, tr("Error"), tr("Map load failed"));
+        }
+    }
+}
+
+void MainWindow::loginMyNextGISCom()
+{
+    LoginMyNextGISComDialog dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::createTracker()
+{
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::information(this, tr("Tracker ID"),
+                                     tr("Your tracker ID is: <i>%1</i><p>"
+        "Add this tracker ID to your Web GIS or send this ID to Web GIS administrator.<p>"
+        "Do you want to create tracker in Web GIS?<p>"
+        "<small>You must be Web GIS administrator or have permissions to create trackers.</small>")
+          .arg(ngsGetDeviceId(false)), QMessageBox::Yes|QMessageBox::No);
+    if (reply == QMessageBox::Yes) {
+        const QVector<int> filter = {
+            ngsCatalogObjectType::CAT_CONTAINER_GISCONNECTIONS,
+            ngsCatalogObjectType::CAT_CONTAINER_NGW,
+            ngsCatalogObjectType::CAT_CONTAINER_NGWGROUP,
+            ngsCatalogObjectType::CAT_CONTAINER_NGWTRACKERGROUP };
+        CatalogDialog dlg(CatalogDialog::SAVE, tr("Select location and tracker name"),
+                          filter, this);
+        int result = dlg.exec();
+        if(QDialog::Accepted == result) {
+            std::string trackersPath = dlg.getCatalogPath();
+
+            CatalogObjectH storeDir = ngsCatalogObjectGet(trackersPath.c_str());
+            std::string newName = dlg.getNewName();
+
+            char **options = nullptr;
+            options = ngsListAddNameValue(options, "TYPE", std::to_string(CAT_NGW_TRACKER).c_str());
+            options = ngsListAddNameValue(options, "CREATE_UNIQUE", "ON");
+            options = ngsListAddNameValue(options, "TRACKER_ID", ngsGetDeviceId(false));
+            if(ngsCatalogObjectCreate(storeDir, newName.c_str(), options) !=
+                    COD_SUCCESS) {
+                QMessageBox::critical(this, tr("Error"),
+                                      tr("Failed to create tracker.\nError: %1").arg(ngsGetDeviceId(false)));
+            }
+            else {
+                QMessageBox::information(this, tr("Success"), tr("Tracker created successfully."));
+            }
+            ngsListFree(options);
+        }
+    }
+}

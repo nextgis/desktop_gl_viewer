@@ -61,8 +61,8 @@ class MapModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    explicit MapModel(QObject *parent = 0);
-    virtual ~MapModel();
+    explicit MapModel(QObject *parent = Q_NULLPTR);
+    virtual ~MapModel() override;
 
     bool create(const char* name = DEFAULT_MAP_NAME,
                 const char* description = DEFAULT_MAP_DESCRIPTION,
@@ -96,7 +96,7 @@ public:
     }
 
     // Map functions
-    unsigned char mapId() const;
+    char mapId() const;
     void setSize(int w, int h, bool YAxisInverted = true);
     void draw(enum ngsDrawState state, ngsProgressFunc callback,
                  void* callbackData);
@@ -152,7 +152,7 @@ signals:
     void geometryPartDeleted();
 
 private:
-    unsigned char m_mapId;
+    char m_mapId;
 
     // QAbstractItemModel interface
 public:

@@ -26,24 +26,28 @@
 // CatalogItem
 //------------------------------------------------------------------------------
 
-CatalogItem::CatalogItem(const std::string& name,
+CatalogItem::CatalogItem(const std::string &name,
                          enum ngsCatalogObjectType type,
+                         CatalogObjectH object,
                          int filter,
                          CatalogItem *parent) :
     parentItem(parent),
     m_name(name),
-    m_type(type)
+    m_type(type),
+    m_object(object)
 {
     m_filter.append(filter);
 }
 
-CatalogItem::CatalogItem(const std::string& name,
+CatalogItem::CatalogItem(const std::string &name,
                          enum ngsCatalogObjectType type,
-                         const QVector<int>& filter,
-                         CatalogItem* parent) :
+                         CatalogObjectH object,
+                         const QVector<int> &filter,
+                         CatalogItem *parent) :
     parentItem(parent),
     m_name(name),
     m_type(type),
+    m_object(object),
     m_filter(filter)
 {
 
@@ -58,25 +62,16 @@ int CatalogItem::childCount()
 
     if(childItems.empty()) {
         // load children
-        ngsCatalogObjectInfo* pathInfo;
-        if(nullptr == parentItem) {
-            CatalogObjectH catalog = ngsCatalogObjectGet("ngc://");
-            pathInfo = ngsCatalogObjectQueryMultiFilter(catalog,
-                                                        m_filter.data(),
-                                                        m_filter.count());
-        }
-        else {
-            CatalogObjectH directory = ngsCatalogObjectGet(getPath().c_str());
-            pathInfo = ngsCatalogObjectQueryMultiFilter(directory,
-                                                        m_filter.data(),
-                                                        m_filter.count());
-        }
+        ngsCatalogObjectInfo *pathInfo =
+                ngsCatalogObjectQueryMultiFilter(m_object, m_filter.data(),
+                                                 m_filter.count());
         if(nullptr != pathInfo) {
             int count = 0;
             while(pathInfo[count].name) {
                 appendChild(new CatalogItem(pathInfo[count].name,
                                 static_cast<enum ngsCatalogObjectType>(pathInfo[count].type),
-                                m_filter, this));
+                                            pathInfo[count].object,
+                                            m_filter, this));
                 count++;
             }
             ngsFree(pathInfo);
@@ -84,6 +79,34 @@ int CatalogItem::childCount()
     }
 
     return childItems.count();
+}
+
+void CatalogItem::onInsertNew()
+{
+    ngsCatalogObjectInfo *pathInfo =
+            ngsCatalogObjectQueryMultiFilter(m_object, m_filter.data(),
+                                             m_filter.count());
+    if(nullptr != pathInfo) {
+        int count = 0;
+        while(pathInfo[count].name) {
+            bool hasItem = false;
+            for(auto item : childItems) {
+                if(item->m_name.compare(pathInfo[count].name) == 0) {
+                    hasItem = true;
+                    break;
+                }
+            }
+
+            if(!hasItem) {
+                appendChild(new CatalogItem(pathInfo[count].name,
+                                static_cast<enum ngsCatalogObjectType>(pathInfo[count].type),
+                                            pathInfo[count].object,
+                                            m_filter, this));
+            }
+            count++;
+        }
+        ngsFree(pathInfo);
+    }
 }
 
 QVariant CatalogItem::data(int column) const
@@ -110,17 +133,39 @@ QVariant CatalogItem::data(int column) const
 
 int CatalogItem::row() const
 {
-    if (parentItem)
+    if (parentItem) {
         return parentItem->childItems.indexOf(const_cast<CatalogItem*>(this));
-
+    }
     return 0;
 }
 
 std::string CatalogItem::getPath() const
 {
-    if(nullptr == parentItem)
+    if(nullptr == parentItem) {
         return "ngc:/";
+    }
     return parentItem->getPath() + "/" + m_name;
+}
+
+bool CatalogItem::canCreate(enum ngsCatalogObjectType type)
+{
+    return ngsCatalogObjectCanCreate(m_object, type) == 1;
+}
+
+bool CatalogItem::create(const std::string &name, enum ngsCatalogObjectType type,
+            const QMap<std::string, std::string> &options)
+{
+    char **createOptions = nullptr;
+    createOptions = ngsListAddNameValue(createOptions, "TYPE", std::to_string(type).c_str());
+    QMapIterator<std::string, std::string> i(options);
+    while (i.hasNext()) {
+        i.next();
+        createOptions = ngsListAddNameValue(createOptions, i.key().c_str(),
+                                            i.value().c_str());
+    }
+    int result = ngsCatalogObjectCreate(m_object, name.c_str(), createOptions);
+    ngsListFree(createOptions);
+    return result == COD_SUCCESS;
 }
 
 std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
@@ -128,7 +173,11 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
     switch (type) {
     case ngsCatalogObjectType::CAT_CONTAINER_ROOT:
         return "Catalog";
-    case ngsCatalogObjectType::CAT_CONTAINER_LOCALCONNECTION:
+    case ngsCatalogObjectType::CAT_CONTAINER_LOCALCONNECTIONS:
+    case ngsCatalogObjectType::CAT_CONTAINER_GISCONNECTIONS:
+    case ngsCatalogObjectType::CAT_CONTAINER_DBCONNECTIONS:
+        return "Connections";
+    case ngsCatalogObjectType::CAT_CONTAINER_DIR_LINK:
     case ngsCatalogObjectType::CAT_CONTAINER_WFS:
     case ngsCatalogObjectType::CAT_CONTAINER_POSTGRES:
     case ngsCatalogObjectType::CAT_CONTAINER_WMS:
@@ -155,6 +204,10 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
         return "SXF File";
     case ngsCatalogObjectType::CAT_CONTAINER_GPKG:
         return "GeoPackage";
+    case ngsCatalogObjectType::CAT_CONTAINER_NGWGROUP:
+        return "Resource group";
+    case ngsCatalogObjectType::CAT_CONTAINER_NGWTRACKERGROUP:
+        return "Trackers group";
     case ngsCatalogObjectType::CAT_FC_ESRI_SHAPEFILE:
         return "ESRI Shapefile";
     case ngsCatalogObjectType::CAT_FC_MAPINFO_TAB:
@@ -227,95 +280,133 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
 CatalogModel::CatalogModel(int filter, QObject *parent) :
     QAbstractItemModel(parent)
 {
-    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
+    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT,
+                                 ngsCatalogObjectGet("ngc://"), filter);
 }
 
-CatalogModel::CatalogModel(const QVector<int>& filter, QObject* parent)
+CatalogModel::CatalogModel(const QVector<int>& filter, QObject* parent) :
+    QAbstractItemModel(parent)
 {
-    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT, filter);
+    m_rootItem = new CatalogItem("", ngsCatalogObjectType::CAT_CONTAINER_ROOT,
+                                 ngsCatalogObjectGet("ngc://"), filter);
 }
 
 QModelIndex CatalogModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (!hasIndex(row, column, parent))
+    if (!hasIndex(row, column, parent)) {
         return QModelIndex();
-
+    }
     CatalogItem *parentItem;
 
-    if (!parent.isValid())
+    if (!parent.isValid()) {
         parentItem = m_rootItem;
-    else
+    }
+    else {
         parentItem = static_cast<CatalogItem*>(parent.internalPointer());
+    }
 
     CatalogItem *childItem = parentItem->child(row);
-    if (childItem)
+    if (childItem) {
         return createIndex(row, column, childItem);
-    else
+    }
+    else {
         return QModelIndex();
+    }
 }
 
 QModelIndex CatalogModel::parent(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QModelIndex();
+    }
 
     CatalogItem *childItem = static_cast<CatalogItem*>(index.internalPointer());
     CatalogItem *parentItem = childItem->parent();
 
-    if (parentItem == m_rootItem)
+    if (parentItem == m_rootItem) {
         return QModelIndex();
-
+    }
     return createIndex(parentItem->row(), 0, parentItem);
 }
 
 int CatalogModel::rowCount(const QModelIndex &parent) const
 {
     CatalogItem *parentItem;
-    if (parent.column() > 0)
+    if (parent.column() > 0) {
         return 0;
-
-    if (!parent.isValid())
+    }
+    if (!parent.isValid()) {
         parentItem = m_rootItem;
-    else
+    }
+    else {
         parentItem = static_cast<CatalogItem*>(parent.internalPointer());
-
+    }
     return parentItem->childCount();
 }
 
 int CatalogModel::columnCount(const QModelIndex &parent) const
 {
-    if (parent.isValid())
+    if (parent.isValid()) {
         return static_cast<CatalogItem*>(parent.internalPointer())->columnCount();
-    else
+    }
+    else {
         return m_rootItem->columnCount();
+    }
 }
 
 QVariant CatalogModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return QVariant();
-
-    if (role != Qt::DisplayRole)
+    }
+    if (role != Qt::DisplayRole) {
         return QVariant();
-
+    }
     CatalogItem *item = static_cast<CatalogItem*>(index.internalPointer());
-
     return item->data(index.column());
 }
 
 Qt::ItemFlags CatalogModel::flags(const QModelIndex &index) const
 {
-    if (!index.isValid())
+    if (!index.isValid()) {
         return Qt::NoItemFlags;
-
+    }
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
 QVariant CatalogModel::headerData(int section, Qt::Orientation orientation,
                                int role) const
 {
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return m_rootItem->data(section);
-
+    }
     return QVariant();
+}
+
+bool CatalogModel::canCreateObject(const QModelIndex &parent,
+                                   enum ngsCatalogObjectType type)
+{
+    CatalogItem *item = static_cast<CatalogItem*>(parent.internalPointer());
+    if(nullptr == item) {
+        return false;
+    }
+    return item->canCreate(type);
+}
+
+bool CatalogModel::createObject(const QModelIndex &parent, const QString &name,
+                                enum ngsCatalogObjectType type,
+                                const QMap<std::string, std::string> &options)
+{
+    CatalogItem *item = static_cast<CatalogItem*>(parent.internalPointer());
+    if(nullptr == item) {
+        return false;
+    }
+    if(item->create(name.toStdString(), type, options)) {
+        beginInsertRows(parent, -1, -1);
+        item->onInsertNew();
+        endInsertRows();
+        return true;
+    }
+
+    return false;
 }

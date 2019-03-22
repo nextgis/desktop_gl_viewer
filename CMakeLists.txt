@@ -3,7 +3,7 @@
 # Purpose:  cmake script
 # Author:   Dmitry Baryshnikov, bishop.dev@gmail.com
 #***************************************************************************
-#   Copyright (C) 2016 NextGIS, info@nextgis.ru
+#   Copyright (C) 2016-2019 NextGIS, info@nextgis.ru
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
-set(PRJ_NAME ngglviewer)
-set(APP_NAME ngglviewer)
-
-project(${PRJ_NAME})
+project(ngglviewer)
 
 # some init settings
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -32,13 +29,13 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 if(OSX_FRAMEWORK)
-  set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
-  set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/Library/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
-  set(SKIP_INSTALL_HEADERS ON)
-  set(SKIP_INSTALL_EXECUTABLES ON)
-  set(SKIP_INSTALL_FILES ON)
-  set(SKIP_INSTALL_EXPORT ON)
-  set(CMAKE_MACOSX_RPATH ON)
+    set(INSTALL_BIN_DIR "Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
+    set(INSTALL_LIB_DIR "Library/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
+    set(SKIP_INSTALL_HEADERS ON)
+    set(SKIP_INSTALL_EXECUTABLES ON)
+    set(SKIP_INSTALL_FILES ON)
+    set(SKIP_INSTALL_EXPORT ON)
+    set(CMAKE_MACOSX_RPATH ON)
 else()
     include(GNUInstallDirs)
     set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
@@ -62,6 +59,14 @@ set(VERSION ${NGGLV_MAJOR_VERSION}.${NGGLV_MINOR_VERSION}.${NGGLV_PATCH_NUMBER})
 
 report_version(${PROJECT_NAME} ${VERSION})
 
+if(WIN32)
+    add_definitions(-DNGS_ABI="Windows")
+elseif(APPLE)
+    add_definitions(-DNGS_ABI="Mac OS X")
+else()
+    add_definitions(-DNGS_ABI="UNIX")
+endif()
+
 enable_testing()
 
 add_subdirectory (lib)
@@ -75,6 +80,8 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets Svg)
 
 qt5_add_resources(RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/glviewer.qrc")
 
+set_property(SOURCE ${RESOURCES} PROPERTY SKIP_AUTOGEN ON)
+
 set(PROJECT_HEADERS
     src/version.h
     src/mainwindow.h
@@ -85,6 +92,11 @@ set(PROJECT_HEADERS
     src/catalogmodel.h
     src/progressdialog.h
     src/mapmodel.h
+    src/createtmsrasterwizard.h
+    src/qmswizardpage.h
+    src/createtmsfinishwizardpage.h
+    src/loginmynextgiscomdialog.h
+    src/createngwconnectiondialog.h
 )
 
 set(PROJECT_SOURCES
@@ -97,41 +109,46 @@ set(PROJECT_SOURCES
     src/catalogmodel.cpp
     src/progressdialog.cpp
     src/mapmodel.cpp
+    src/createtmsrasterwizard.cpp
+    src/qmswizardpage.cpp
+    src/createtmsfinishwizardpage.cpp
+    src/loginmynextgiscomdialog.cpp
+    src/createngwconnectiondialog.cpp
 )
 
 set(UIS_HDRS
     src/catalogdialog.ui
     src/progressdialog.ui
+    src/qmswizardpage.ui
+    src/createtmsfinishwizardpage.ui
+    src/loginmynextgiscomdialog.ui
+    src/createngwconnectiondialog.ui
 )
 
 if(MSVC)
     set(PROJECT_SOURCES ${PROJECT_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/res/glviewer.rc")
 endif()
 
-
-if(WIN32)
-    add_executable(${APP_NAME} WIN32 ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_executable(${APP_NAME} MACOSX_BUNDLE ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
-
+set(APP_NAME ngglviewer)
+add_executable(${APP_NAME} MACOSX_BUNDLE WIN32 ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_target_properties(${APP_NAME} PROPERTIES
-        MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME} Version ${VERSION}, Copyright 2017 NextGIS."
+        MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME} Version ${VERSION}, Copyright 2016-2018 NextGIS."
         # MACOSX_BUNDLE_ICON_FILE ${ICON_FILE_NAME}
-       MACOSX_BUNDLE_GUI_IDENTIFIER "${PROJECT_NAME}"
-       MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version ${VERSION}"
-       MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
-       MACOSX_BUNDLE_SHORT_VERSION_STRING ${VERSION}
-       MACOSX_BUNDLE_BUNDLE_VERSION ${NGGLV_MAJOR_VERSION}
-       MACOSX_BUNDLE_COPYRIGHT "Copyright 2017, NextGIS. All Rights Reserved."
-       MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "${PROJECT_NAME}"
+        MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version ${VERSION}"
+        MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${VERSION}
+        MACOSX_BUNDLE_BUNDLE_VERSION ${NGGLV_MAJOR_VERSION}
+        MACOSX_BUNDLE_COPYRIGHT "Copyright 2016-2018, NextGIS. All Rights Reserved."
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in"
      )
 
+# For debug
      add_custom_command(TARGET ${APP_NAME}
          POST_BUILD COMMAND
          ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "~/Applications/NextGIS/Library/Frameworks/"
          $<TARGET_FILE:${APP_NAME}>)
-else()
-    add_executable(${APP_NAME} ${PROJECT_HEADERS} ${PROJECT_SOURCES} ${RESOURCES} ${UIS_HDRS})
 endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY CXX_STANDARD 11)

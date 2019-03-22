@@ -36,7 +36,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
 
 public slots:
     void about();
@@ -70,6 +70,10 @@ public slots:
     void zoomInMode();
     void zoomOutMode();
     void createStore();
+    void createTMS();
+    void onOpenRecentFile();
+    void loginMyNextGISCom();
+    void createTracker();
 
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
@@ -79,49 +83,57 @@ protected:
     void createActions();
     void createDockWindows();
     bool createDatastore();
+    void updateRecentFileActions();
+    void addRecentFile(const QString &fileName);
 
 private:
-    QAction* m_newAct;
-    QAction* m_openAct;
-    QAction* m_saveAct;
-    QAction* m_aboutAct;
-    QAction* m_loadAct;
-    QAction* m_createStore;
-    QAction* m_createOverviewsAct;
-    QAction* m_undoEditAct;
-    QAction* m_redoEditAct;
-    QAction* m_saveEditAct;
-    QAction* m_cancelEditAct;
-    QAction* m_createNewGeometryAct;
-    QAction* m_createNewGeometryByWalkAct;
-    QAction* m_editSelectedGeometryAct;
-    QAction* m_deleteGeometryAct;
-    QAction* m_addPointAct;
-    QAction* m_deletePointAct;
-    QAction* m_addHoleAct;
-    QAction* m_deleteHoleAct;
-    QAction* m_addGeometryPartAct;
-    QAction* m_deleteGeometryPartAct;
-    QAction* m_aboutQtAct;
-    QAction* m_exitAct;
-    QAction* m_addLayerAct;
-    QAction* m_pDeleteLayerAct;
-    QAction* m_statusBarAct;
-    QAction* m_identify;
-    QAction* m_pan;
-    QAction* m_zoomIn;
-    QAction* m_zoomOut;
-    QActionGroup* m_mapGroup;
+    QAction *m_newAct;
+    QAction *m_openAct;
+    QAction *m_saveAct;
+    QAction *m_aboutAct;
+    QAction *m_loadAct;
+    QAction *m_createStore;
+    QAction *m_createOverviewsAct;
+    QAction *m_undoEditAct;
+    QAction *m_redoEditAct;
+    QAction *m_saveEditAct;
+    QAction *m_cancelEditAct;
+    QAction *m_createNewGeometryAct;
+    QAction *m_createNewGeometryByWalkAct;
+    QAction *m_editSelectedGeometryAct;
+    QAction *m_deleteGeometryAct;
+    QAction *m_addPointAct;
+    QAction *m_deletePointAct;
+    QAction *m_addHoleAct;
+    QAction *m_deleteHoleAct;
+    QAction *m_addGeometryPartAct;
+    QAction *m_deleteGeometryPartAct;
+    QAction *m_aboutQtAct;
+    QAction *m_exitAct;
+    QAction *m_addLayerAct;
+    QAction *m_pDeleteLayerAct;
+    QAction *m_statusBarAct;
+    QAction *m_identify;
+    QAction *m_pan;
+    QAction *m_zoomIn;
+    QAction *m_zoomOut;
+    QAction *m_createTMS;
+    QAction *m_loginMyNextGISCom;
+    QAction *m_createTracker;
+    QActionGroup *m_mapGroup;
 
     ProgressDialog *m_progressDlg;
     QSplitter *m_splitter;
+
+    QList<QAction*> recentFileActs;
+    QAction *m_recentSeparator;
 
 private:
     QFutureWatcher<int> m_watcher;
     EventsStatus *m_eventsStatus;
     LocationStatus *m_locationStatus;
     GlMapView *m_mapView;
-    QListView* m_mapLayersView;
+    QListView *m_mapLayersView;
     MapModel *m_mapModel;
 };
 

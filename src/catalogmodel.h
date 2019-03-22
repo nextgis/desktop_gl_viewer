@@ -80,12 +80,12 @@ typedef QSharedPointer<Feature> FeaturePtr;
 class CatalogItem
 {
 public:
-    CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
+    CatalogItem(const std::string &name, enum ngsCatalogObjectType type, CatalogObjectH object,
                 int filter = 0,
-                CatalogItem *parent = 0);
-    CatalogItem(const std::string& name, enum ngsCatalogObjectType type,
-                const QVector<int>& filter = QVector<int>(),
-                CatalogItem *parent = 0);
+                CatalogItem *parent = nullptr);
+    CatalogItem(const std::string &name, enum ngsCatalogObjectType type, CatalogObjectH object,
+                const QVector<int> &filter = QVector<int>(),
+                CatalogItem *parent = nullptr);
     ~CatalogItem() { qDeleteAll(childItems); }
 
     void appendChild(CatalogItem *child) { childItems.append(child); }
@@ -97,6 +97,10 @@ public:
     int row() const;
     CatalogItem *parent() { return parentItem; }
     std::string getPath() const;
+    bool canCreate(enum ngsCatalogObjectType type);
+    bool create(const std::string &name, enum ngsCatalogObjectType type,
+                const QMap<std::string, std::string> &options);
+    void onInsertNew();
 
     // static
 public:
@@ -107,6 +111,7 @@ private:
     CatalogItem *parentItem;
     std::string m_name;
     enum ngsCatalogObjectType m_type;
+    CatalogObjectH m_object;
     QVector<int> m_filter;
 };
 
@@ -116,10 +121,10 @@ class CatalogModel : public QAbstractItemModel
 
 public:
     explicit CatalogModel(int filter = ngsCatalogObjectType::CAT_UNKNOWN,
-                          QObject *parent = 0);
-    explicit CatalogModel(const QVector<int>& filter = QVector<int>(),
-                          QObject *parent = 0);
-    ~CatalogModel() { delete m_rootItem; }
+                          QObject *parent = nullptr);
+    explicit CatalogModel(const QVector<int> &filter = QVector<int>(),
+                          QObject *parent = nullptr);
+    virtual ~CatalogModel() override { delete m_rootItem; }
 
     // Basic functionality:
     QModelIndex index(int row, int column,
@@ -135,6 +140,11 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation,
                         int role = Qt::DisplayRole) const override;
 
+    bool canCreateObject(const QModelIndex &parent,
+                         enum ngsCatalogObjectType type);
+    bool createObject(const QModelIndex &parent, const QString &name,
+                      enum ngsCatalogObjectType type,
+                      const QMap<std::string, std::string> &options);
 private:
     CatalogItem *m_rootItem;
 };

@@ -40,8 +40,11 @@ public:
     };
 
 public:
-    explicit CatalogDialog(enum Type type, const QString & title, int filter = 0, QWidget *parent = 0);
-    explicit CatalogDialog(enum Type type, const QString & title, const QVector<int>& filter = QVector<int>(), QWidget *parent = 0);
+    explicit CatalogDialog(enum Type type, const QString & title, int filter = 0,
+                           QWidget *parent = Q_NULLPTR);
+    explicit CatalogDialog(enum Type type, const QString & title,
+                           const QVector<int>& filter = QVector<int>(),
+                           QWidget *parent = Q_NULLPTR);
     ~CatalogDialog();
     std::string getCatalogPath();
     std::string getNewName();
@@ -49,6 +52,13 @@ public:
 protected slots:
     void selectionChanged(const QItemSelection &selected,
                           const QItemSelection &deselected);
+    void showContextMenu(const QPoint &pos);
+    void createNGWTrackerGroup();
+    void createNGWGroup();
+    void createNGWConnection();
+
+private:
+    void init(const QString &title);
 
 private:
     Ui::CatalogDialog *ui;
