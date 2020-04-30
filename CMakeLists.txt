@@ -45,10 +45,6 @@ else()
     option (BUILD_SHARED_LIBS "Build as dynamic library" ON)
 endif()
 
-# Tell CMake to run moc when necessary:
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-
 # As moc files are generated in the binary dir, tell CMake
 # to always look for includes there:
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -67,16 +63,22 @@ else()
     add_definitions(-DNGS_ABI="UNIX")
 endif()
 
-enable_testing()
-
 add_subdirectory (lib)
+
+enable_testing()
 add_subdirectory (test)
 
-include_directories (${CMAKE_SOURCE_DIR}/lib/src
-    ${CMAKE_SOURCE_DIR}/lib/include)
+include_directories(
+    ${CMAKE_SOURCE_DIR}/lib/src
+    ${CMAKE_SOURCE_DIR}/lib/include
+)
 
 # Widgets finds its own dependencies.
 find_package(Qt5 REQUIRED COMPONENTS Widgets Svg)
+
+# Tell CMake to run moc when necessary:
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 
 qt5_add_resources(RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/res/glviewer.qrc")
 

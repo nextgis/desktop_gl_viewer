@@ -55,8 +55,10 @@ CatalogItem::CatalogItem(const std::string &name,
 
 int CatalogItem::childCount()
 {
-    if(m_type < ngsCatalogObjectType::CAT_CONTAINER_ANY ||
-            m_type > ngsCatalogObjectType::CAT_CONTAINER_ALL) {
+    if((m_type < ngsCatalogObjectType::CAT_CONTAINER_ANY ||
+        m_type > ngsCatalogObjectType::CAT_CONTAINER_ALL) &&
+       (m_type < ngsCatalogObjectType::CAT_NGW_ANY ||
+        m_type > ngsCatalogObjectType::CAT_NGW_ALL)) {
         return 0;
     }
 
@@ -163,9 +165,9 @@ bool CatalogItem::create(const std::string &name, enum ngsCatalogObjectType type
         createOptions = ngsListAddNameValue(createOptions, i.key().c_str(),
                                             i.value().c_str());
     }
-    int result = ngsCatalogObjectCreate(m_object, name.c_str(), createOptions);
+    CatalogObjectH result = ngsCatalogObjectCreate(m_object, name.c_str(), createOptions);
     ngsListFree(createOptions);
-    return result == COD_SUCCESS;
+    return result != nullptr;
 }
 
 std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
@@ -204,9 +206,9 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
         return "SXF File";
     case ngsCatalogObjectType::CAT_CONTAINER_GPKG:
         return "GeoPackage";
-    case ngsCatalogObjectType::CAT_CONTAINER_NGWGROUP:
+    case ngsCatalogObjectType::CAT_NGW_GROUP:
         return "Resource group";
-    case ngsCatalogObjectType::CAT_CONTAINER_NGWTRACKERGROUP:
+    case ngsCatalogObjectType::CAT_NGW_TRACKERGROUP:
         return "Trackers group";
     case ngsCatalogObjectType::CAT_FC_ESRI_SHAPEFILE:
         return "ESRI Shapefile";
@@ -268,6 +270,41 @@ std::string CatalogItem::getTypeText(enum ngsCatalogObjectType type)
         return "Spread sheet";
     case ngsCatalogObjectType::CAT_FILE_NGMAPDOCUMENT:
         return "NextGIS Map document";
+    case ngsCatalogObjectType::CAT_NGW_WMS_CONNECTION:
+        return "WMS Connection";
+    case ngsCatalogObjectType::CAT_NGW_WMS_SERVICE:
+        return "WMS Service";
+    case ngsCatalogObjectType::CAT_NGW_WFS_SERVICE:
+        return "WFS Service";
+    case ngsCatalogObjectType::CAT_NGW_VECTOR_LAYER:
+        return "Vector layer";
+    case ngsCatalogObjectType::CAT_NGW_POSTGIS_LAYER:
+        return "PostGIS layer";
+    case ngsCatalogObjectType::CAT_NGW_RASTER_LAYER:
+        return "Raster layer";
+    case ngsCatalogObjectType::CAT_NGW_BASEMAP:
+        return "Basemap";
+    case ngsCatalogObjectType::CAT_NGW_QGISRASTER_STYLE:
+        return "QGIS Raster style";
+    case ngsCatalogObjectType::CAT_NGW_QGISVECTOR_STYLE:
+        return "QGIS Vector style";
+    case ngsCatalogObjectType::CAT_NGW_MAPSERVER_STYLE:
+        return "MapServer style";
+    case ngsCatalogObjectType::CAT_NGW_RASTER_STYLE:
+        return "Raster stylee";
+    case ngsCatalogObjectType::CAT_NGW_WMS_LAYER:
+        return "WMS layer";
+    case ngsCatalogObjectType::CAT_NGW_TRACKER:
+        return "Tracker";
+    case ngsCatalogObjectType::CAT_NGW_WEBMAP:
+        return "Web map";
+    case ngsCatalogObjectType::CAT_NGW_FORMBUILDER_FORM:
+        return "Formbuilder form";
+    case ngsCatalogObjectType::CAT_NGW_LOOKUP_TABLE:
+        return "Lookup table";
+    case ngsCatalogObjectType::CAT_NGW_FILE_BUCKET:
+        return "File bucket";
+
     default:
         return "";
     }

@@ -104,13 +104,13 @@ void CatalogDialog::showContextMenu(const QPoint &pos)
 
     QMenu contextNewMenu(tr("New"));
 
-    if(m_model->canCreateObject(selected, CAT_CONTAINER_NGWGROUP)) {
+    if(m_model->canCreateObject(selected, CAT_NGW_GROUP)) {
         QAction *action = contextNewMenu.addAction("NextGIS Web group", this,
                                                    &CatalogDialog::createNGWGroup);
         action->setData(selected);
     }
 
-    if(m_model->canCreateObject(selected, CAT_CONTAINER_NGWTRACKERGROUP)) {
+    if(m_model->canCreateObject(selected, CAT_NGW_TRACKERGROUP)) {
         QAction *action = contextNewMenu.addAction("NextGIS Web tracker group",
                                                    this,
                                                    &CatalogDialog::createNGWTrackerGroup);
@@ -147,7 +147,7 @@ void CatalogDialog::createNGWGroup()
             if (ok && !name.isEmpty()) {
                 QMap<std::string, std::string> options;
                 options["CREATE_UNIQUE"] = "ON";
-                if(!m_model->createObject(index, name, CAT_CONTAINER_NGWGROUP, options)) {
+                if(!m_model->createObject(index, name, CAT_NGW_GROUP, options)) {
                     QString message = QString(tr("Create resource group failed.\nError: %1")).arg(
                                 ngsGetLastErrorMessage());
                 }
@@ -170,7 +170,7 @@ void CatalogDialog::createNGWTrackerGroup()
             if (ok && !name.isEmpty()) {
                 QMap<std::string, std::string> options;
                 options["CREATE_UNIQUE"] = "ON";
-                if(!m_model->createObject(index, name, CAT_CONTAINER_NGWTRACKERGROUP, options)) {
+                if(!m_model->createObject(index, name, CAT_NGW_TRACKERGROUP, options)) {
                     QString message = QString(tr("Create tracker group failed.\nError: %1")).arg(
                                 ngsGetLastErrorMessage());
                 }

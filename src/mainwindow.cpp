@@ -82,6 +82,8 @@ MainWindow::MainWindow(QWidget *parent) :
     options = ngsListAddNameValue(options, "CACHE_DIR", cacheDir.toLatin1().data());
     options = ngsListAddNameValue(options, "GDAL_DATA",
                               qgetenv("GDAL_DATA").constData());
+    options = ngsListAddNameValue(options, "PROJ_DATA",
+                                  qgetenv("PROJ_LIB").constData());
     options = ngsListAddNameValue(options, "NUM_THREADS", "ALL_CPUS");
     options = ngsListAddNameValue(options, "GL_MULTISAMPLE", "OFF");
 //    const char *key = ngsGeneratePrivateKey();
@@ -654,7 +656,7 @@ void MainWindow::createActions()
 bool MainWindow::createDatastore()
 {
     // Check if datastore exists
-    std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr);
+    std::string path = ngsFormFileName(ngsGetCurrentDirectory(), "tmp", nullptr, 0);
     std::string catalogPath = ngsCatalogPathFromSystem(path.c_str());
     std::string storeName("main.ngst");
     std::string storePath = catalogPath + "/" + storeName;
@@ -668,7 +670,7 @@ bool MainWindow::createDatastore()
 
         CatalogObjectH storeDir = ngsCatalogObjectGet(catalogPath.c_str());
         return ngsCatalogObjectCreate(storeDir, storeName.c_str(),
-                                      options) == COD_SUCCESS;
+                                      options) != nullptr;
     }
     return true;
 }
@@ -844,7 +846,7 @@ void MainWindow::createTMS()
         options = ngsListAddNameValue(options, "cache_expires", "1209600");
 
         if(ngsCatalogObjectCreate(catalog, name.toStdString().c_str(),
-                                  options) != COD_SUCCESS) {
+                                  options) == nullptr) {
             QMessageBox::critical(this, tr("Error"), tr("Failed to create TMS") +
                                   ": " + ngsGetLastErrorMessage());
         }
@@ -880,8 +882,8 @@ void MainWindow::createTracker()
         const QVector<int> filter = {
             ngsCatalogObjectType::CAT_CONTAINER_GISCONNECTIONS,
             ngsCatalogObjectType::CAT_CONTAINER_NGW,
-            ngsCatalogObjectType::CAT_CONTAINER_NGWGROUP,
-            ngsCatalogObjectType::CAT_CONTAINER_NGWTRACKERGROUP };
+            ngsCatalogObjectType::CAT_NGW_GROUP,
+            ngsCatalogObjectType::CAT_NGW_TRACKERGROUP };
         CatalogDialog dlg(CatalogDialog::SAVE, tr("Select location and tracker name"),
                           filter, this);
         int result = dlg.exec();
@@ -895,8 +897,8 @@ void MainWindow::createTracker()
             options = ngsListAddNameValue(options, "TYPE", std::to_string(CAT_NGW_TRACKER).c_str());
             options = ngsListAddNameValue(options, "CREATE_UNIQUE", "ON");
             options = ngsListAddNameValue(options, "TRACKER_ID", ngsGetDeviceId(false));
-            if(ngsCatalogObjectCreate(storeDir, newName.c_str(), options) !=
-                    COD_SUCCESS) {
+            if(ngsCatalogObjectCreate(storeDir, newName.c_str(), options) ==
+                    nullptr) {
                 QMessageBox::critical(this, tr("Error"),
                                       tr("Failed to create tracker.\nError: %1").arg(ngsGetDeviceId(false)));
             }
